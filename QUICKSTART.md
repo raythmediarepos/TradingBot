@@ -17,7 +17,7 @@ This will install all required packages including:
 - Lucide React icons
 - And more...
 
-## Step 2: Start Development Server
+## Step 2: Start Development Server√
 
 ```bash
 npm run dev
