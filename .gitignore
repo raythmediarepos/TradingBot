@@ -35,3 +35,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# scripts (only needed locally)
+/scripts
+
+# sharp cache
+.sharp
+
