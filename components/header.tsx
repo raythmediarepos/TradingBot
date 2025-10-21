@@ -7,6 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+type NavigationItem = {
+  name: string
+  href: string
+  badge?: string
+}
+
 const Header = () => {
   const [isScrolled, setIsScrolled] = React.useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
@@ -20,7 +26,7 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const navigation = [
+  const navigation: NavigationItem[] = [
     { name: 'Features', href: '#features' },
     { name: 'FAQ', href: '#faq' },
     { name: 'Changelog', href: '/changelog' },
