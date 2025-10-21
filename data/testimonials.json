@@ -1,0 +1,31 @@
+[
+  {
+    "id": "1",
+    "quote": "Finally, a trading alert system that respects my values. The halal screening is thorough and the signals are impressively fast.",
+    "author": "A.K.",
+    "role": "Day Trader",
+    "rating": 5
+  },
+  {
+    "id": "2",
+    "quote": "The Research Chatbot is a game-changer. I can ask about fundamentals and get sourced answers instantly. Saves me hours of research.",
+    "author": "M.R.",
+    "role": "Swing Trader",
+    "rating": 5
+  },
+  {
+    "id": "3",
+    "quote": "Love the transparency. Every alert shows exactly why the signal was generated. No black box nonsense.",
+    "author": "S.H.",
+    "role": "Investment Analyst",
+    "rating": 5
+  },
+  {
+    "id": "4",
+    "quote": "The team plan has been perfect for our group. Shared watchlists and webhook integrations make collaboration seamless.",
+    "author": "Y.A.",
+    "role": "Trading Team Lead",
+    "rating": 5
+  }
+]
+

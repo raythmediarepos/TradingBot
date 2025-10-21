@@ -1,0 +1,43 @@
+[
+  {
+    "id": "1",
+    "question": "What makes Honeypot halal-compliant?",
+    "answer": "Honeypot applies comprehensive halal screening to all tickers. We exclude prohibited sectors (alcohol, gambling, adult entertainment, conventional banking/interest-heavy businesses). We also screen for financial ratios including interest income thresholds and leverage limits. Most importantly, we never provide signals for options, calls, puts, or any derivative instruments—only direct equity and compliant crypto holdings."
+  },
+  {
+    "id": "2",
+    "question": "Which markets do you cover?",
+    "answer": "Currently, we cover US equities (NYSE, NASDAQ) and major cryptocurrencies. We're actively working on expanding to international markets. You can configure which tickers and asset classes you want to follow in your dashboard."
+  },
+  {
+    "id": "3",
+    "question": "Do you place trades automatically?",
+    "answer": "No. Honeypot AI is an alert and research platform, not a trading bot. We provide you with signals and insights, but you remain in complete control of all trading decisions. We do not have access to your brokerage accounts and cannot execute trades on your behalf."
+  },
+  {
+    "id": "4",
+    "question": "What's the latency on real-time alerts?",
+    "answer": "Our Pro and Team plans deliver signals with sub-second latency from signal generation to notification delivery. Free plan alerts are delayed by 15 minutes. Actual delivery time may vary based on your notification channel and network conditions."
+  },
+  {
+    "id": "5",
+    "question": "What data sources do you use?",
+    "answer": "We aggregate data from multiple tier-1 financial data providers, including real-time price feeds, volume data, and technical indicators. For the Research Chatbot, we source from SEC filings (10-K, 10-Q), earnings call transcripts, and verified financial databases. All sources are cited in responses."
+  },
+  {
+    "id": "6",
+    "question": "Do you offer refunds or free trials?",
+    "answer": "We offer a 14-day money-back guarantee on Pro plans. If you're not satisfied within the first 14 days, contact support for a full refund. Our Free plan is available indefinitely with no credit card required, so you can test the platform before upgrading."
+  },
+  {
+    "id": "7",
+    "question": "Is this financial advice?",
+    "answer": "No. Honeypot AI provides educational alerts and research tools, not personalized financial advice. All signals are based on technical analysis and quantitative models. Past performance is not indicative of future results. You should consult with a qualified financial advisor before making investment decisions. Trading carries risk of loss."
+  },
+  {
+    "id": "8",
+    "question": "Can I customize the halal screening criteria?",
+    "answer": "Yes. While we apply default halal screening standards, Pro and Team users can adjust screening strictness and specific threshold values to align with their personal interpretation of halal investing principles. You can configure sector exclusions, debt ratios, and interest income limits in your account settings."
+  }
+]
+

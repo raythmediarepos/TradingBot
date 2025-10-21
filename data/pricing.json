@@ -1,0 +1,68 @@
+[
+  {
+    "id": "free",
+    "name": "Free",
+    "priceMonthly": "$0",
+    "priceYearly": "$0",
+    "billing": "Forever",
+    "description": "Perfect for trying out Honeypot AI with basic features",
+    "features": [
+      "Delayed alerts (15-min delay)",
+      "Up to 5 tickers",
+      "Email notifications only",
+      "Basic halal screening",
+      "Community support"
+    ],
+    "cta": "Join Waitlist",
+    "ctaLink": "#waitlist",
+    "highlighted": false
+  },
+  {
+    "id": "pro",
+    "name": "Pro",
+    "priceMonthly": "$49",
+    "priceYearly": "$39",
+    "billingMonthly": "per month",
+    "billingYearly": "per month",
+    "yearlyTotal": "$468",
+    "monthlySavings": "Save $10/mo",
+    "description": "Real-time alerts for serious traders who need speed and flexibility",
+    "features": [
+      "Real-time alerts (sub-second)",
+      "Unlimited tickers",
+      "Email, SMS, Telegram & Discord",
+      "Advanced halal screening filters",
+      "Signal rationale & datapoints",
+      "Priority support",
+      "Research Chatbot access (when available)"
+    ],
+    "cta": "Join Waitlist",
+    "ctaLink": "#waitlist",
+    "highlighted": true,
+    "badge": "Most Popular"
+  },
+  {
+    "id": "team",
+    "name": "Team",
+    "priceMonthly": "$199",
+    "priceYearly": "$159",
+    "billingMonthly": "per month",
+    "billingYearly": "per month",
+    "yearlyTotal": "$1,908",
+    "monthlySavings": "Save $40/mo",
+    "description": "For trading teams and businesses requiring multiple seats and SLA",
+    "features": [
+      "Everything in Pro",
+      "Up to 5 team members",
+      "Shared watchlists",
+      "Webhook integrations",
+      "Custom alert rules",
+      "99.9% uptime SLA",
+      "Dedicated account manager",
+      "API access (beta)"
+    ],
+    "cta": "Contact Sales",
+    "ctaLink": "mailto:team@honeypot.ai",
+    "highlighted": false
+  }
+]

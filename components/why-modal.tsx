@@ -1,0 +1,164 @@
+'use client'
+
+import * as React from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+
+type Signal = {
+  id: string
+  ticker: string
+  direction: 'BUY' | 'SELL' | 'HOLD'
+  timestamp: string
+  confidence: number
+  rationale: string
+  datapoints: {
+    rsi: number
+    volume: string
+    momentum: string
+    support: string
+    resistance: string
+  }
+}
+
+type WhyModalProps = {
+  signal: Signal
+  isOpen: boolean
+  onClose: () => void
+}
+
+const WhyModal = ({ signal, isOpen, onClose }: WhyModalProps) => {
+  const getDirectionIcon = (direction: string) => {
+    switch (direction) {
+      case 'BUY':
+        return <TrendingUp className="text-green-500" size={24} />
+      case 'SELL':
+        return <TrendingDown className="text-red-500" size={24} />
+      default:
+        return <Minus className="text-gray-500" size={24} />
+    }
+  }
+
+  const getDirectionColor = (direction: string) => {
+    switch (direction) {
+      case 'BUY':
+        return 'text-green-500'
+      case 'SELL':
+        return 'text-red-500'
+      default:
+        return 'text-gray-500'
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-3">
+            {getDirectionIcon(signal.direction)}
+            <span>
+              {signal.ticker} - {signal.direction} Signal
+            </span>
+          </DialogTitle>
+          <DialogDescription>
+            Signal generated on{' '}
+            {new Date(signal.timestamp).toLocaleString('en-US', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            })}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 mt-4">
+          {/* Confidence */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-400">
+                Confidence Level
+              </span>
+              <span className="text-sm font-semibold text-hp-yellow">
+                {signal.confidence}%
+              </span>
+            </div>
+            <div className="w-full h-3 bg-hp-gray900 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-hp-yellow"
+                style={{ width: `${signal.confidence}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Rationale */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-400 mb-2">
+              Signal Rationale
+            </h4>
+            <p className="text-hp-white">{signal.rationale}</p>
+          </div>
+
+          {/* Datapoints */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-400 mb-3">
+              Key Datapoints
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-hp-gray900 rounded-lg">
+                <div className="text-xs text-gray-400 mb-1">RSI</div>
+                <div className="text-lg font-semibold text-hp-white">
+                  {signal.datapoints.rsi}
+                </div>
+              </div>
+              <div className="p-4 bg-hp-gray900 rounded-lg">
+                <div className="text-xs text-gray-400 mb-1">Volume</div>
+                <div className="text-lg font-semibold text-hp-white">
+                  {signal.datapoints.volume}
+                </div>
+              </div>
+              <div className="p-4 bg-hp-gray900 rounded-lg">
+                <div className="text-xs text-gray-400 mb-1">Momentum</div>
+                <div
+                  className={`text-lg font-semibold ${
+                    signal.datapoints.momentum === 'Bullish'
+                      ? 'text-green-500'
+                      : signal.datapoints.momentum === 'Bearish'
+                      ? 'text-red-500'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  {signal.datapoints.momentum}
+                </div>
+              </div>
+              <div className="p-4 bg-hp-gray900 rounded-lg">
+                <div className="text-xs text-gray-400 mb-1">
+                  Support / Resistance
+                </div>
+                <div className="text-sm font-semibold text-hp-white">
+                  {signal.datapoints.support} / {signal.datapoints.resistance}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Disclaimer */}
+          <div className="p-4 bg-hp-yellow/5 border border-hp-yellow/20 rounded-lg">
+            <p className="text-xs text-gray-400">
+              <span className="font-semibold text-hp-yellow">Note:</span> This
+              signal is generated by algorithmic analysis and does not
+              constitute financial advice. Always conduct your own research and
+              consult with qualified professionals before making investment
+              decisions.
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export default WhyModal
+

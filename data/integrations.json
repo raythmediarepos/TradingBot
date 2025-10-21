@@ -1,0 +1,50 @@
+[
+  {
+    "id": "email",
+    "name": "Email",
+    "description": "Receive alerts directly in your inbox",
+    "icon": "Mail",
+    "available": true
+  },
+  {
+    "id": "sms",
+    "name": "SMS",
+    "description": "Text message notifications for time-sensitive signals",
+    "icon": "MessageSquare",
+    "available": true,
+    "planRequired": "Pro"
+  },
+  {
+    "id": "telegram",
+    "name": "Telegram",
+    "description": "Get alerts in your Telegram channels or DMs",
+    "icon": "Send",
+    "available": true,
+    "planRequired": "Pro"
+  },
+  {
+    "id": "discord",
+    "name": "Discord",
+    "description": "Push alerts to your Discord servers",
+    "icon": "MessageCircle",
+    "available": true,
+    "planRequired": "Pro"
+  },
+  {
+    "id": "webhook",
+    "name": "Webhooks",
+    "description": "Custom integrations via webhook endpoints",
+    "icon": "Webhook",
+    "available": true,
+    "planRequired": "Team"
+  },
+  {
+    "id": "slack",
+    "name": "Slack",
+    "description": "Team notifications in Slack channels",
+    "icon": "Hash",
+    "available": false,
+    "comingSoon": true
+  }
+]
+

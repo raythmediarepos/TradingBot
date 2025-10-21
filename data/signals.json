@@ -1,0 +1,63 @@
+[
+  {
+    "id": "1",
+    "ticker": "AAPL",
+    "direction": "BUY",
+    "timestamp": "2025-10-21T14:32:18Z",
+    "confidence": 85,
+    "rationale": "Strong momentum breakout above resistance with increased volume. RSI shows bullish divergence.",
+    "datapoints": {
+      "rsi": 62,
+      "volume": "+45% vs avg",
+      "momentum": "Bullish",
+      "support": "$178.20",
+      "resistance": "$182.50"
+    }
+  },
+  {
+    "id": "2",
+    "ticker": "MSFT",
+    "direction": "SELL",
+    "timestamp": "2025-10-21T13:15:42Z",
+    "confidence": 72,
+    "rationale": "Bearish divergence on MACD with declining volume. Price testing support level.",
+    "datapoints": {
+      "rsi": 38,
+      "volume": "-28% vs avg",
+      "momentum": "Bearish",
+      "support": "$385.00",
+      "resistance": "$395.00"
+    }
+  },
+  {
+    "id": "3",
+    "ticker": "GOOGL",
+    "direction": "BUY",
+    "timestamp": "2025-10-21T12:48:05Z",
+    "confidence": 78,
+    "rationale": "Bullish flag pattern forming with consolidation near highs. Volume accumulation detected.",
+    "datapoints": {
+      "rsi": 58,
+      "volume": "+32% vs avg",
+      "momentum": "Bullish",
+      "support": "$142.50",
+      "resistance": "$147.80"
+    }
+  },
+  {
+    "id": "4",
+    "ticker": "TSLA",
+    "direction": "HOLD",
+    "timestamp": "2025-10-21T11:22:30Z",
+    "confidence": 65,
+    "rationale": "Mixed signals. Trading in consolidation range with neutral momentum indicators.",
+    "datapoints": {
+      "rsi": 50,
+      "volume": "0% vs avg",
+      "momentum": "Neutral",
+      "support": "$242.00",
+      "resistance": "$258.00"
+    }
+  }
+]
+

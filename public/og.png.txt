@@ -1,0 +1,19 @@
+# OG Image Placeholder
+
+This is a placeholder for the Open Graph image (og.png).
+
+To create the actual image:
+1. Design a 1200x630px image
+2. Use black background (#0A0A0A)
+3. Include the Honeypot AI logo and tagline in yellow (#F5C518)
+4. Add text: "Halal-first trading alerts that move when markets do"
+5. Save as og.png in the /public directory
+
+You can use tools like:
+- Figma
+- Canva
+- Photoshop
+- Or any online OG image generator
+
+For now, the site will work without this image, but it's recommended to create one for better social media sharing.
+
