@@ -16,9 +16,18 @@ const mailjet = Mailjet.apiConnect(
  * @returns {Promise<boolean>}
  */
 const sendWaitlistConfirmation = async (email, firstName, lastName, position) => {
+  console.log('📧 [EMAIL] Starting waitlist confirmation email...')
+  console.log(`   → To: ${email}`)
+  console.log(`   → Name: ${firstName} ${lastName}`)
+  console.log(`   → Position: #${position}`)
+  
   try {
     const fromEmail = process.env.MAILJET_FROM_EMAIL || 'noreply@honeypotai.com'
     const fromName = process.env.MAILJET_FROM_NAME || 'Honeypot AI'
+
+    console.log(`   → From: ${fromName} <${fromEmail}>`)
+    console.log(`   → Mailjet API Key: ${process.env.MAILJET_API_KEY ? '✓ Set' : '✗ Missing'}`)
+    console.log(`   → Mailjet Secret: ${process.env.MAILJET_SECRET_KEY ? '✓ Set' : '✗ Missing'}`)
 
     const request = mailjet.post('send', { version: 'v3.1' }).request({
       Messages: [
@@ -204,13 +213,23 @@ Honeypot AI - Halal-first trading alerts
       ],
     })
 
+    console.log('   → Sending request to Mailjet...')
     const result = await request
-    console.log(`✅ Confirmation email sent to ${email} (Position #${position})`)
+    console.log('✅ [EMAIL SUCCESS] Confirmation email sent!')
+    console.log(`   → To: ${email}`)
+    console.log(`   → Position: #${position}`)
+    console.log(`   → Mailjet Response:`, result.body)
     return true
   } catch (error) {
-    console.error('❌ Error sending confirmation email:', error.message)
+    console.error('❌ [EMAIL ERROR] Failed to send confirmation email')
+    console.error(`   → Recipient: ${email}`)
+    console.error(`   → Error: ${error.message}`)
     if (error.response) {
-      console.error('Mailjet error details:', error.response.body)
+      console.error(`   → Status: ${error.statusCode}`)
+      console.error(`   → Mailjet Response:`, JSON.stringify(error.response.body, null, 2))
+    }
+    if (error.ErrorMessage) {
+      console.error(`   → Mailjet Message: ${error.ErrorMessage}`)
     }
     // Don't throw - we don't want to fail the waitlist signup if email fails
     return false

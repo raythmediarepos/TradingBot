@@ -44,8 +44,13 @@ const getRemainingWaitlistSpots = async () => {
 const addToWaitlist = async (userData) => {
   const { email, firstName, lastName } = userData
 
+  console.log('🎫 [WAITLIST] New signup attempt...')
+  console.log(`   → Email: ${email}`)
+  console.log(`   → Name: ${firstName} ${lastName}`)
+
   // Validate input
   if (!email || !firstName || !lastName) {
+    console.error('❌ [WAITLIST] Validation failed: Missing required fields')
     return {
       success: false,
       message: 'Email, first name, and last name are required',
@@ -55,6 +60,7 @@ const addToWaitlist = async (userData) => {
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email)) {
+    console.error(`❌ [WAITLIST] Invalid email format: ${email}`)
     return {
       success: false,
       message: 'Invalid email format',
@@ -63,8 +69,12 @@ const addToWaitlist = async (userData) => {
 
   try {
     // Check if waitlist is full
+    console.log('   → Checking waitlist capacity...')
     const spotsInfo = await getRemainingWaitlistSpots()
+    console.log(`   → Spots: ${spotsInfo.filled}/${spotsInfo.total} filled (${spotsInfo.remaining} remaining)`)
+    
     if (spotsInfo.remaining === 0) {
+      console.warn('⚠️  [WAITLIST] Waitlist is full!')
       return {
         success: false,
         message: 'Sorry, the waitlist is full. Please check back later.',
@@ -72,12 +82,14 @@ const addToWaitlist = async (userData) => {
     }
 
     // Check if email already exists
+    console.log(`   → Checking for duplicate email...`)
     const existingUser = await db
       .collection(WAITLIST_COLLECTION)
       .where('email', '==', email.toLowerCase().trim())
       .get()
 
     if (!existingUser.empty) {
+      console.warn(`⚠️  [WAITLIST] Email already registered: ${email}`)
       return {
         success: false,
         message: 'This email is already on the waitlist',
@@ -95,17 +107,28 @@ const addToWaitlist = async (userData) => {
       listType: 'trading-bot', // trading-bot or chatbot
     }
 
+    console.log('   → Saving to Firebase...')
     const docRef = await db.collection(WAITLIST_COLLECTION).add(waitlistData)
+    console.log(`✅ [WAITLIST] User saved to Firebase!`)
+    console.log(`   → Document ID: ${docRef.id}`)
 
     const position = spotsInfo.filled + 1
+    console.log(`   → Position assigned: #${position}`)
 
     // Send confirmation email
-    await sendWaitlistConfirmation(
+    console.log('   → Initiating confirmation email...')
+    const emailSent = await sendWaitlistConfirmation(
       waitlistData.email,
       waitlistData.firstName,
       waitlistData.lastName,
       position
     )
+    
+    if (emailSent) {
+      console.log('✅ [WAITLIST] Complete with email confirmation')
+    } else {
+      console.warn('⚠️  [WAITLIST] Complete but email failed (user still added)')
+    }
 
     return {
       success: true,
@@ -114,7 +137,9 @@ const addToWaitlist = async (userData) => {
       position,
     }
   } catch (error) {
-    console.error('Error adding to waitlist:', error)
+    console.error('❌ [WAITLIST] Error adding to waitlist')
+    console.error(`   → Error: ${error.message}`)
+    console.error(`   → Stack:`, error.stack)
     return {
       success: false,
       message: 'An error occurred while adding you to the waitlist. Please try again.',

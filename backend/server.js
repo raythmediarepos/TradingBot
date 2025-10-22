@@ -44,13 +44,37 @@ app.use(cors(corsOptions))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Request logging (development)
-if (process.env.NODE_ENV !== 'production') {
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`)
-    next()
-  })
-}
+// Enhanced request logging (all environments)
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString()
+  console.log('')
+  console.log('📥 [REQUEST] Incoming request')
+  console.log(`   → Time: ${timestamp}`)
+  console.log(`   → Method: ${req.method}`)
+  console.log(`   → Path: ${req.path}`)
+  console.log(`   → Origin: ${req.get('origin') || 'No origin header'}`)
+  console.log(`   → IP: ${req.ip}`)
+  
+  if (req.body && Object.keys(req.body).length > 0) {
+    // Log body but hide sensitive data
+    const sanitizedBody = { ...req.body }
+    if (sanitizedBody.email) {
+      sanitizedBody.email = sanitizedBody.email.substring(0, 3) + '***'
+    }
+    console.log(`   → Body:`, sanitizedBody)
+  }
+  
+  // Log response
+  const originalSend = res.send
+  res.send = function(data) {
+    console.log(`📤 [RESPONSE] Sending response`)
+    console.log(`   → Status: ${res.statusCode}`)
+    console.log(`   → Path: ${req.path}`)
+    return originalSend.call(this, data)
+  }
+  
+  next()
+})
 
 // ============================================
 // ROUTES
