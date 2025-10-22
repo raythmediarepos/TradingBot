@@ -17,7 +17,6 @@ const AffiliatesPage = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = React.useState('')
-  const [affiliateCode, setAffiliateCode] = React.useState('')
 
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
@@ -115,7 +114,7 @@ const AffiliatesPage = () => {
 
       if (response.ok && data.success) {
         setSubmitStatus('success')
-        setAffiliateCode(data.affiliateCode)
+        // No affiliate code yet - will be generated after setup
         // Clear form
         setName('')
         setEmail('')
@@ -441,15 +440,11 @@ const AffiliatesPage = () => {
                   <CheckCircle2 className="w-16 h-16 text-hp-yellow mx-auto mb-4" />
                   <h3 className="text-2xl font-bold text-hp-white mb-2">Account Created!</h3>
                   
-                  {affiliateCode && (
-                    <div className="mb-6 p-4 bg-hp-yellow/10 border border-hp-yellow/30 rounded-lg">
-                      <p className="text-sm text-gray-300 mb-2">Your Affiliate Code</p>
-                      <p className="text-2xl font-bold text-hp-yellow font-mono">{affiliateCode}</p>
-                    </div>
-                  )}
-                  
-                  <p className="text-gray-400 mb-6">
-                    Your account is ready! Check your email for your login credentials and next steps.
+                  <p className="text-gray-400 mb-3">
+                    Your account has been created successfully! We've sent your login credentials to your email.
+                  </p>
+                  <p className="text-gray-300 mb-6 text-sm">
+                    Next, you'll complete your profile to get your unique referral link and start earning commissions.
                   </p>
                   <Button
                     onClick={() => window.location.href = '/affiliates/login'}

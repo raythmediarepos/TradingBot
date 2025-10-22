@@ -243,6 +243,62 @@ router.get('/all', async (req, res) => {
 })
 
 /**
+ * POST /api/affiliates/complete-setup
+ * Complete affiliate setup and generate affiliate code
+ */
+router.post('/complete-setup', async (req, res) => {
+  console.log('📥 [REQUEST] Complete affiliate setup')
+  
+  try {
+    const { affiliateId, setupData } = req.body
+
+    if (!affiliateId || !setupData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Affiliate ID and setup data are required'
+      })
+    }
+
+    // Validate required fields
+    const requiredFields = [
+      'fullName',
+      'phone',
+      'address.street',
+      'address.city',
+      'address.state',
+      'address.country',
+      'address.postalCode',
+      'paymentInfo.method',
+      'paymentInfo.details'
+    ]
+
+    for (const field of requiredFields) {
+      const keys = field.split('.')
+      let value = setupData
+      for (const key of keys) {
+        value = value?.[key]
+      }
+      if (!value) {
+        return res.status(400).json({
+          success: false,
+          message: `Missing required field: ${field}`
+        })
+      }
+    }
+
+    const result = await affiliateService.completeAffiliateSetup(affiliateId, setupData)
+    res.status(200).json(result)
+
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error completing setup:', error)
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to complete setup'
+    })
+  }
+})
+
+/**
  * POST /api/affiliates/approve/:affiliateId (Admin only)
  * Approve affiliate application
  */

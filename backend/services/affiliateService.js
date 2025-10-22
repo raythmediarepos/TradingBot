@@ -53,7 +53,7 @@ const generateUniqueAffiliateCode = async () => {
 }
 
 /**
- * Create new affiliate account (automatic approval)
+ * Create new affiliate account (basic signup - no affiliate code yet)
  * @param {Object} affiliateData - Affiliate signup data
  * @returns {Promise<Object>}
  */
@@ -76,28 +76,37 @@ const createAffiliateAccount = async (affiliateData) => {
       throw new Error('An affiliate account with this email already exists')
     }
 
-    // Generate unique affiliate code
-    console.log('   → Generating unique affiliate code...')
-    const affiliateCode = await generateUniqueAffiliateCode()
-    console.log(`   → Generated code: ${affiliateCode}`)
-
     // Create temporary password (will be sent via email)
     const tempPassword = crypto.randomBytes(8).toString('hex')
     console.log('   → Generated temporary password')
 
-    // Create affiliate record - automatically approved
+    // Create affiliate record - NO affiliate code yet (will be generated after setup)
     const affiliateRecord = {
       name: affiliateData.name,
       email: affiliateData.email,
       platform: affiliateData.platform,
       audienceSize: affiliateData.audienceSize || null,
       websiteUrl: affiliateData.websiteUrl || null,
-      affiliateCode: affiliateCode,
-      affiliateLink: `https://honeypotai.com/?ref=${affiliateCode}`,
+      affiliateCode: null, // Generated after setup completion
+      affiliateLink: null, // Generated after setup completion
       tempPassword: tempPassword, // In production, hash this!
       passwordChanged: false,
       status: 'active', // active, suspended
       setupCompleted: false,
+      // Full profile info (collected during setup)
+      fullName: null,
+      phone: null,
+      address: {
+        street: null,
+        city: null,
+        state: null,
+        country: null,
+        postalCode: null
+      },
+      paymentInfo: {
+        method: null, // paypal, bank, etc
+        details: null
+      },
       commissionRate: 0.10, // 10%
       totalEarnings: 0,
       totalReferrals: 0,
@@ -113,12 +122,11 @@ const createAffiliateAccount = async (affiliateData) => {
     const docRef = await db.collection('affiliates').add(affiliateRecord)
     console.log(`✅ [AFFILIATE] Account created with ID: ${docRef.id}`)
 
-    // Send welcome email with login credentials
+    // Send welcome email with login credentials (no affiliate code yet)
     console.log('   → Sending welcome email...')
     const emailSent = await emailService.sendAffiliateWelcomeEmail(
       affiliateData.email,
       affiliateData.name,
-      affiliateCode,
       tempPassword
     )
 
@@ -131,14 +139,86 @@ const createAffiliateAccount = async (affiliateData) => {
     return {
       success: true,
       affiliateId: docRef.id,
-      affiliateCode: affiliateCode,
       tempPassword: tempPassword,
       status: 'active',
+      setupCompleted: false,
       message: 'Account created successfully! Check your email for login credentials.'
     }
 
   } catch (error) {
     console.error('❌ [AFFILIATE] Error creating account:', error)
+    throw error
+  }
+}
+
+/**
+ * Complete affiliate setup and generate affiliate code
+ * @param {string} affiliateId - Affiliate document ID
+ * @param {Object} setupData - Complete setup data
+ * @returns {Promise<Object>}
+ */
+const completeAffiliateSetup = async (affiliateId, setupData) => {
+  console.log('🎯 [AFFILIATE] Completing setup...')
+  console.log(`   → Affiliate ID: ${affiliateId}`)
+
+  try {
+    const affiliateRef = db.collection('affiliates').doc(affiliateId)
+    const doc = await affiliateRef.get()
+
+    if (!doc.exists) {
+      throw new Error('Affiliate not found')
+    }
+
+    const affiliate = doc.data()
+
+    if (affiliate.setupCompleted) {
+      throw new Error('Setup already completed')
+    }
+
+    // Generate unique affiliate code NOW
+    console.log('   → Generating unique affiliate code...')
+    const affiliateCode = await generateUniqueAffiliateCode()
+    console.log(`   → Generated code: ${affiliateCode}`)
+
+    // Update affiliate with complete info
+    await affiliateRef.update({
+      fullName: setupData.fullName,
+      phone: setupData.phone,
+      address: {
+        street: setupData.address.street,
+        city: setupData.address.city,
+        state: setupData.address.state,
+        country: setupData.address.country,
+        postalCode: setupData.address.postalCode
+      },
+      paymentInfo: {
+        method: setupData.paymentInfo.method,
+        details: setupData.paymentInfo.details
+      },
+      affiliateCode: affiliateCode,
+      affiliateLink: `https://honeypotai.com/?ref=${affiliateCode}`,
+      setupCompleted: true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    })
+
+    console.log('✅ [AFFILIATE] Setup completed successfully')
+
+    // Send setup completion email with affiliate code
+    await emailService.sendAffiliateSetupCompleteEmail(
+      affiliate.email,
+      affiliate.name,
+      affiliateCode
+    )
+
+    return {
+      success: true,
+      affiliateCode: affiliateCode,
+      affiliateLink: `https://honeypotai.com/?ref=${affiliateCode}`,
+      message: 'Setup completed! Your affiliate code has been generated.'
+    }
+
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error completing setup:', error)
     throw error
   }
 }
@@ -335,6 +415,7 @@ const getAllAffiliates = async () => {
 
 module.exports = {
   createAffiliateAccount,
+  completeAffiliateSetup,
   createAffiliateApplication: createAffiliateAccount, // Alias for backward compatibility
   approveAffiliate,
   getAffiliateByEmail,
