@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: honeypot-ai-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # These will be added manually in Render dashboard:
+      # - FIREBASE_SERVICE_ACCOUNT (paste entire serviceAccountKey.json content)
+
