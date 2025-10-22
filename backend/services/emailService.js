@@ -1,11 +1,8 @@
-const Mailjet = require('node-mailjet')
+const { Resend } = require('resend')
 require('dotenv').config()
 
-// Initialize Mailjet client
-const mailjet = Mailjet.apiConnect(
-  process.env.MAILJET_API_KEY,
-  process.env.MAILJET_SECRET_KEY
-)
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 /**
  * Send waitlist confirmation email
@@ -22,29 +19,17 @@ const sendWaitlistConfirmation = async (email, firstName, lastName, position) =>
   console.log(`   → Position: #${position}`)
   
   try {
-    // Use verified sender email from environment variables
-    const fromEmail = process.env.MAILJET_FROM_EMAIL || 'raythmedia.repo@gmail.com'
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
     const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
 
     console.log(`   → From: ${fromName} <${fromEmail}>`)
-    console.log(`   → Mailjet API Key: ${process.env.MAILJET_API_KEY ? '✓ Set' : '✗ Missing'}`)
-    console.log(`   → Mailjet Secret: ${process.env.MAILJET_SECRET_KEY ? '✓ Set' : '✗ Missing'}`)
+    console.log(`   → Resend API Key: ${process.env.RESEND_API_KEY ? '✓ Set' : '✗ Missing'}`)
 
-    const request = mailjet.post('send', { version: 'v3.1' }).request({
-      Messages: [
-        {
-          From: {
-            Email: fromEmail,
-            Name: fromName,
-          },
-          To: [
-            {
-              Email: email,
-              Name: `${firstName} ${lastName}`,
-            },
-          ],
-          Subject: `Welcome to Honeypot AI Waitlist - Position #${position}`,
-          TextPart: `
+    const data = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: `Welcome to Honeypot AI Waitlist - Position #${position}`,
+      text: `
 Hi ${firstName},
 
 Welcome to the Honeypot AI Trading Bot Waitlist!
@@ -79,8 +64,8 @@ The Honeypot AI Team
 
 ---
 Honeypot AI - Halal-first trading alerts
-          `.trim(),
-          HTMLPart: `
+      `.trim(),
+      html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -209,28 +194,24 @@ Honeypot AI - Halal-first trading alerts
   </table>
 </body>
 </html>
-          `,
-        },
-      ],
+      `,
     })
 
-    console.log('   → Sending request to Mailjet via HTTPS API...')
-    const result = await request
+    console.log('   → Sending email via Resend API...')
     console.log('✅ [EMAIL SUCCESS] Confirmation email sent!')
     console.log(`   → To: ${email}`)
     console.log(`   → Position: #${position}`)
-    console.log(`   → Mailjet Response:`, result.body)
+    console.log(`   → Email ID: ${data.id}`)
     return true
   } catch (error) {
     console.error('❌ [EMAIL ERROR] Failed to send confirmation email')
     console.error(`   → Recipient: ${email}`)
     console.error(`   → Error: ${error.message}`)
-    if (error.response) {
-      console.error(`   → Status: ${error.statusCode}`)
-      console.error(`   → Mailjet Response:`, JSON.stringify(error.response.body, null, 2))
+    if (error.statusCode) {
+      console.error(`   → Status Code: ${error.statusCode}`)
     }
-    if (error.ErrorMessage) {
-      console.error(`   → Mailjet Message: ${error.ErrorMessage}`)
+    if (error.name) {
+      console.error(`   → Error Type: ${error.name}`)
     }
     // Don't throw - we don't want to fail the waitlist signup if email fails
     return false
@@ -251,27 +232,18 @@ const sendContactNotification = async (email, firstName, lastName, message, subj
   console.log(`   → From: ${firstName} ${lastName} <${email}>`)
   
   try {
-    const fromEmail = process.env.MAILJET_FROM_EMAIL || 'raythmedia.repo@gmail.com'
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
     const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
-    const adminEmail = process.env.ADMIN_EMAIL || fromEmail
+    const adminEmail = process.env.ADMIN_EMAIL || 'raythmedia.repo@gmail.com'
 
     console.log(`   → To Admin: ${adminEmail}`)
 
-    const request = mailjet.post('send', { version: 'v3.1' }).request({
-      Messages: [
-        {
-          From: {
-            Email: fromEmail,
-            Name: fromName,
-          },
-          To: [
-            {
-              Email: adminEmail,
-              Name: 'Honeypot AI Admin',
-            },
-          ],
-          Subject: `New Contact Form: ${subject}`,
-          TextPart: `
+    const data = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [adminEmail],
+      replyTo: email,
+      subject: `New Contact Form: ${subject}`,
+      text: `
 New contact form submission:
 
 From: ${firstName} ${lastName}
@@ -283,8 +255,8 @@ ${message}
 
 ---
 Reply to: ${email}
-          `.trim(),
-          HTMLPart: `
+      `.trim(),
+      html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -314,14 +286,11 @@ ${message}
   </div>
 </body>
 </html>
-          `,
-        },
-      ],
+      `,
     })
 
-    const result = await request
     console.log(`✅ [EMAIL SUCCESS] Contact notification sent!`)
-    console.log(`   → Mailjet Response:`, result.body)
+    console.log(`   → Email ID: ${data.id}`)
     return true
   } catch (error) {
     console.error('❌ [EMAIL ERROR] Failed to send contact notification')
