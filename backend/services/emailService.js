@@ -119,9 +119,6 @@ You're receiving this email because you joined our waitlist at honeypotai.com
           <!-- Header with Logo -->
           <tr>
             <td style="padding: 48px 48px 32px 48px; text-align: center; background: linear-gradient(180deg, rgba(245, 197, 24, 0.08) 0%, transparent 100%);">
-              <div style="display: inline-block; width: 64px; height: 64px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(245, 197, 24, 0.3); display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 36px; font-weight: 700; color: #0A0A0A;">H</span>
-              </div>
               <h1 style="margin: 0; color: #FFFFFF; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">
                 Honeypot AI
               </h1>
