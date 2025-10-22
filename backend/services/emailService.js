@@ -743,7 +743,7 @@ const sendAffiliateWelcomeEmail = async (email, name, tempPassword) => {
                 Hi <strong style="color: #F5C518;">${name}</strong>!
               </p>
               <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
-                Your Honeypot AI affiliate account has been created! To start earning 10% recurring commissions, please log in and complete your profile setup.
+                Your Honeypot AI affiliate account has been created! To start earning 10% recurring commissions, please log in and complete your profile setup with your address and payment information.
               </p>
               
               <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 22px; font-weight: 700;">Your Login Credentials</h2>
@@ -766,15 +766,14 @@ const sendAffiliateWelcomeEmail = async (email, name, tempPassword) => {
                 </tr>
               </table>
 
-              <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 20px; font-weight: 700;">Next Steps</h2>
+              <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 20px; font-weight: 700;">Complete Your Profile</h2>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
                 <tr>
                   <td style="padding: 20px; background-color: rgba(245, 197, 24, 0.05); border-left: 4px solid #F5C518; border-radius: 8px;">
-                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">1.</strong> Login with your credentials</p>
-                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">2.</strong> Complete your profile (address, payment info)</p>
-                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">3.</strong> Get your unique referral link</p>
-                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">4.</strong> Download marketing materials</p>
-                    <p style="margin: 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">5.</strong> Start promoting and earning!</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">1.</strong> Click the button above to login</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">2.</strong> Complete your full profile information</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">3.</strong> Add your address and payment details</p>
+                    <p style="margin: 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">4.</strong> Get your unique referral link and start earning!</p>
                   </td>
                 </tr>
               </table>
