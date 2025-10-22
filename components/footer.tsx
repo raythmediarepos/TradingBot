@@ -122,9 +122,17 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-hp-gray900">
           <div className="flex flex-col md:flex-row items-center justify-between">
-            <p className="text-gray-500 text-sm mb-4 md:mb-0">
-              © {currentYear} Honeypot AI. All rights reserved.
-            </p>
+            <div className="flex items-center gap-4 mb-4 md:mb-0">
+              <p className="text-gray-500 text-sm">
+                © {currentYear} Honeypot AI. All rights reserved.
+              </p>
+              <Link 
+                href="/admin/login" 
+                className="text-gray-600 hover:text-hp-yellow text-xs transition-colors"
+              >
+                Admin
+              </Link>
+            </div>
             <p className="text-gray-500 text-xs">
               Built with Next.js, TypeScript, and Tailwind CSS
             </p>
