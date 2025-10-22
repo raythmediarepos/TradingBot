@@ -1,8 +1,23 @@
 const { Resend } = require('resend')
 require('dotenv').config()
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Initialize Resend client (lazy initialization to allow env vars to load)
+let resend = null
+
+const getResendClient = () => {
+  if (!resend) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      console.error('❌ [RESEND CONFIG] RESEND_API_KEY environment variable is missing!')
+      console.error('   → Set it in Render dashboard: Environment → Add Variable')
+      return null
+    }
+    console.log('✅ [RESEND CONFIG] Initializing Resend client...')
+    console.log(`   → API Key: ${apiKey.substring(0, 8)}...`)
+    resend = new Resend(apiKey)
+  }
+  return resend
+}
 
 /**
  * Send waitlist confirmation email
@@ -19,13 +34,19 @@ const sendWaitlistConfirmation = async (email, firstName, lastName, position) =>
   console.log(`   → Position: #${position}`)
   
   try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
     const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
 
     console.log(`   → From: ${fromName} <${fromEmail}>`)
     console.log(`   → Resend API Key: ${process.env.RESEND_API_KEY ? '✓ Set' : '✗ Missing'}`)
 
-    const data = await resend.emails.send({
+    const data = await resendClient.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [email],
       subject: `Welcome to Honeypot AI Waitlist - Position #${position}`,
@@ -232,13 +253,19 @@ const sendContactNotification = async (email, firstName, lastName, message, subj
   console.log(`   → From: ${firstName} ${lastName} <${email}>`)
   
   try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
     const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
     const adminEmail = process.env.ADMIN_EMAIL || 'raythmedia.repo@gmail.com'
 
     console.log(`   → To Admin: ${adminEmail}`)
 
-    const data = await resend.emails.send({
+    const data = await resendClient.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [adminEmail],
       replyTo: email,
