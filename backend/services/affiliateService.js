@@ -53,12 +53,12 @@ const generateUniqueAffiliateCode = async () => {
 }
 
 /**
- * Create new affiliate application
- * @param {Object} affiliateData - Affiliate application data
+ * Create new affiliate account (automatic approval)
+ * @param {Object} affiliateData - Affiliate signup data
  * @returns {Promise<Object>}
  */
-const createAffiliateApplication = async (affiliateData) => {
-  console.log('🎯 [AFFILIATE] New application started...')
+const createAffiliateAccount = async (affiliateData) => {
+  console.log('🎯 [AFFILIATE] New signup started...')
   console.log(`   → Name: ${affiliateData.name}`)
   console.log(`   → Email: ${affiliateData.email}`)
   console.log(`   → Platform: ${affiliateData.platform}`)
@@ -85,7 +85,7 @@ const createAffiliateApplication = async (affiliateData) => {
     const tempPassword = crypto.randomBytes(8).toString('hex')
     console.log('   → Generated temporary password')
 
-    // Create affiliate record
+    // Create affiliate record - automatically approved
     const affiliateRecord = {
       name: affiliateData.name,
       email: affiliateData.email,
@@ -96,7 +96,8 @@ const createAffiliateApplication = async (affiliateData) => {
       affiliateLink: `https://honeypotai.com/?ref=${affiliateCode}`,
       tempPassword: tempPassword, // In production, hash this!
       passwordChanged: false,
-      status: 'pending', // pending, approved, rejected, suspended
+      status: 'active', // active, suspended
+      setupCompleted: false,
       commissionRate: 0.10, // 10%
       totalEarnings: 0,
       totalReferrals: 0,
@@ -105,38 +106,39 @@ const createAffiliateApplication = async (affiliateData) => {
       conversions: 0,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      approvedAt: null,
       lastLoginAt: null
     }
 
     console.log('   → Saving to Firebase...')
     const docRef = await db.collection('affiliates').add(affiliateRecord)
-    console.log(`✅ [AFFILIATE] Created with ID: ${docRef.id}`)
+    console.log(`✅ [AFFILIATE] Account created with ID: ${docRef.id}`)
 
-    // Send application confirmation email
-    console.log('   → Sending confirmation email...')
-    const emailSent = await emailService.sendAffiliateApplicationEmail(
+    // Send welcome email with login credentials
+    console.log('   → Sending welcome email...')
+    const emailSent = await emailService.sendAffiliateWelcomeEmail(
       affiliateData.email,
       affiliateData.name,
-      affiliateCode
+      affiliateCode,
+      tempPassword
     )
 
     if (emailSent) {
-      console.log('✅ [AFFILIATE] Confirmation email sent')
+      console.log('✅ [AFFILIATE] Welcome email sent')
     } else {
-      console.log('⚠️ [AFFILIATE] Email failed but application created')
+      console.log('⚠️ [AFFILIATE] Email failed but account created')
     }
 
     return {
       success: true,
       affiliateId: docRef.id,
       affiliateCode: affiliateCode,
-      status: 'pending',
-      message: 'Application submitted successfully. Check your email for login credentials.'
+      tempPassword: tempPassword,
+      status: 'active',
+      message: 'Account created successfully! Check your email for login credentials.'
     }
 
   } catch (error) {
-    console.error('❌ [AFFILIATE] Error creating application:', error)
+    console.error('❌ [AFFILIATE] Error creating account:', error)
     throw error
   }
 }
@@ -332,7 +334,8 @@ const getAllAffiliates = async () => {
 }
 
 module.exports = {
-  createAffiliateApplication,
+  createAffiliateAccount,
+  createAffiliateApplication: createAffiliateAccount, // Alias for backward compatibility
   approveAffiliate,
   getAffiliateByEmail,
   trackClick,

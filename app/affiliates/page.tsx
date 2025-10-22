@@ -58,13 +58,13 @@ const AffiliatesPage = () => {
   const howItWorks = [
     {
       step: '1',
-      title: 'Apply & Get Approved',
-      description: 'Submit your application below. We review and approve qualified applicants within 24-48 hours.'
+      title: 'Sign Up Instantly',
+      description: 'Create your account in seconds. Get instant access to your dashboard and affiliate tools.'
     },
     {
       step: '2',
-      title: 'Receive Your Unique Link',
-      description: 'Get your personalized referral link and access to marketing materials, graphics, and copy.'
+      title: 'Complete Quick Setup',
+      description: 'Personalize your account and get your unique referral link with marketing materials.'
     },
     {
       step: '3',
@@ -97,7 +97,7 @@ const AffiliatesPage = () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tradingbot-w843.onrender.com'
       
-      const response = await fetch(`${apiUrl}/api/affiliates/apply`, {
+      const response = await fetch(`${apiUrl}/api/affiliates/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,8 +174,8 @@ const AffiliatesPage = () => {
                 className="bg-hp-yellow hover:bg-hp-yellow600 text-hp-black font-bold text-lg px-8"
                 asChild
               >
-                <a href="#apply">
-                  Apply Now - It's Free
+                <a href="#signup">
+                  Sign Up - It's Free
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </a>
               </Button>
@@ -413,8 +413,8 @@ const AffiliatesPage = () => {
         </div>
       </section>
 
-      {/* Application Form */}
-      <section id="apply" className="py-20 bg-gradient-to-b from-hp-gray900/50 to-transparent">
+      {/* Signup Form */}
+      <section id="signup" className="py-20 bg-gradient-to-b from-hp-gray900/50 to-transparent">
         <div className="container mx-auto px-4">
           <motion.div
             className="max-w-2xl mx-auto"
@@ -425,10 +425,10 @@ const AffiliatesPage = () => {
             <div className="bg-hp-gray900 border border-hp-yellow/30 rounded-2xl p-8 md:p-12">
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-hp-white mb-4">
-                  Apply to Become an Affiliate
+                  Sign Up as an Affiliate
                 </h2>
                 <p className="text-gray-400">
-                  Fill out the form below and we'll review your application within 24-48 hours.
+                  Create your account instantly and start earning commissions today.
                 </p>
               </div>
 
@@ -439,7 +439,7 @@ const AffiliatesPage = () => {
                   className="text-center py-12"
                 >
                   <CheckCircle2 className="w-16 h-16 text-hp-yellow mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-hp-white mb-2">Application Submitted!</h3>
+                  <h3 className="text-2xl font-bold text-hp-white mb-2">Account Created!</h3>
                   
                   {affiliateCode && (
                     <div className="mb-6 p-4 bg-hp-yellow/10 border border-hp-yellow/30 rounded-lg">
@@ -449,18 +449,13 @@ const AffiliatesPage = () => {
                   )}
                   
                   <p className="text-gray-400 mb-6">
-                    We've received your application! Check your email for confirmation. 
-                    We'll review and send you login credentials within 24-48 hours.
+                    Your account is ready! Check your email for your login credentials and next steps.
                   </p>
                   <Button
-                    onClick={() => {
-                      setSubmitStatus('idle')
-                      setAffiliateCode('')
-                    }}
-                    variant="outline"
-                    className="border-hp-yellow/30 text-hp-yellow hover:bg-hp-yellow/10"
+                    onClick={() => window.location.href = '/affiliates/login'}
+                    className="bg-hp-yellow hover:bg-hp-yellow/90 text-hp-black font-bold"
                   >
-                    Submit Another Application
+                    Go to Login
                   </Button>
                 </motion.div>
               ) : (
@@ -562,7 +557,7 @@ const AffiliatesPage = () => {
                     disabled={isSubmitting}
                     className="w-full bg-hp-yellow hover:bg-hp-yellow600 text-hp-black font-bold text-lg py-6"
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                    {isSubmitting ? 'Creating Account...' : 'Create Account'}
                     {!isSubmitting && <ArrowRight className="w-5 h-5 ml-2" />}
                   </Button>
 

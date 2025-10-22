@@ -3,11 +3,11 @@ const router = express.Router()
 const affiliateService = require('../services/affiliateService')
 
 /**
- * POST /api/affiliates/apply
- * Submit affiliate application
+ * POST /api/affiliates/signup
+ * Create affiliate account (instant signup)
  */
-router.post('/apply', async (req, res) => {
-  console.log('📥 [REQUEST] Incoming affiliate application')
+router.post('/signup', async (req, res) => {
+  console.log('📥 [REQUEST] Incoming affiliate signup')
   console.log(`   → Time: ${new Date().toISOString()}`)
   console.log(`   → Body:`, {
     name: req.body.name,
@@ -37,14 +37,14 @@ router.post('/apply', async (req, res) => {
       })
     }
 
-    // Create affiliate application
-    const result = await affiliateService.createAffiliateApplication(req.body)
+    // Create affiliate account
+    const result = await affiliateService.createAffiliateAccount(req.body)
 
-    console.log('✅ [AFFILIATE] Application successful')
+    console.log('✅ [AFFILIATE] Signup successful')
     res.status(201).json(result)
 
   } catch (error) {
-    console.error('❌ [AFFILIATE] Error processing application:', error)
+    console.error('❌ [AFFILIATE] Error processing signup:', error)
     
     // Check for duplicate email error
     if (error.message.includes('already exists')) {
@@ -56,9 +56,14 @@ router.post('/apply', async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: 'Failed to process affiliate application. Please try again.'
+      message: 'Failed to create affiliate account. Please try again.'
     })
   }
+})
+
+// Alias for backward compatibility
+router.post('/apply', async (req, res) => {
+  return router.handle(req, res, '/signup')
 })
 
 /**
