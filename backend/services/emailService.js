@@ -1,31 +1,11 @@
-const nodemailer = require('nodemailer')
+const Mailjet = require('node-mailjet')
 require('dotenv').config()
 
-// Create Gmail SMTP transporter
-const createTransporter = () => {
-  const gmailUser = process.env.GMAIL_USER
-  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD
-
-  if (!gmailUser || !gmailAppPassword) {
-    console.error('❌ [EMAIL CONFIG] Missing Gmail credentials!')
-    console.error('   → GMAIL_USER:', gmailUser ? '✓ Set' : '✗ Missing')
-    console.error('   → GMAIL_APP_PASSWORD:', gmailAppPassword ? '✓ Set' : '✗ Missing')
-    return null
-  }
-
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // use SSL
-    auth: {
-      user: gmailUser,
-      pass: gmailAppPassword,
-    },
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-  })
-}
+// Initialize Mailjet client
+const mailjet = Mailjet.apiConnect(
+  process.env.MAILJET_API_KEY,
+  process.env.MAILJET_SECRET_KEY
+)
 
 /**
  * Send waitlist confirmation email
@@ -42,24 +22,29 @@ const sendWaitlistConfirmation = async (email, firstName, lastName, position) =>
   console.log(`   → Position: #${position}`)
   
   try {
-    const transporter = createTransporter()
-    if (!transporter) {
-      console.error('❌ [EMAIL] Cannot create transporter - missing credentials')
-      return false
-    }
-
-    const fromEmail = process.env.GMAIL_USER
+    // Use verified sender email from environment variables
+    const fromEmail = process.env.MAILJET_FROM_EMAIL || 'raythmedia.repo@gmail.com'
     const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
 
     console.log(`   → From: ${fromName} <${fromEmail}>`)
-    console.log(`   → Gmail User: ${fromEmail ? '✓ Set' : '✗ Missing'}`)
-    console.log(`   → Gmail App Password: ${process.env.GMAIL_APP_PASSWORD ? '✓ Set' : '✗ Missing'}`)
+    console.log(`   → Mailjet API Key: ${process.env.MAILJET_API_KEY ? '✓ Set' : '✗ Missing'}`)
+    console.log(`   → Mailjet Secret: ${process.env.MAILJET_SECRET_KEY ? '✓ Set' : '✗ Missing'}`)
 
-    const mailOptions = {
-      from: `"${fromName}" <${fromEmail}>`,
-      to: `"${firstName} ${lastName}" <${email}>`,
-      subject: `Welcome to Honeypot AI Waitlist - Position #${position}`,
-      text: `
+    const request = mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [
+        {
+          From: {
+            Email: fromEmail,
+            Name: fromName,
+          },
+          To: [
+            {
+              Email: email,
+              Name: `${firstName} ${lastName}`,
+            },
+          ],
+          Subject: `Welcome to Honeypot AI Waitlist - Position #${position}`,
+          TextPart: `
 Hi ${firstName},
 
 Welcome to the Honeypot AI Trading Bot Waitlist!
@@ -94,8 +79,8 @@ The Honeypot AI Team
 
 ---
 Honeypot AI - Halal-first trading alerts
-      `.trim(),
-      html: `
+          `.trim(),
+          HTMLPart: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -224,27 +209,28 @@ Honeypot AI - Halal-first trading alerts
   </table>
 </body>
 </html>
-      `,
-    }
+          `,
+        },
+      ],
+    })
 
-    console.log('   → Sending email via Gmail SMTP...')
-    const info = await transporter.sendMail(mailOptions)
-    
+    console.log('   → Sending request to Mailjet via HTTPS API...')
+    const result = await request
     console.log('✅ [EMAIL SUCCESS] Confirmation email sent!')
     console.log(`   → To: ${email}`)
     console.log(`   → Position: #${position}`)
-    console.log(`   → Message ID: ${info.messageId}`)
-    console.log(`   → Response: ${info.response}`)
+    console.log(`   → Mailjet Response:`, result.body)
     return true
   } catch (error) {
     console.error('❌ [EMAIL ERROR] Failed to send confirmation email')
     console.error(`   → Recipient: ${email}`)
     console.error(`   → Error: ${error.message}`)
-    if (error.code) {
-      console.error(`   → Error Code: ${error.code}`)
+    if (error.response) {
+      console.error(`   → Status: ${error.statusCode}`)
+      console.error(`   → Mailjet Response:`, JSON.stringify(error.response.body, null, 2))
     }
-    if (error.command) {
-      console.error(`   → SMTP Command: ${error.command}`)
+    if (error.ErrorMessage) {
+      console.error(`   → Mailjet Message: ${error.ErrorMessage}`)
     }
     // Don't throw - we don't want to fail the waitlist signup if email fails
     return false
@@ -265,24 +251,27 @@ const sendContactNotification = async (email, firstName, lastName, message, subj
   console.log(`   → From: ${firstName} ${lastName} <${email}>`)
   
   try {
-    const transporter = createTransporter()
-    if (!transporter) {
-      console.error('❌ [EMAIL] Cannot create transporter - missing credentials')
-      return false
-    }
-
-    const fromEmail = process.env.GMAIL_USER
+    const fromEmail = process.env.MAILJET_FROM_EMAIL || 'raythmedia.repo@gmail.com'
     const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
-    const adminEmail = process.env.ADMIN_EMAIL || fromEmail // Send to same account if ADMIN_EMAIL not set
+    const adminEmail = process.env.ADMIN_EMAIL || fromEmail
 
     console.log(`   → To Admin: ${adminEmail}`)
 
-    const mailOptions = {
-      from: `"${fromName}" <${fromEmail}>`,
-      to: adminEmail,
-      replyTo: email,
-      subject: `New Contact Form: ${subject}`,
-      text: `
+    const request = mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [
+        {
+          From: {
+            Email: fromEmail,
+            Name: fromName,
+          },
+          To: [
+            {
+              Email: adminEmail,
+              Name: 'Honeypot AI Admin',
+            },
+          ],
+          Subject: `New Contact Form: ${subject}`,
+          TextPart: `
 New contact form submission:
 
 From: ${firstName} ${lastName}
@@ -294,8 +283,8 @@ ${message}
 
 ---
 Reply to: ${email}
-      `.trim(),
-      html: `
+          `.trim(),
+          HTMLPart: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -325,12 +314,14 @@ ${message}
   </div>
 </body>
 </html>
-      `,
-    }
+          `,
+        },
+      ],
+    })
 
-    const info = await transporter.sendMail(mailOptions)
+    const result = await request
     console.log(`✅ [EMAIL SUCCESS] Contact notification sent!`)
-    console.log(`   → Message ID: ${info.messageId}`)
+    console.log(`   → Mailjet Response:`, result.body)
     return true
   } catch (error) {
     console.error('❌ [EMAIL ERROR] Failed to send contact notification')
