@@ -206,3 +206,4 @@ After setup:
 - **API Keys:** https://resend.com/api-keys
 - **Domains:** https://resend.com/domains
 
+

@@ -29,6 +29,7 @@ const Header = () => {
   const navigation: NavigationItem[] = [
     { name: 'Features', href: '#features' },
     { name: 'FAQ', href: '#faq' },
+    { name: 'Investors', href: '/investors' },
     { name: 'Changelog', href: '/changelog' },
   ]
 
