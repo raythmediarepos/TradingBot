@@ -1,17 +1,4 @@
-const admin = require('firebase-admin')
-
-// Initialize Firebase Admin (do this once)
-// Make sure to download your service account key from Firebase Console
-// and add it to your environment variables
-const serviceAccount = require('../serviceAccountKey.json') // You'll need to add this
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  })
-}
-
-const db = admin.firestore()
+const { admin, db } = require('../config/firebase-admin')
 
 // Constants
 const MAX_WAITLIST_MEMBERS = 100

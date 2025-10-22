@@ -1,7 +1,4 @@
-const admin = require('firebase-admin')
-
-// Use the same Firebase instance
-const db = admin.firestore()
+const { admin, db } = require('../config/firebase-admin')
 
 const CONTACT_COLLECTION = 'contact-messages'
 
