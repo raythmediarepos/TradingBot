@@ -575,8 +575,9 @@ const sendAffiliateApprovalEmail = async (email, name, affiliateCode, tempPasswo
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
     const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
-    const affiliateLink = `https://honeypotai.com/?ref=${affiliateCode}`
-    const loginUrl = 'https://honeypotai.com/affiliates/login'
+    const frontendUrl = process.env.FRONTEND_URL || 'https://trading-bot-dusky-two.vercel.app'
+    const affiliateLink = `${frontendUrl}/?ref=${affiliateCode}`
+    const loginUrl = `${frontendUrl}/affiliates/login`
 
     const data = await resendClient.emails.send({
       from: `${fromName} <${fromEmail}>`,
@@ -708,7 +709,8 @@ const sendAffiliateWelcomeEmail = async (email, name, tempPassword) => {
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
     const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
-    const loginUrl = 'https://honeypotai.com/affiliates/login'
+    const frontendUrl = process.env.FRONTEND_URL || 'https://trading-bot-dusky-two.vercel.app'
+    const loginUrl = `${frontendUrl}/affiliates/login`
 
     const data = await resendClient.emails.send({
       from: `${fromName} <${fromEmail}>`,
@@ -830,7 +832,8 @@ const sendAffiliateSetupCompleteEmail = async (email, name, affiliateCode) => {
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
     const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
-    const affiliateLink = `https://honeypotai.com/?ref=${affiliateCode}`
+    const frontendUrl = process.env.FRONTEND_URL || 'https://trading-bot-dusky-two.vercel.app'
+    const affiliateLink = `${frontendUrl}/?ref=${affiliateCode}`
 
     const data = await resendClient.emails.send({
       from: `${fromName} <${fromEmail}>`,
@@ -903,7 +906,7 @@ const sendAffiliateSetupCompleteEmail = async (email, name, affiliateCode) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
                 <tr>
                   <td align="center">
-                    <a href="https://honeypotai.com/affiliates/dashboard" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); color: #0A0A0A; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px;">Go to Dashboard →</a>
+                    <a href="${frontendUrl}/affiliates/dashboard" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); color: #0A0A0A; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px;">Go to Dashboard →</a>
                   </td>
                 </tr>
               </table>
