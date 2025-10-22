@@ -170,6 +170,13 @@ router.patch('/contact/messages/:id/status', async (req, res) => {
 })
 
 // ============================================
+// AFFILIATE ROUTES
+// ============================================
+
+const affiliateRoutes = require('../routes/affiliates')
+router.use('/affiliates', affiliateRoutes)
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 

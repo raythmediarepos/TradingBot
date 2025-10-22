@@ -440,7 +440,257 @@ ${message}
   }
 }
 
+/**
+ * Send affiliate application confirmation email
+ * @param {string} email - Affiliate email
+ * @param {string} name - Affiliate name
+ * @param {string} affiliateCode - Unique affiliate code
+ * @returns {Promise<boolean>}
+ */
+const sendAffiliateApplicationEmail = async (email, name, affiliateCode) => {
+  console.log('📧 [EMAIL] Sending affiliate application confirmation...')
+  console.log(`   → To: ${email}`)
+  console.log(`   → Name: ${name}`)
+  console.log(`   → Code: ${affiliateCode}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: `Affiliate Application Received - Honeypot AI`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affiliate Application Received</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A; line-height: 1.6;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; box-shadow: 0 8px 32px rgba(245, 197, 24, 0.15); max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #F5C518 0%, #D4A90E 50%, #F5C518 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 32px; font-weight: 700;">Application Received!</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Affiliate Program</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Hi <strong style="color: #F5C518;">${name}</strong>,
+              </p>
+              <p style="margin: 0 0 24px 0; color: #D4D4D4; font-size: 16px;">
+                Thank you for applying to become a Honeypot AI affiliate! We've received your application and are reviewing it.
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td align="center" style="background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); border-radius: 12px; padding: 24px;">
+                    <p style="margin: 0 0 8px 0; color: #0A0A0A; font-size: 13px; font-weight: 700; text-transform: uppercase;">Your Affiliate Code</p>
+                    <p style="margin: 0; color: #0A0A0A; font-size: 32px; font-weight: 800; font-family: monospace;">${affiliateCode}</p>
+                  </td>
+                </tr>
+              </table>
+              <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 20px; font-weight: 700;">What Happens Next?</h2>
+              <p style="margin: 0 0 16px 0; color: #D4D4D4; font-size: 15px;">
+                We'll review your application within <strong>24-48 hours</strong>. Once approved, you'll receive an email with:
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background-color: rgba(245, 197, 24, 0.05); border-left: 4px solid #F5C518; border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: #F5C518; font-size: 16px; font-weight: 600;">✓ Login credentials for your dashboard</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;">✓ Your unique referral link</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;">✓ Marketing materials and resources</p>
+                    <p style="margin: 0; color: #E5E5E5; font-size: 15px;">✓ Getting started guide</p>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 15px;">
+                Questions? Reply to this email or contact us at <a href="mailto:affiliates@honeypotai.com" style="color: #F5C518; text-decoration: none;">affiliates@honeypotai.com</a>
+              </p>
+              <p style="margin: 24px 0 0 0; color: #D4D4D4; font-size: 15px;">
+                <strong style="color: #FFFFFF;">Best regards,</strong><br>
+                <span style="color: #A3A3A3;">The Honeypot AI Team</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Honeypot AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `
+    })
+
+    console.log('✅ [EMAIL SUCCESS] Affiliate application confirmation sent!')
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error('❌ [EMAIL ERROR] Failed to send affiliate confirmation')
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
+/**
+ * Send affiliate approval email with login credentials
+ * @param {string} email - Affiliate email
+ * @param {string} name - Affiliate name
+ * @param {string} affiliateCode - Unique affiliate code
+ * @param {string} tempPassword - Temporary password
+ * @returns {Promise<boolean>}
+ */
+const sendAffiliateApprovalEmail = async (email, name, affiliateCode, tempPassword) => {
+  console.log('📧 [EMAIL] Sending affiliate approval email...')
+  console.log(`   → To: ${email}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
+    const affiliateLink = `https://honeypotai.com/?ref=${affiliateCode}`
+    const loginUrl = 'https://honeypotai.com/affiliates/login'
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: `🎉 You're Approved! Welcome to Honeypot AI Affiliates`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affiliate Approved</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #F5C518 0%, #D4A90E 50%, #F5C518 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 32px; font-weight: 700;">You're Approved!</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Welcome to the Affiliate Program</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Congratulations <strong style="color: #F5C518;">${name}</strong>!
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                Your affiliate application has been approved! You can now start earning 10% recurring commissions on every referral.
+              </p>
+              
+              <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 22px; font-weight: 700;">Your Login Credentials</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 24px; background: rgba(245, 197, 24, 0.05); border: 1px solid rgba(245, 197, 24, 0.2); border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: #A3A3A3; font-size: 13px;">Email</p>
+                    <p style="margin: 0 0 20px 0; color: #FFFFFF; font-size: 16px; font-weight: 600;">${email}</p>
+                    <p style="margin: 0 0 12px 0; color: #A3A3A3; font-size: 13px;">Temporary Password</p>
+                    <p style="margin: 0; color: #F5C518; font-size: 18px; font-weight: 700; font-family: monospace;">${tempPassword}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${loginUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); color: #0A0A0A; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px;">Login to Dashboard →</a>
+                  </td>
+                </tr>
+              </table>
+
+              <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 22px; font-weight: 700;">Your Referral Link</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(245, 197, 24, 0.05); border: 1px solid rgba(245, 197, 24, 0.2); border-radius: 8px;">
+                    <p style="margin: 0; color: #F5C518; font-size: 14px; word-break: break-all;">${affiliateLink}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 20px; font-weight: 700;">Next Steps</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background-color: rgba(245, 197, 24, 0.05); border-left: 4px solid #F5C518; border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">1.</strong> Login to your dashboard</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">2.</strong> Change your temporary password</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">3.</strong> Copy your referral link</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">4.</strong> Download marketing materials</p>
+                    <p style="margin: 0; color: #E5E5E5; font-size: 15px;"><strong style="color: #F5C518;">5.</strong> Start promoting and earning!</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #D4D4D4; font-size: 15px;">
+                <strong style="color: #FFFFFF;">Best regards,</strong><br>
+                <span style="color: #A3A3A3;">The Honeypot AI Team</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Honeypot AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `
+    })
+
+    console.log('✅ [EMAIL SUCCESS] Affiliate approval email sent!')
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error('❌ [EMAIL ERROR] Failed to send affiliate approval')
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
 module.exports = {
   sendWaitlistConfirmation,
   sendContactNotification,
+  sendAffiliateApplicationEmail,
+  sendAffiliateApprovalEmail,
 }

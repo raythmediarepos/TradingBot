@@ -11,8 +11,13 @@ import Link from 'next/link'
 const AffiliatesPage = () => {
   const [email, setEmail] = React.useState('')
   const [name, setName] = React.useState('')
+  const [platform, setPlatform] = React.useState('')
+  const [audienceSize, setAudienceSize] = React.useState('')
+  const [websiteUrl, setWebsiteUrl] = React.useState('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = React.useState('')
+  const [affiliateCode, setAffiliateCode] = React.useState('')
 
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
@@ -87,14 +92,47 @@ const AffiliatesPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setErrorMessage('')
     
-    // Simulate API call
-    setTimeout(() => {
-      setSubmitStatus('success')
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tradingbot-w843.onrender.com'
+      
+      const response = await fetch(`${apiUrl}/api/affiliates/apply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          platform,
+          audienceSize: audienceSize || null,
+          websiteUrl: websiteUrl || null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setSubmitStatus('success')
+        setAffiliateCode(data.affiliateCode)
+        // Clear form
+        setName('')
+        setEmail('')
+        setPlatform('')
+        setAudienceSize('')
+        setWebsiteUrl('')
+      } else {
+        setSubmitStatus('error')
+        setErrorMessage(data.message || 'Something went wrong. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error submitting affiliate application:', error)
+      setSubmitStatus('error')
+      setErrorMessage('Failed to submit application. Please check your connection and try again.')
+    } finally {
       setIsSubmitting(false)
-      setEmail('')
-      setName('')
-    }, 1500)
+    }
   }
 
   return (
@@ -402,11 +440,23 @@ const AffiliatesPage = () => {
                 >
                   <CheckCircle2 className="w-16 h-16 text-hp-yellow mx-auto mb-4" />
                   <h3 className="text-2xl font-bold text-hp-white mb-2">Application Submitted!</h3>
+                  
+                  {affiliateCode && (
+                    <div className="mb-6 p-4 bg-hp-yellow/10 border border-hp-yellow/30 rounded-lg">
+                      <p className="text-sm text-gray-300 mb-2">Your Affiliate Code</p>
+                      <p className="text-2xl font-bold text-hp-yellow font-mono">{affiliateCode}</p>
+                    </div>
+                  )}
+                  
                   <p className="text-gray-400 mb-6">
-                    We'll review your application and send you an email within 24-48 hours with your unique affiliate link.
+                    We've received your application! Check your email for confirmation. 
+                    We'll review and send you login credentials within 24-48 hours.
                   </p>
                   <Button
-                    onClick={() => setSubmitStatus('idle')}
+                    onClick={() => {
+                      setSubmitStatus('idle')
+                      setAffiliateCode('')
+                    }}
                     variant="outline"
                     className="border-hp-yellow/30 text-hp-yellow hover:bg-hp-yellow/10"
                   >
@@ -415,6 +465,16 @@ const AffiliatesPage = () => {
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {submitStatus === 'error' && errorMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg"
+                    >
+                      <p className="text-red-400 text-sm">{errorMessage}</p>
+                    </motion.div>
+                  )}
+                  
                   <div>
                     <label htmlFor="name" className="block text-sm font-semibold text-gray-300 mb-2">
                       Full Name *
@@ -451,6 +511,8 @@ const AffiliatesPage = () => {
                     </label>
                     <select
                       id="platform"
+                      value={platform}
+                      onChange={(e) => setPlatform(e.target.value)}
                       required
                       className="w-full px-4 py-3 bg-hp-black border border-hp-yellow/20 rounded-lg text-hp-white focus:outline-none focus:border-hp-yellow/50 transition-colors"
                     >
@@ -474,6 +536,8 @@ const AffiliatesPage = () => {
                     <input
                       type="text"
                       id="audience"
+                      value={audienceSize}
+                      onChange={(e) => setAudienceSize(e.target.value)}
                       className="w-full px-4 py-3 bg-hp-black border border-hp-yellow/20 rounded-lg text-hp-white placeholder-gray-500 focus:outline-none focus:border-hp-yellow/50 transition-colors"
                       placeholder="e.g., 10,000 followers"
                     />
@@ -486,6 +550,8 @@ const AffiliatesPage = () => {
                     <input
                       type="url"
                       id="website"
+                      value={websiteUrl}
+                      onChange={(e) => setWebsiteUrl(e.target.value)}
                       className="w-full px-4 py-3 bg-hp-black border border-hp-yellow/20 rounded-lg text-hp-white placeholder-gray-500 focus:outline-none focus:border-hp-yellow/50 transition-colors"
                       placeholder="https://..."
                     />

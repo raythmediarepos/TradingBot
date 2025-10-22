@@ -1,0 +1,352 @@
+const admin = require('../config/firebase-admin')
+const emailService = require('./emailService')
+const crypto = require('crypto')
+
+/**
+ * Generate a unique affiliate code
+ * @returns {string} Unique 8-character code
+ */
+const generateAffiliateCode = () => {
+  return crypto.randomBytes(4).toString('hex').toUpperCase()
+}
+
+/**
+ * Check if affiliate code already exists
+ * @param {string} code - Affiliate code to check
+ * @returns {Promise<boolean>}
+ */
+const isCodeUnique = async (code) => {
+  try {
+    const db = admin.firestore()
+    const snapshot = await db.collection('affiliates')
+      .where('affiliateCode', '==', code)
+      .limit(1)
+      .get()
+    
+    return snapshot.empty
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error checking code uniqueness:', error)
+    throw error
+  }
+}
+
+/**
+ * Generate unique affiliate code
+ * @returns {Promise<string>}
+ */
+const generateUniqueAffiliateCode = async () => {
+  let code
+  let isUnique = false
+  let attempts = 0
+  const maxAttempts = 10
+
+  while (!isUnique && attempts < maxAttempts) {
+    code = generateAffiliateCode()
+    isUnique = await isCodeUnique(code)
+    attempts++
+  }
+
+  if (!isUnique) {
+    throw new Error('Failed to generate unique affiliate code')
+  }
+
+  return code
+}
+
+/**
+ * Create new affiliate application
+ * @param {Object} affiliateData - Affiliate application data
+ * @returns {Promise<Object>}
+ */
+const createAffiliateApplication = async (affiliateData) => {
+  console.log('🎯 [AFFILIATE] New application started...')
+  console.log(`   → Name: ${affiliateData.name}`)
+  console.log(`   → Email: ${affiliateData.email}`)
+  console.log(`   → Platform: ${affiliateData.platform}`)
+
+  try {
+    const db = admin.firestore()
+
+    // Check if affiliate already exists
+    console.log('   → Checking for existing affiliate...')
+    const existingAffiliate = await db.collection('affiliates')
+      .where('email', '==', affiliateData.email)
+      .limit(1)
+      .get()
+
+    if (!existingAffiliate.empty) {
+      console.log('⚠️ [AFFILIATE] Email already exists')
+      throw new Error('An affiliate account with this email already exists')
+    }
+
+    // Generate unique affiliate code
+    console.log('   → Generating unique affiliate code...')
+    const affiliateCode = await generateUniqueAffiliateCode()
+    console.log(`   → Generated code: ${affiliateCode}`)
+
+    // Create temporary password (will be sent via email)
+    const tempPassword = crypto.randomBytes(8).toString('hex')
+    console.log('   → Generated temporary password')
+
+    // Create affiliate record
+    const affiliateRecord = {
+      name: affiliateData.name,
+      email: affiliateData.email,
+      platform: affiliateData.platform,
+      audienceSize: affiliateData.audienceSize || null,
+      websiteUrl: affiliateData.websiteUrl || null,
+      affiliateCode: affiliateCode,
+      affiliateLink: `https://honeypotai.com/?ref=${affiliateCode}`,
+      tempPassword: tempPassword, // In production, hash this!
+      passwordChanged: false,
+      status: 'pending', // pending, approved, rejected, suspended
+      commissionRate: 0.10, // 10%
+      totalEarnings: 0,
+      totalReferrals: 0,
+      activeReferrals: 0,
+      clicks: 0,
+      conversions: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      approvedAt: null,
+      lastLoginAt: null
+    }
+
+    console.log('   → Saving to Firebase...')
+    const docRef = await db.collection('affiliates').add(affiliateRecord)
+    console.log(`✅ [AFFILIATE] Created with ID: ${docRef.id}`)
+
+    // Send application confirmation email
+    console.log('   → Sending confirmation email...')
+    const emailSent = await emailService.sendAffiliateApplicationEmail(
+      affiliateData.email,
+      affiliateData.name,
+      affiliateCode
+    )
+
+    if (emailSent) {
+      console.log('✅ [AFFILIATE] Confirmation email sent')
+    } else {
+      console.log('⚠️ [AFFILIATE] Email failed but application created')
+    }
+
+    return {
+      success: true,
+      affiliateId: docRef.id,
+      affiliateCode: affiliateCode,
+      status: 'pending',
+      message: 'Application submitted successfully. Check your email for login credentials.'
+    }
+
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error creating application:', error)
+    throw error
+  }
+}
+
+/**
+ * Approve affiliate application
+ * @param {string} affiliateId - Affiliate document ID
+ * @returns {Promise<Object>}
+ */
+const approveAffiliate = async (affiliateId) => {
+  console.log(`✅ [AFFILIATE] Approving affiliate: ${affiliateId}`)
+
+  try {
+    const db = admin.firestore()
+    const affiliateRef = db.collection('affiliates').doc(affiliateId)
+    
+    await affiliateRef.update({
+      status: 'approved',
+      approvedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    })
+
+    // Get affiliate data to send approval email
+    const affiliateDoc = await affiliateRef.get()
+    const affiliate = affiliateDoc.data()
+
+    // Send approval email with login credentials
+    await emailService.sendAffiliateApprovalEmail(
+      affiliate.email,
+      affiliate.name,
+      affiliate.affiliateCode,
+      affiliate.tempPassword
+    )
+
+    console.log('✅ [AFFILIATE] Approved and notification sent')
+    return { success: true, message: 'Affiliate approved successfully' }
+
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error approving affiliate:', error)
+    throw error
+  }
+}
+
+/**
+ * Get affiliate by email
+ * @param {string} email - Affiliate email
+ * @returns {Promise<Object>}
+ */
+const getAffiliateByEmail = async (email) => {
+  try {
+    const db = admin.firestore()
+    const snapshot = await db.collection('affiliates')
+      .where('email', '==', email)
+      .limit(1)
+      .get()
+
+    if (snapshot.empty) {
+      return null
+    }
+
+    const doc = snapshot.docs[0]
+    return {
+      id: doc.id,
+      ...doc.data()
+    }
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error fetching affiliate:', error)
+    throw error
+  }
+}
+
+/**
+ * Track affiliate click
+ * @param {string} affiliateCode - Affiliate code
+ * @returns {Promise<Object>}
+ */
+const trackClick = async (affiliateCode) => {
+  console.log(`🖱️ [AFFILIATE] Click tracked for code: ${affiliateCode}`)
+
+  try {
+    const db = admin.firestore()
+    const snapshot = await db.collection('affiliates')
+      .where('affiliateCode', '==', affiliateCode)
+      .limit(1)
+      .get()
+
+    if (snapshot.empty) {
+      console.log('⚠️ [AFFILIATE] Invalid affiliate code')
+      return { success: false, message: 'Invalid affiliate code' }
+    }
+
+    const doc = snapshot.docs[0]
+    await doc.ref.update({
+      clicks: admin.firestore.FieldValue.increment(1),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    })
+
+    console.log('✅ [AFFILIATE] Click recorded')
+    return { success: true }
+
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error tracking click:', error)
+    throw error
+  }
+}
+
+/**
+ * Track affiliate conversion
+ * @param {string} affiliateCode - Affiliate code
+ * @param {string} userId - User who converted
+ * @param {number} subscriptionAmount - Monthly subscription amount
+ * @returns {Promise<Object>}
+ */
+const trackConversion = async (affiliateCode, userId, subscriptionAmount) => {
+  console.log(`💰 [AFFILIATE] Conversion tracked for code: ${affiliateCode}`)
+  console.log(`   → User: ${userId}`)
+  console.log(`   → Amount: $${subscriptionAmount}`)
+
+  try {
+    const db = admin.firestore()
+    
+    // Get affiliate
+    const snapshot = await db.collection('affiliates')
+      .where('affiliateCode', '==', affiliateCode)
+      .limit(1)
+      .get()
+
+    if (snapshot.empty) {
+      console.log('⚠️ [AFFILIATE] Invalid affiliate code')
+      return { success: false, message: 'Invalid affiliate code' }
+    }
+
+    const affiliateDoc = snapshot.docs[0]
+    const affiliate = affiliateDoc.data()
+    const commissionAmount = subscriptionAmount * affiliate.commissionRate
+
+    // Update affiliate stats
+    await affiliateDoc.ref.update({
+      conversions: admin.firestore.FieldValue.increment(1),
+      totalReferrals: admin.firestore.FieldValue.increment(1),
+      activeReferrals: admin.firestore.FieldValue.increment(1),
+      totalEarnings: admin.firestore.FieldValue.increment(commissionAmount),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    })
+
+    // Create commission record
+    await db.collection('commissions').add({
+      affiliateId: affiliateDoc.id,
+      affiliateCode: affiliateCode,
+      userId: userId,
+      subscriptionAmount: subscriptionAmount,
+      commissionRate: affiliate.commissionRate,
+      commissionAmount: commissionAmount,
+      status: 'pending', // pending, paid
+      type: 'recurring',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      paidAt: null
+    })
+
+    console.log('✅ [AFFILIATE] Conversion recorded')
+    console.log(`   → Commission: $${commissionAmount.toFixed(2)}`)
+
+    return { 
+      success: true, 
+      commission: commissionAmount,
+      message: 'Conversion tracked successfully'
+    }
+
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error tracking conversion:', error)
+    throw error
+  }
+}
+
+/**
+ * Get all affiliates (admin)
+ * @returns {Promise<Array>}
+ */
+const getAllAffiliates = async () => {
+  try {
+    const db = admin.firestore()
+    const snapshot = await db.collection('affiliates')
+      .orderBy('createdAt', 'desc')
+      .get()
+
+    const affiliates = []
+    snapshot.forEach(doc => {
+      affiliates.push({
+        id: doc.id,
+        ...doc.data()
+      })
+    })
+
+    return affiliates
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error fetching affiliates:', error)
+    throw error
+  }
+}
+
+module.exports = {
+  createAffiliateApplication,
+  approveAffiliate,
+  getAffiliateByEmail,
+  trackClick,
+  trackConversion,
+  getAllAffiliates,
+  generateUniqueAffiliateCode
+}
+

@@ -99,6 +99,14 @@ app.get('/', (req, res) => {
         messages: 'GET /api/contact/messages (admin)',
         updateStatus: 'PATCH /api/contact/messages/:id/status (admin)',
       },
+      affiliates: {
+        apply: 'POST /api/affiliates/apply',
+        login: 'POST /api/affiliates/login',
+        stats: 'GET /api/affiliates/stats/:affiliateId',
+        trackClick: 'POST /api/affiliates/track-click',
+        all: 'GET /api/affiliates/all (admin)',
+        approve: 'POST /api/affiliates/approve/:affiliateId (admin)',
+      },
       health: 'GET /api/health',
     },
   })
