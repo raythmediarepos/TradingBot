@@ -101,25 +101,52 @@ You're receiving this email because you joined our waitlist at honeypotai.com
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Welcome to Honeypot AI</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f6f9fc; line-height: 1.6;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #FFF9E6 0%, #FFF4D6 100%); line-height: 1.6;">
   
   <!-- Main Container -->
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f6f9fc; padding: 20px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(135deg, #FFF9E6 0%, #FFF4D6 100%); padding: 20px 0;">
     <tr>
       <td align="center">
         
+        <!-- Decorative Bees at Top -->
+        <div style="text-align: center; font-size: 24px; margin-bottom: 16px; letter-spacing: 40px;">
+          🐝🐝🐝
+        </div>
+        
         <!-- Email Content -->
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); max-width: 600px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15); max-width: 600px; border: 3px solid #FBBF24; position: relative; overflow: hidden;">
           
-          <!-- Header with Logo -->
+          <!-- Honey Drip Effect Header -->
           <tr>
-            <td style="padding: 48px 48px 24px 48px; text-align: center; border-bottom: 1px solid #e6ebf1;">
-              <h1 style="margin: 0; color: #0A0A0A; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
-                🐝 Honeypot AI
-              </h1>
-              <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 14px; font-weight: 500;">
-                Halal-First Trading Intelligence
-              </p>
+            <td style="background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 100%); padding: 0; position: relative;">
+              <!-- Dripping honey SVG effect -->
+              <div style="position: relative; height: 8px; background: #FBBF24;">
+                <div style="position: absolute; bottom: -6px; left: 10%; width: 30px; height: 12px; background: #FBBF24; border-radius: 0 0 50% 50%;"></div>
+                <div style="position: absolute; bottom: -8px; left: 30%; width: 25px; height: 14px; background: #F59E0B; border-radius: 0 0 50% 50%;"></div>
+                <div style="position: absolute; bottom: -10px; left: 50%; width: 35px; height: 16px; background: #FBBF24; border-radius: 0 0 50% 50%;"></div>
+                <div style="position: absolute; bottom: -7px; left: 70%; width: 28px; height: 13px; background: #F59E0B; border-radius: 0 0 50% 50%;"></div>
+                <div style="position: absolute; bottom: -9px; left: 85%; width: 32px; height: 15px; background: #FBBF24; border-radius: 0 0 50% 50%;"></div>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Header with Logo and Honeycomb Pattern -->
+          <tr>
+            <td style="padding: 40px 48px 32px 48px; text-align: center; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-bottom: 3px solid #FBBF24; position: relative;">
+              <!-- Honeycomb Background Pattern -->
+              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: repeating-linear-gradient(30deg, #F59E0B 0px, #F59E0B 1px, transparent 1px, transparent 10px), repeating-linear-gradient(-30deg, #F59E0B 0px, #F59E0B 1px, transparent 1px, transparent 10px);"></div>
+              
+              <div style="position: relative; z-index: 1;">
+                <div style="font-size: 48px; margin-bottom: 12px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+                  🐝🍯
+                </div>
+                <h1 style="margin: 0; color: #78350F; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">
+                  Honeypot AI
+                </h1>
+                <p style="margin: 8px 0 0 0; color: #92400E; font-size: 15px; font-weight: 600; letter-spacing: 1px;">
+                  🌙 Halal-First Trading Intelligence
+                </p>
+              </div>
             </td>
           </tr>
           
@@ -127,77 +154,144 @@ You're receiving this email because you joined our waitlist at honeypotai.com
           <tr>
             <td style="padding: 40px 48px;">
               
-              <!-- Greeting -->
-              <p style="margin: 0 0 24px 0; color: #1f2937; font-size: 16px; line-height: 1.5;">
-                Hi <strong>${firstName}</strong>,
+              <!-- Greeting with Bee -->
+              <p style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px; line-height: 1.5;">
+                <span style="font-size: 20px; margin-right: 8px;">🐝</span> Hi <strong>${firstName}</strong>,
               </p>
               
               <p style="margin: 0 0 32px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                Thank you for joining the Honeypot AI waitlist! We're excited to have you as part of our early community.
+                Thank you for joining the Honeypot AI waitlist! We're excited to have you as part of our early <strong style="color: #F59E0B;">hive</strong>. 🍯
               </p>
               
-              <!-- Position Badge -->
+              <!-- Position Badge with Honeycomb Design -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
                 <tr>
-                  <td align="center" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 12px; padding: 24px;">
-                    <p style="margin: 0 0 8px 0; color: #78350f; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                      Your Waitlist Position
-                    </p>
-                    <p style="margin: 0; color: #1f2937; font-size: 36px; font-weight: 700; line-height: 1;">
-                      #${position}
-                    </p>
-                    <p style="margin: 8px 0 0 0; color: #78350f; font-size: 13px;">
-                      ✓ Confirmed
+                  <td align="center" style="padding: 32px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 50%, #FCD34D 100%); border-radius: 16px; border: 4px solid #FBBF24; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3); position: relative;">
+                    <!-- Honeycomb Pattern Overlay -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.15; background-image: repeating-linear-gradient(30deg, #F59E0B 0px, #F59E0B 2px, transparent 2px, transparent 12px), repeating-linear-gradient(-30deg, #F59E0B 0px, #F59E0B 2px, transparent 2px, transparent 12px); border-radius: 12px;"></div>
+                    
+                    <!-- Badge Content -->
+                    <div style="position: relative; z-index: 1;">
+                      <div style="font-size: 32px; margin-bottom: 8px;">
+                        🍯
+                      </div>
+                      <p style="margin: 0 0 12px 0; color: #78350f; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                        Your Spot in the Hive
+                      </p>
+                      <p style="margin: 0; color: #1f2937; font-size: 48px; font-weight: 800; line-height: 1; text-shadow: 2px 2px 0px rgba(255,255,255,0.5);">
+                        #${position}
+                      </p>
+                      <div style="margin-top: 12px; display: inline-block; background-color: #10B981; color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">
+                        ✓ CONFIRMED
+                      </div>
+                    </div>
+                    
+                    <!-- Decorative Bees -->
+                    <div style="position: absolute; top: -10px; right: -10px; font-size: 28px; transform: rotate(15deg);">
+                      🐝
+                    </div>
+                    <div style="position: absolute; bottom: -8px; left: -8px; font-size: 24px; transform: rotate(-25deg);">
+                      🐝
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- About Section with Honey Jar -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 16px;">🍯</div>
+                    <h2 style="margin: 0 0 16px 0; color: #78350F; font-size: 22px; font-weight: 700; line-height: 1.3;">
+                      About Honeypot AI
+                    </h2>
+                    <p style="margin: 0; color: #4b5563; font-size: 15px; line-height: 1.7;">
+                      We're building the first AI-powered trading assistant designed with Islamic principles at its core. Our platform provides real-time, halal-compliant trading signals with complete transparency on every recommendation.
                     </p>
                   </td>
                 </tr>
               </table>
               
-              <!-- About Section -->
-              <h2 style="margin: 0 0 16px 0; color: #1f2937; font-size: 20px; font-weight: 600; line-height: 1.3;">
-                About Honeypot AI
-              </h2>
-              <p style="margin: 0 0 32px 0; color: #4b5563; font-size: 15px; line-height: 1.6;">
-                We're building the first AI-powered trading assistant designed with Islamic principles at its core. Our platform provides real-time, halal-compliant trading signals with complete transparency on every recommendation.
-              </p>
-              
-              <!-- Features Section -->
-              <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 20px; font-weight: 600; line-height: 1.3;">
-                What You'll Get
+              <!-- Features Section with Honeycomb Cells -->
+              <h2 style="margin: 0 0 20px 0; color: #78350F; font-size: 22px; font-weight: 700; line-height: 1.3; text-align: center;">
+                🐝 What You'll Get
               </h2>
               
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
                 <tr>
-                  <td style="padding: 16px; background-color: #f9fafb; border-left: 3px solid #10b981; border-radius: 6px;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <td style="padding: 20px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border: 3px solid #FBBF24; border-radius: 12px; position: relative;">
+                    <!-- Honeycomb pattern background -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.08; background-image: repeating-linear-gradient(30deg, #F59E0B 0px, #F59E0B 2px, transparent 2px, transparent 15px), repeating-linear-gradient(-30deg, #F59E0B 0px, #F59E0B 2px, transparent 2px, transparent 15px); border-radius: 9px;"></div>
+                    
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="position: relative; z-index: 1;">
                       <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #10b981; font-size: 18px; margin-right: 8px;">✓</span>
-                          <span style="color: #374151; font-size: 15px; line-height: 1.5;">Real-time buy/sell signals for halal-compliant stocks</span>
+                        <td style="padding: 12px 0;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td width="30" valign="top">
+                                <div style="width: 26px; height: 26px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; font-weight: bold; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">✓</div>
+                              </td>
+                              <td style="color: #1F2937; font-size: 15px; line-height: 1.6; font-weight: 500;">
+                                Real-time buy/sell signals for halal-compliant stocks
+                              </td>
+                            </tr>
+                          </table>
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #10b981; font-size: 18px; margin-right: 8px;">✓</span>
-                          <span style="color: #374151; font-size: 15px; line-height: 1.5;">Detailed rationale and risk analysis for every trade</span>
+                        <td style="padding: 12px 0;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td width="30" valign="top">
+                                <div style="width: 26px; height: 26px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; font-weight: bold; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">✓</div>
+                              </td>
+                              <td style="color: #1F2937; font-size: 15px; line-height: 1.6; font-weight: 500;">
+                                Detailed rationale and risk analysis for every trade
+                              </td>
+                            </tr>
+                          </table>
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #10b981; font-size: 18px; margin-right: 8px;">✓</span>
-                          <span style="color: #374151; font-size: 15px; line-height: 1.5;">Automatic screening: No options, no haram sectors</span>
+                        <td style="padding: 12px 0;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td width="30" valign="top">
+                                <div style="width: 26px; height: 26px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; font-weight: bold; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">✓</div>
+                              </td>
+                              <td style="color: #1F2937; font-size: 15px; line-height: 1.6; font-weight: 500;">
+                                Automatic screening: No options, no haram sectors
+                              </td>
+                            </tr>
+                          </table>
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #10b981; font-size: 18px; margin-right: 8px;">✓</span>
-                          <span style="color: #374151; font-size: 15px; line-height: 1.5;">Direct delivery to your Discord server</span>
+                        <td style="padding: 12px 0;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td width="30" valign="top">
+                                <div style="width: 26px; height: 26px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; font-weight: bold; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">✓</div>
+                              </td>
+                              <td style="color: #1F2937; font-size: 15px; line-height: 1.6; font-weight: 500;">
+                                Direct delivery to your Discord server
+                              </td>
+                            </tr>
+                          </table>
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #10b981; font-size: 18px; margin-right: 8px;">✓</span>
-                          <span style="color: #374151; font-size: 15px; line-height: 1.5;">Educational resources on halal investing</span>
+                        <td style="padding: 12px 0;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td width="30" valign="top">
+                                <div style="width: 26px; height: 26px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; font-weight: bold; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">✓</div>
+                              </td>
+                              <td style="color: #1F2937; font-size: 15px; line-height: 1.6; font-weight: 500;">
+                                Educational resources on halal investing
+                              </td>
+                            </tr>
+                          </table>
                         </td>
                       </tr>
                     </table>
@@ -205,88 +299,136 @@ You're receiving this email because you joined our waitlist at honeypotai.com
                 </tr>
               </table>
               
-              <!-- Timeline Section -->
-              <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 20px; font-weight: 600; line-height: 1.3;">
-                Launch Timeline
+              <!-- Timeline Section with Honey Drips -->
+              <h2 style="margin: 0 0 20px 0; color: #78350F; font-size: 22px; font-weight: 700; line-height: 1.3; text-align: center;">
+                📅 Launch Timeline
               </h2>
               
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0; border: 3px solid #FBBF24; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(251, 191, 36, 0.2);">
                 <tr>
-                  <td style="padding: 16px 20px; background-color: #fef3c7; border-bottom: 1px solid #fde68a;">
-                    <p style="margin: 0; color: #92400e; font-size: 14px; font-weight: 600;">November 15, 2025</p>
-                    <p style="margin: 4px 0 0 0; color: #78350f; font-size: 13px;">Discord community opens</p>
+                  <td style="padding: 18px 24px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-bottom: 2px solid #FBBF24;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="40" style="font-size: 24px;">🍯</td>
+                        <td>
+                          <p style="margin: 0 0 4px 0; color: #78350F; font-size: 15px; font-weight: 700;">November 15, 2025</p>
+                          <p style="margin: 0; color: #92400E; font-size: 13px; font-weight: 500;">Discord community opens</p>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 16px 20px; background-color: #fef3c7; border-bottom: 1px solid #fde68a;">
-                    <p style="margin: 0; color: #92400e; font-size: 14px; font-weight: 600;">December 1, 2025</p>
-                    <p style="margin: 4px 0 0 0; color: #78350f; font-size: 13px;">Beta access for first 100 members</p>
+                  <td style="padding: 18px 24px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-bottom: 2px solid #FBBF24;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="40" style="font-size: 24px;">🐝</td>
+                        <td>
+                          <p style="margin: 0 0 4px 0; color: #78350F; font-size: 15px; font-weight: 700;">December 1, 2025</p>
+                          <p style="margin: 0; color: #92400E; font-size: 13px; font-weight: 500;">Beta access for first 100 members</p>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 16px 20px; background-color: #fef3c7;">
-                    <p style="margin: 0; color: #92400e; font-size: 14px; font-weight: 600;">January 1, 2026</p>
-                    <p style="margin: 4px 0 0 0; color: #78350f; font-size: 13px;">Full platform launch (v1.0)</p>
+                  <td style="padding: 18px 24px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="40" style="font-size: 24px;">🎉</td>
+                        <td>
+                          <p style="margin: 0 0 4px 0; color: #78350F; font-size: 15px; font-weight: 700;">January 1, 2026</p>
+                          <p style="margin: 0; color: #92400E; font-size: 13px; font-weight: 500;">Full platform launch (v1.0)</p>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
               
-              <!-- Next Steps -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0; background-color: #eff6ff; border-radius: 8px; padding: 24px;">
+              <!-- Next Steps with Honeycomb -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0; background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%); border-radius: 12px; padding: 24px; border: 2px solid #3B82F6; position: relative; overflow: hidden;">
                 <tr>
                   <td>
-                    <p style="margin: 0 0 12px 0; color: #1e40af; font-size: 15px; font-weight: 600;">
-                      What Happens Next?
-                    </p>
-                    <p style="margin: 0; color: #1e3a8a; font-size: 14px; line-height: 1.6;">
-                      We'll email you as soon as it's your turn to join. In the meantime, you can follow our progress and connect with early members on our social channels.
-                    </p>
+                    <!-- Light honeycomb pattern -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.05; background-image: repeating-linear-gradient(30deg, #3B82F6 0px, #3B82F6 1px, transparent 1px, transparent 10px), repeating-linear-gradient(-30deg, #3B82F6 0px, #3B82F6 1px, transparent 1px, transparent 10px); border-radius: 10px;"></div>
+                    
+                    <div style="position: relative; z-index: 1; text-align: center;">
+                      <p style="margin: 0 0 4px 0; font-size: 32px;">
+                        🐝
+                      </p>
+                      <p style="margin: 0 0 12px 0; color: #1E40AF; font-size: 16px; font-weight: 700;">
+                        What Happens Next?
+                      </p>
+                      <p style="margin: 0; color: #1E3A8A; font-size: 14px; line-height: 1.7; font-weight: 500;">
+                        We'll email you as soon as it's your turn to join. In the meantime, you can follow our progress and connect with early members on our social channels.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               </table>
               
-              <!-- CTA Button -->
+              <!-- CTA Button with Honey Drip -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
                 <tr>
                   <td align="center">
-                    <a href="https://honeypotai.com" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #1f2937; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 2px 6px rgba(251, 191, 36, 0.3);">
-                      Visit Our Website →
+                    <a href="https://honeypotai.com" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FCD34D 0%, #FBBF24 50%, #F59E0B 100%); color: #1F2937; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4); border: 3px solid #F59E0B; text-transform: uppercase; letter-spacing: 0.5px;">
+                      🐝 Visit Our Hive →
                     </a>
                   </td>
                 </tr>
               </table>
               
-              <!-- Closing -->
-              <p style="margin: 0 0 8px 0; color: #4b5563; font-size: 15px; line-height: 1.6;">
-                Have questions? Just reply to this email – we read every message.
-              </p>
+              <!-- Closing with Bee -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 16px 0; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-radius: 12px; padding: 20px; border: 2px solid #FBBF24;">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 12px 0; color: #78350F; font-size: 15px; line-height: 1.6;">
+                      <strong>Have questions?</strong> Just reply to this email – we read every message! 📧
+                    </p>
+                    <p style="margin: 0; font-size: 24px;">
+                      🐝
+                    </p>
+                  </td>
+                </tr>
+              </table>
               
-              <p style="margin: 0; color: #4b5563; font-size: 15px; line-height: 1.6;">
-                <strong style="color: #1f2937;">Best regards,</strong><br>
-                <span style="color: #6b7280;">The Honeypot AI Team</span>
+              <p style="margin: 0; color: #4b5563; font-size: 15px; line-height: 1.6; text-align: center;">
+                <strong style="color: #78350F;">Sweet regards,</strong><br>
+                <span style="color: #6b7280;">The Honeypot AI Team 🍯</span>
               </p>
               
             </td>
           </tr>
           
-          <!-- Footer -->
+          <!-- Footer with Honeycomb Pattern -->
           <tr>
-            <td style="padding: 32px 48px; background-color: #f9fafb; border-top: 1px solid #e6ebf1; border-radius: 0 0 8px 8px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <td style="padding: 32px 48px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-top: 3px solid #FBBF24; border-radius: 0 0 13px 13px; position: relative;">
+              <!-- Honeycomb Pattern -->
+              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: repeating-linear-gradient(30deg, #F59E0B 0px, #F59E0B 2px, transparent 2px, transparent 12px), repeating-linear-gradient(-30deg, #F59E0B 0px, #F59E0B 2px, transparent 2px, transparent 12px); border-radius: 0 0 10px 10px;"></div>
+              
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="position: relative; z-index: 1;">
                 <tr>
                   <td align="center">
-                    <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 13px;">
-                      <a href="https://honeypotai.com" style="color: #f59e0b; text-decoration: none; font-weight: 500;">Website</a>
-                      <span style="color: #d1d5db; margin: 0 8px;">•</span>
-                      <a href="https://twitter.com/HoneypotAI" style="color: #f59e0b; text-decoration: none; font-weight: 500;">Twitter</a>
-                      <span style="color: #d1d5db; margin: 0 8px;">•</span>
-                      <span style="color: #9ca3af;">Discord (Coming Soon)</span>
+                    <!-- Bee Divider -->
+                    <p style="margin: 0 0 16px 0; font-size: 20px; letter-spacing: 20px;">
+                      🐝🍯🐝
                     </p>
-                    <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">
+                    
+                    <p style="margin: 0 0 12px 0; color: #78350F; font-size: 13px; font-weight: 600;">
+                      <a href="https://honeypotai.com" style="color: #F59E0B; text-decoration: none; font-weight: 700;">🏠 Website</a>
+                      <span style="color: #D97706; margin: 0 10px; font-weight: 700;">•</span>
+                      <a href="https://twitter.com/HoneypotAI" style="color: #F59E0B; text-decoration: none; font-weight: 700;">🐦 Twitter</a>
+                      <span style="color: #D97706; margin: 0 10px; font-weight: 700;">•</span>
+                      <span style="color: #92400E; font-weight: 600;">💬 Discord (Soon)</span>
+                    </p>
+                    
+                    <p style="margin: 0 0 8px 0; color: #92400E; font-size: 12px; line-height: 1.5; font-weight: 600;">
                       © ${new Date().getFullYear()} Honeypot AI. All rights reserved.
                     </p>
-                    <p style="margin: 0; color: #d1d5db; font-size: 11px; line-height: 1.5;">
-                      You're receiving this email because you joined our waitlist at honeypotai.com
+                    
+                    <p style="margin: 0; color: #B45309; font-size: 11px; line-height: 1.5;">
+                      You're receiving this because you joined our hive at honeypotai.com 🍯
                     </p>
                   </td>
                 </tr>
@@ -295,6 +437,11 @@ You're receiving this email because you joined our waitlist at honeypotai.com
           </tr>
           
         </table>
+        
+        <!-- Bottom Decorative Bees -->
+        <div style="text-align: center; font-size: 20px; margin-top: 16px; letter-spacing: 30px;">
+          🐝🍯🐝
+        </div>
         
       </td>
     </tr>
