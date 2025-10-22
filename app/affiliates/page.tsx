@@ -130,7 +130,7 @@ const AffiliatesPage = () => {
               Share your unique link, get paid 10% every single month for as long as your referrals stay subscribed.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button 
                 size="lg" 
                 className="bg-hp-yellow hover:bg-hp-yellow600 text-hp-black font-bold text-lg px-8"
@@ -152,6 +152,26 @@ const AffiliatesPage = () => {
                 </a>
               </Button>
             </div>
+
+            {/* Existing Affiliate Login */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mb-12"
+            >
+              <p className="text-gray-400 text-sm mb-3">Already an affiliate?</p>
+              <Button
+                variant="ghost"
+                className="text-hp-yellow hover:text-hp-yellow600 hover:bg-hp-yellow/10 font-semibold"
+                asChild
+              >
+                <Link href="/affiliates/login">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Go to Affiliate Dashboard →
+                </Link>
+              </Button>
+            </motion.div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
