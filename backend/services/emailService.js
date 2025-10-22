@@ -219,11 +219,30 @@ Honeypot AI - Halal-first trading alerts
     })
 
     console.log('   → Sending email via Resend API...')
-    console.log('✅ [EMAIL SUCCESS] Confirmation email sent!')
-    console.log(`   → To: ${email}`)
-    console.log(`   → Position: #${position}`)
-    console.log(`   → Email ID: ${data.id}`)
-    return true
+    console.log('📨 [RESEND RESPONSE] Full API response:', JSON.stringify(data, null, 2))
+    
+    if (data && data.data && data.data.id) {
+      console.log('✅ [EMAIL SUCCESS] Confirmation email sent!')
+      console.log(`   → To: ${email}`)
+      console.log(`   → Position: #${position}`)
+      console.log(`   → Email ID: ${data.data.id}`)
+      return true
+    } else if (data && data.id) {
+      console.log('✅ [EMAIL SUCCESS] Confirmation email sent!')
+      console.log(`   → To: ${email}`)
+      console.log(`   → Position: #${position}`)
+      console.log(`   → Email ID: ${data.id}`)
+      return true
+    } else if (data && data.error) {
+      console.error('❌ [EMAIL ERROR] Resend API returned an error')
+      console.error(`   → Error details:`, JSON.stringify(data.error, null, 2))
+      return false
+    } else {
+      console.warn('⚠️ [EMAIL WARNING] Unexpected Resend API response structure')
+      console.warn(`   → Can't find email ID in response`)
+      // Still return true since no error was thrown
+      return true
+    }
   } catch (error) {
     console.error('❌ [EMAIL ERROR] Failed to send confirmation email')
     console.error(`   → Recipient: ${email}`)
