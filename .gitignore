@@ -41,3 +41,4 @@ next-env.d.ts
 # sharp cache
 .sharp
 
+tradingbot-cb932-firebase-adminsdk-fbsvc-*.json

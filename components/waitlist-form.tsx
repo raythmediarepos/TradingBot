@@ -3,15 +3,36 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Loader2, CheckCircle } from 'lucide-react'
+import { Loader2, CheckCircle, Users } from 'lucide-react'
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error'
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'
+
 const WaitlistForm = () => {
   const [email, setEmail] = React.useState('')
-  const [list, setList] = React.useState<'newsletter' | 'chatbot'>('newsletter')
+  const [firstName, setFirstName] = React.useState('')
+  const [lastName, setLastName] = React.useState('')
   const [status, setStatus] = React.useState<FormStatus>('idle')
   const [errorMessage, setErrorMessage] = React.useState('')
+  const [position, setPosition] = React.useState<number | null>(null)
+  const [remainingSpots, setRemainingSpots] = React.useState<number | null>(null)
+
+  // Fetch remaining spots on mount
+  React.useEffect(() => {
+    const fetchRemainingSpots = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/waitlist/remaining`)
+        const data = await response.json()
+        if (data.success) {
+          setRemainingSpots(data.remaining)
+        }
+      } catch (error) {
+        console.error('Failed to fetch remaining spots:', error)
+      }
+    }
+    fetchRemainingSpots()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,20 +40,28 @@ const WaitlistForm = () => {
     setErrorMessage('')
 
     try {
-      const response = await fetch('/api/subscribe', {
+      const response = await fetch(`${BACKEND_URL}/api/waitlist/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, list }),
+        body: JSON.stringify({ email, firstName, lastName }),
       })
 
       const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to subscribe')
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to join waitlist')
       }
 
       setStatus('success')
+      setPosition(data.position)
       setEmail('')
+      setFirstName('')
+      setLastName('')
+      
+      // Update remaining spots
+      if (remainingSpots !== null) {
+        setRemainingSpots(remainingSpots - 1)
+      }
     } catch (error) {
       setStatus('error')
       setErrorMessage(
@@ -58,6 +87,14 @@ const WaitlistForm = () => {
             <p className="text-gray-400 text-lg">
               Be the first to get early access to Honeypot AI halal-compliant trading signals
             </p>
+            {remainingSpots !== null && (
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-hp-yellow/10 border border-hp-yellow/30 rounded-full">
+                <Users className="w-4 h-4 text-hp-yellow" />
+                <span className="text-sm font-semibold text-hp-yellow">
+                  {remainingSpots} spots remaining
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="p-8 bg-hp-gray900 border border-hp-yellow/10 rounded-lg">
@@ -67,12 +104,57 @@ const WaitlistForm = () => {
                 <h3 className="text-xl font-semibold text-hp-white mb-2">
                   You're on the list!
                 </h3>
+                {position && (
+                  <p className="text-hp-yellow font-semibold mb-2">
+                    Position #{position} in line
+                  </p>
+                )}
                 <p className="text-gray-400">
                   We'll notify you as soon as the trading bot launches. Check your inbox for confirmation.
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Name Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="firstName"
+                      className="block text-sm font-medium text-gray-400 mb-2"
+                    >
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      placeholder="John"
+                      className="w-full px-4 py-3 bg-hp-black border border-hp-yellow/20 rounded-lg text-hp-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-hp-yellow focus:border-transparent"
+                      disabled={status === 'loading'}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="lastName"
+                      className="block text-sm font-medium text-gray-400 mb-2"
+                    >
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      placeholder="Doe"
+                      className="w-full px-4 py-3 bg-hp-black border border-hp-yellow/20 rounded-lg text-hp-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-hp-yellow focus:border-transparent"
+                      disabled={status === 'loading'}
+                    />
+                  </div>
+                </div>
+
                 {/* Email Input */}
                 <div>
                   <label
