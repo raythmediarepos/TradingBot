@@ -1,4 +1,5 @@
 const { admin, db } = require('../config/firebase-admin')
+const { sendWaitlistConfirmation } = require('./emailService')
 
 // Constants
 const MAX_WAITLIST_MEMBERS = 100
@@ -96,18 +97,21 @@ const addToWaitlist = async (userData) => {
 
     const docRef = await db.collection(WAITLIST_COLLECTION).add(waitlistData)
 
-    // Send confirmation email (stubbed)
-    await sendWaitlistConfirmationEmail({
-      email: waitlistData.email,
-      firstName: waitlistData.firstName,
-      lastName: waitlistData.lastName,
-    })
+    const position = spotsInfo.filled + 1
+
+    // Send confirmation email
+    await sendWaitlistConfirmation(
+      waitlistData.email,
+      waitlistData.firstName,
+      waitlistData.lastName,
+      position
+    )
 
     return {
       success: true,
       message: 'Successfully added to waitlist!',
       userId: docRef.id,
-      position: spotsInfo.filled + 1,
+      position,
     }
   } catch (error) {
     console.error('Error adding to waitlist:', error)
@@ -116,59 +120,6 @@ const addToWaitlist = async (userData) => {
       message: 'An error occurred while adding you to the waitlist. Please try again.',
       error: error.message,
     }
-  }
-}
-
-/**
- * Send confirmation email to waitlist member (STUBBED)
- * @param {Object} userData - User data
- * @param {string} userData.email - User's email
- * @param {string} userData.firstName - User's first name
- * @param {string} userData.lastName - User's last name
- * @returns {Promise<{success: boolean}>}
- */
-const sendWaitlistConfirmationEmail = async (userData) => {
-  // TODO: Implement email sending logic
-  // Options:
-  // 1. SendGrid API
-  // 2. Mailgun API
-  // 3. AWS SES
-  // 4. Firebase Extensions (Trigger Email)
-  // 5. Resend API
-
-  console.log('📧 [STUBBED] Sending confirmation email to:', userData.email)
-  console.log('Email content would be:')
-  console.log(`
-    To: ${userData.email}
-    Subject: Welcome to Honeypot AI Waitlist! 🐝
-
-    Hi ${userData.firstName},
-
-    Thank you for joining the Honeypot AI Trading Bot waitlist!
-    
-    We're excited to have you as part of our early community. You'll be among 
-    the first to access our halal-compliant trading signals when we launch.
-
-    What's Next:
-    • Discord Launch: November 15, 2025
-    • Beta Access (First 100): December 1, 2025
-    • Trading Bot v1: January 1, 2026
-
-    We'll notify you via email as soon as spots open up.
-
-    In the meantime:
-    • Join our Discord community: [Link]
-    • Follow us for updates: [Social Links]
-    • Have questions? Reply to this email
-
-    Best regards,
-    The Honeypot AI Team 🍯
-  `)
-
-  // Return success for now (stubbed)
-  return {
-    success: true,
-    stubbed: true,
   }
 }
 
@@ -209,7 +160,6 @@ const getAllWaitlistMembers = async () => {
 module.exports = {
   getRemainingWaitlistSpots,
   addToWaitlist,
-  sendWaitlistConfirmationEmail,
   getAllWaitlistMembers,
   MAX_WAITLIST_MEMBERS,
 }
