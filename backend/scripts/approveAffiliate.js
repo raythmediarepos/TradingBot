@@ -13,7 +13,7 @@
  */
 
 require('dotenv').config()
-const admin = require('../config/firebase-admin')
+const { admin, db } = require('../config/firebase-admin')
 const affiliateService = require('../services/affiliateService')
 
 const args = process.argv.slice(2)
@@ -67,7 +67,6 @@ async function approveById(affiliateId) {
   console.log(`🔍 Looking up affiliate by ID: ${affiliateId}`)
   
   try {
-    const db = admin.firestore()
     const doc = await db.collection('affiliates').doc(affiliateId).get()
     
     if (!doc.exists) {

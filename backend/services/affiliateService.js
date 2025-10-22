@@ -1,4 +1,4 @@
-const admin = require('../config/firebase-admin')
+const { admin, db } = require('../config/firebase-admin')
 const emailService = require('./emailService')
 const crypto = require('crypto')
 
@@ -17,7 +17,6 @@ const generateAffiliateCode = () => {
  */
 const isCodeUnique = async (code) => {
   try {
-    const db = admin.firestore()
     const snapshot = await db.collection('affiliates')
       .where('affiliateCode', '==', code)
       .limit(1)
@@ -65,8 +64,6 @@ const createAffiliateApplication = async (affiliateData) => {
   console.log(`   → Platform: ${affiliateData.platform}`)
 
   try {
-    const db = admin.firestore()
-
     // Check if affiliate already exists
     console.log('   → Checking for existing affiliate...')
     const existingAffiliate = await db.collection('affiliates')
@@ -153,7 +150,6 @@ const approveAffiliate = async (affiliateId) => {
   console.log(`✅ [AFFILIATE] Approving affiliate: ${affiliateId}`)
 
   try {
-    const db = admin.firestore()
     const affiliateRef = db.collection('affiliates').doc(affiliateId)
     
     await affiliateRef.update({
@@ -190,7 +186,6 @@ const approveAffiliate = async (affiliateId) => {
  */
 const getAffiliateByEmail = async (email) => {
   try {
-    const db = admin.firestore()
     const snapshot = await db.collection('affiliates')
       .where('email', '==', email)
       .limit(1)
@@ -220,7 +215,6 @@ const trackClick = async (affiliateCode) => {
   console.log(`🖱️ [AFFILIATE] Click tracked for code: ${affiliateCode}`)
 
   try {
-    const db = admin.firestore()
     const snapshot = await db.collection('affiliates')
       .where('affiliateCode', '==', affiliateCode)
       .limit(1)
@@ -259,8 +253,6 @@ const trackConversion = async (affiliateCode, userId, subscriptionAmount) => {
   console.log(`   → Amount: $${subscriptionAmount}`)
 
   try {
-    const db = admin.firestore()
-    
     // Get affiliate
     const snapshot = await db.collection('affiliates')
       .where('affiliateCode', '==', affiliateCode)
@@ -320,7 +312,6 @@ const trackConversion = async (affiliateCode, userId, subscriptionAmount) => {
  */
 const getAllAffiliates = async () => {
   try {
-    const db = admin.firestore()
     const snapshot = await db.collection('affiliates')
       .orderBy('createdAt', 'desc')
       .get()

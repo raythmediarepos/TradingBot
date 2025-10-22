@@ -13,7 +13,7 @@
  */
 
 require('dotenv').config()
-const admin = require('../config/firebase-admin')
+const { admin, db } = require('../config/firebase-admin')
 
 const args = process.argv.slice(2)
 const filterStatus = args[0] || null
@@ -23,7 +23,6 @@ async function listAffiliates() {
   console.log('')
 
   try {
-    const db = admin.firestore()
     let query = db.collection('affiliates').orderBy('createdAt', 'desc')
 
     if (filterStatus) {
