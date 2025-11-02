@@ -1,40 +1,40 @@
 import { DefaultSeoProps } from 'next-seo'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://honeypot.ai'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://helwa.ai'
 
 export const defaultSEO: DefaultSeoProps = {
-  titleTemplate: '%s | Honeypot AI',
-  defaultTitle: 'Honeypot AI - Halal-First Trading Alerts',
+  titleTemplate: '%s | Helwa AI',
+  defaultTitle: 'Helwa AI - Ethical Trading Alerts',
   description:
-    'Real-time halal-compliant buy/sell signals with transparent rationale. No haram sectors, no options. Research Chatbot coming soon.',
+    'Real-time ethical trading signals with transparent rationale and AI-powered analysis. Smart, transparent, and principled trading decisions.',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: siteUrl,
-    siteName: 'Honeypot AI',
+    siteName: 'Helwa AI',
     images: [
       {
         url: `${siteUrl}/og.png`,
         width: 1200,
         height: 630,
-        alt: 'Honeypot AI Trading Bot',
+        alt: 'Helwa AI Trading Bot',
       },
     ],
   },
   twitter: {
-    handle: '@honeypotai',
-    site: '@honeypotai',
+    handle: '@helwaai',
+    site: '@helwaai',
     cardType: 'summary_large_image',
   },
   additionalMetaTags: [
     {
       name: 'keywords',
       content:
-        'halal trading, islamic trading, trading alerts, stock signals, halal investing, compliant trading bot',
+        'ethical trading, ai trading bot, trading alerts, stock signals, transparent investing, principled trading',
     },
     {
       name: 'author',
-      content: 'Honeypot AI',
+      content: 'Helwa AI',
     },
   ],
 }
@@ -58,7 +58,7 @@ export const getProductSchema = () => {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'Honeypot AI Trading Bot',
+    name: 'Helwa AI Trading Bot',
     applicationCategory: 'FinanceApplication',
     offers: {
       '@type': 'AggregateOffer',
@@ -72,7 +72,7 @@ export const getProductSchema = () => {
       ratingCount: '127',
     },
     description:
-      'Halal-compliant trading alerts with real-time buy/sell signals and transparent rationale.',
+      'Ethical trading alerts with real-time buy/sell signals, transparent rationale, and AI-powered analysis.',
   }
 }
 

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: honeypot-ai-backend
+    name: helwa-ai-backend
     env: node
     region: oregon
     plan: free

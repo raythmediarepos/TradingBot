@@ -4,7 +4,7 @@ import Footer from '@/components/footer'
 
 export const metadata = {
   title: 'Terms of Service',
-  description: 'Terms of Service for Honeypot AI - Halal-compliant trading signals platform.',
+  description: 'Terms of Service for Helwa AI - Ethical trading signals platform.',
 }
 
 export default function TermsPage() {
@@ -25,7 +25,7 @@ export default function TermsPage() {
             </p>
             <div className="p-4 bg-hp-yellow/10 border border-hp-yellow/20 rounded-lg mb-8">
               <p className="text-sm text-gray-300">
-                <strong className="text-hp-yellow">Important:</strong> Please read these Terms of Service carefully before using Honeypot AI. 
+                <strong className="text-hp-yellow">Important:</strong> Please read these Terms of Service carefully before using Helwa AI. 
                 By accessing or using our service, you agree to be bound by these terms. If you disagree with any part of these terms, 
                 you may not access the service.
               </p>
@@ -38,8 +38,8 @@ export default function TermsPage() {
                 </h2>
                 <p className="mb-4">
                   These Terms of Service (&quot;Terms&quot;, &quot;Agreement&quot;) constitute a legally binding agreement between you 
-                  (&quot;User&quot;, &quot;you&quot;, &quot;your&quot;) and Honeypot AI (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) regarding your 
-                  access to and use of the Honeypot AI platform, website, and related services (collectively, the &quot;Service&quot;).
+                  (&quot;User&quot;, &quot;you&quot;, &quot;your&quot;) and Helwa AI (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) regarding your 
+                  access to and use of the Helwa AI platform, website, and related services (collectively, the &quot;Service&quot;).
                 </p>
                 <p className="mb-4">
                   By accessing, browsing, or using our Service, you acknowledge that you have read, understood, and agree to be 
@@ -57,11 +57,11 @@ export default function TermsPage() {
                   2. Definitions
                 </h2>
                 <ul className="list-disc pl-6 space-y-2">
-                  <li><strong className="text-hp-white">&quot;Service&quot;</strong> - The Honeypot AI platform, including website, Discord community, trading signals, and all related services</li>
+                  <li><strong className="text-hp-white">&quot;Service&quot;</strong> - The Helwa AI platform, including website, Discord community, trading signals, and all related services</li>
                   <li><strong className="text-hp-white">&quot;Trading Signals&quot;</strong> - Algorithmic or manually curated alerts, recommendations, or information about trading opportunities</li>
                   <li><strong className="text-hp-white">&quot;Halal Screening&quot;</strong> - Our proprietary filtering process to identify securities that may comply with Islamic finance principles</li>
                   <li><strong className="text-hp-white">&quot;User Content&quot;</strong> - Any data, information, or content you provide to the Service</li>
-                  <li><strong className="text-hp-white">&quot;Account&quot;</strong> - Your registered user account with Honeypot AI</li>
+                  <li><strong className="text-hp-white">&quot;Account&quot;</strong> - Your registered user account with Helwa AI</li>
                 </ul>
               </section>
 
@@ -70,12 +70,12 @@ export default function TermsPage() {
                   3. Service Description
                 </h2>
                 <p className="mb-4">
-                  Honeypot AI provides educational trading alerts and market information services designed for traders 
-                  seeking halal-compliant investment opportunities. Our Service includes:
+                  Helwa AI provides educational trading alerts and market information services designed for traders 
+                  seeking ethical investment opportunities. Our Service includes:
                 </p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li><strong className="text-hp-white">Trading Signals:</strong> Real-time and delayed trading alerts for stocks and cryptocurrencies</li>
-                  <li><strong className="text-hp-white">Halal Screening:</strong> Proprietary filters to identify potentially halal-compliant securities</li>
+                  <li><strong className="text-hp-white">Halal Screening:</strong> Proprietary filters to identify potentially ethical securities</li>
                   <li><strong className="text-hp-white">Discord Community:</strong> Access to our trading community and signal delivery channel</li>
                   <li><strong className="text-hp-white">Market Analysis:</strong> Educational content, rationale, and datapoints for trading opportunities</li>
                   <li><strong className="text-hp-white">Research Tools:</strong> AI-powered research assistant (when available)</li>
@@ -144,7 +144,7 @@ export default function TermsPage() {
                     ⚠️ CRITICAL DISCLAIMER
                   </p>
                   <p>
-                    Honeypot AI provides educational content, market information, and trading alerts for informational and educational purposes only. 
+                    Helwa AI provides educational content, market information, and trading alerts for informational and educational purposes only. 
                     <strong className="text-hp-white"> WE DO NOT PROVIDE FINANCIAL, INVESTMENT, TAX, OR LEGAL ADVICE.</strong>
                   </p>
                 </div>
@@ -155,7 +155,7 @@ export default function TermsPage() {
                 </p>
                 <p className="mb-4">
                   <strong className="text-hp-white">6.2 No Professional Relationship:</strong> Use of our Service does not create an advisor-client, 
-                  fiduciary, or professional relationship between you and Honeypot AI. We are not acting as your broker, advisor, or agent.
+                  fiduciary, or professional relationship between you and Helwa AI. We are not acting as your broker, advisor, or agent.
                 </p>
                 <p className="mb-4">
                   <strong className="text-hp-white">6.3 Your Responsibility:</strong> All trading and investment decisions are made solely by you. 
@@ -215,21 +215,21 @@ export default function TermsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold text-hp-white mb-4">
-                  8. Halal Screening Disclaimer
+                  8. ethical Screening Disclaimer
                 </h2>
                 <p className="mb-4">
                   <strong className="text-hp-white">8.1 No Religious Certification:</strong> While we make efforts to screen securities according 
-                  to principles commonly associated with Islamic finance, Honeypot AI is not a religious authority and does not provide religious 
+                  to principles commonly associated with Islamic finance, Helwa AI is not a religious authority and does not provide religious 
                   certification or guidance.
                 </p>
                 <p className="mb-4">
-                  <strong className="text-hp-white">8.2 Methodology Limitations:</strong> Our halal screening methodology is based on publicly 
+                  <strong className="text-hp-white">8.2 Methodology Limitations:</strong> Our ethical screening methodology is based on publicly 
                   available financial data and our interpretation of commonly cited Islamic finance principles. Different scholars and authorities 
                   may have varying interpretations.
                 </p>
                 <p className="mb-4">
                   <strong className="text-hp-white">8.3 Data Accuracy:</strong> We rely on third-party data sources which may contain errors or 
-                  be incomplete. We do not guarantee the accuracy, completeness, or timeliness of our halal screening.
+                  be incomplete. We do not guarantee the accuracy, completeness, or timeliness of our ethical screening.
                 </p>
                 <p className="mb-4">
                   <strong className="text-hp-white">8.4 Your Responsibility:</strong> You are solely responsible for determining whether any 
@@ -237,7 +237,7 @@ export default function TermsPage() {
                   advisors before making any investment decisions.
                 </p>
                 <p>
-                  <strong className="text-hp-white">8.5 No Guarantee:</strong> We make no representations or warranties regarding the halal status 
+                  <strong className="text-hp-white">8.5 No Guarantee:</strong> We make no representations or warranties regarding the ethical status 
                   of any security. A security passing our screening does not constitute a guarantee that it is halal.
                 </p>
               </section>
@@ -247,7 +247,7 @@ export default function TermsPage() {
                   9. No Auto-Trading or Account Access
                 </h2>
                 <p className="mb-4">
-                  <strong className="text-hp-white">9.1 No Trading Authority:</strong> Honeypot AI does not execute trades on your behalf, access 
+                  <strong className="text-hp-white">9.1 No Trading Authority:</strong> Helwa AI does not execute trades on your behalf, access 
                   your brokerage accounts, or have any trading authority. You maintain full control of your trading decisions and accounts at all times.
                 </p>
                 <p className="mb-4">
@@ -377,7 +377,7 @@ export default function TermsPage() {
                 <p className="mb-4">
                   <strong className="text-hp-white">13.1 Ownership:</strong> All content, features, functionality, software, designs, text, 
                   graphics, logos, icons, images, audio clips, data compilations, algorithms, and software (&quot;Service Content&quot;) are owned by 
-                  Honeypot AI or our licensors and are protected by United States and international copyright, trademark, patent, trade secret, 
+                  Helwa AI or our licensors and are protected by United States and international copyright, trademark, patent, trade secret, 
                   and other intellectual property laws.
                 </p>
                 <p className="mb-4">
@@ -397,8 +397,8 @@ export default function TermsPage() {
                   <li>Use any automated means to access or collect data from the Service</li>
                 </ul>
                 <p className="mb-4">
-                  <strong className="text-hp-white">13.4 Trademarks:</strong> &quot;Honeypot AI,&quot; our logo, and other marks are trademarks of 
-                  Honeypot AI. You may not use these marks without our prior written permission.
+                  <strong className="text-hp-white">13.4 Trademarks:</strong> &quot;Helwa AI,&quot; our logo, and other marks are trademarks of 
+                  Helwa AI. You may not use these marks without our prior written permission.
                 </p>
                 <p>
                   <strong className="text-hp-white">13.5 User Content:</strong> You retain ownership of any content you submit to the Service. 
@@ -473,7 +473,7 @@ export default function TermsPage() {
                   16. Indemnification
                 </h2>
                 <p className="mb-4">
-                  You agree to indemnify, defend, and hold harmless Honeypot AI, its officers, directors, employees, agents, affiliates, 
+                  You agree to indemnify, defend, and hold harmless Helwa AI, its officers, directors, employees, agents, affiliates, 
                   licensors, and service providers from and against any and all claims, liabilities, damages, losses, costs, expenses, or 
                   fees (including reasonable attorneys&apos; fees) arising from:
                 </p>
@@ -559,12 +559,12 @@ export default function TermsPage() {
                     IMPORTANT: PLEASE READ THIS ARBITRATION AGREEMENT CAREFULLY
                   </p>
                   <p className="text-sm text-gray-300">
-                    This section affects your rights and will have a substantial impact on how claims between you and Honeypot AI are resolved.
+                    This section affects your rights and will have a substantial impact on how claims between you and Helwa AI are resolved.
                   </p>
                 </div>
                 <p className="mb-4">
                   <strong className="text-hp-white">20.1 Informal Resolution:</strong> Before filing a claim, you agree to contact us at 
-                  support@honeypot.ai to attempt to resolve the dispute informally. We will attempt to resolve the dispute within 60 days.
+                  support@helwa.ai to attempt to resolve the dispute informally. We will attempt to resolve the dispute within 60 days.
                 </p>
                 <p className="mb-4">
                   <strong className="text-hp-white">20.2 Binding Arbitration:</strong> If we cannot resolve the dispute informally, any controversy 
@@ -582,7 +582,7 @@ export default function TermsPage() {
                 </p>
                 <p className="mb-4">
                   <strong className="text-hp-white">20.5 Opt-Out:</strong> You may opt out of this arbitration agreement by sending written notice 
-                  to support@honeypot.ai within 30 days of first accepting these Terms. Your notice must include your name, address, and a clear 
+                  to support@helwa.ai within 30 days of first accepting these Terms. Your notice must include your name, address, and a clear 
                   statement that you wish to opt out of this arbitration agreement.
                 </p>
                 <p>
@@ -597,7 +597,7 @@ export default function TermsPage() {
                 </h2>
                 <p className="mb-4">
                   <strong className="text-hp-white">21.1 Entire Agreement:</strong> These Terms, together with our Privacy Policy and any other 
-                  agreements referenced herein, constitute the entire agreement between you and Honeypot AI regarding the Service.
+                  agreements referenced herein, constitute the entire agreement between you and Helwa AI regarding the Service.
                 </p>
                 <p className="mb-4">
                   <strong className="text-hp-white">21.2 Severability:</strong> If any provision of these Terms is found to be unenforceable or 
@@ -637,12 +637,12 @@ export default function TermsPage() {
                   For questions, concerns, or notices regarding these Terms of Service, please contact us:
                 </p>
                 <div className="p-4 bg-hp-gray-900 border border-gray-800 rounded-lg">
-                  <p className="mb-2"><strong className="text-hp-white">Email:</strong> support@honeypot.ai</p>
-                  <p className="mb-2"><strong className="text-hp-white">Legal Notices:</strong> legal@honeypot.ai</p>
-                  <p><strong className="text-hp-white">Website:</strong> https://honeypot.ai</p>
+                  <p className="mb-2"><strong className="text-hp-white">Email:</strong> support@helwa.ai</p>
+                  <p className="mb-2"><strong className="text-hp-white">Legal Notices:</strong> legal@helwa.ai</p>
+                  <p><strong className="text-hp-white">Website:</strong> https://helwa.ai</p>
                 </div>
                 <p className="mt-6 text-sm text-gray-500">
-                  By using Honeypot AI, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+                  By using Helwa AI, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
                 </p>
               </section>
             </div>

@@ -177,6 +177,34 @@ const affiliateRoutes = require('../routes/affiliates')
 router.use('/affiliates', affiliateRoutes)
 
 // ============================================
+// AUTHENTICATION ROUTES
+// ============================================
+
+const authRoutes = require('../routes/auth')
+router.use('/auth', authRoutes)
+
+// ============================================
+// USER DASHBOARD ROUTES (Protected)
+// ============================================
+
+const userRoutes = require('../routes/user')
+router.use('/user', userRoutes)
+
+// ============================================
+// BETA PROGRAM ROUTES
+// ============================================
+
+const betaRoutes = require('../routes/beta')
+router.use('/beta', betaRoutes)
+
+// ============================================
+// ADMIN ROUTES (Protected)
+// ============================================
+
+const adminRoutes = require('../routes/admin')
+router.use('/admin', adminRoutes)
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 
@@ -188,7 +216,7 @@ router.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    service: 'Honeypot AI Backend',
+    service: 'Helwa AI Backend',
   })
 })
 

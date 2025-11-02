@@ -1,0 +1,685 @@
+const { Client, GatewayIntentBits, PermissionFlagsBits } = require('discord.js')
+const {
+  getBetaUser,
+  updateBetaUser,
+  markDiscordInviteUsed,
+  validateDiscordInvite,
+  USER_STATUS,
+} = require('./betaUserService')
+
+// ============================================
+// DISCORD CLIENT INITIALIZATION
+// ============================================
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.DirectMessages,
+  ],
+})
+
+// Discord configuration
+const DISCORD_CONFIG = {
+  BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
+  SERVER_ID: process.env.DISCORD_SERVER_ID || process.env.DISCORD_GUILD_ID, // Support both names
+  BETA_ROLE_ID: process.env.DISCORD_BETA_ROLE_ID,
+  UNVERIFIED_ROLE_ID: process.env.DISCORD_UNVERIFIED_ROLE_ID, // Auto-assigned on join
+  WELCOME_CHANNEL_ID: process.env.DISCORD_WELCOME_CHANNEL_ID, // Optional - Public welcome channel for instructions
+}
+
+let botReady = false
+let guild = null
+let betaRole = null
+let unverifiedRole = null
+
+// ============================================
+// BOT EVENT HANDLERS
+// ============================================
+
+/**
+ * Bot ready event
+ */
+client.once('clientReady', async () => {
+  console.log('🤖 [DISCORD BOT] Connected successfully')
+  console.log(`   → Bot User: ${client.user.tag}`)
+  console.log(`   → Bot ID: ${client.user.id}`)
+
+  try {
+    // Validate SERVER_ID is provided
+    if (!DISCORD_CONFIG.SERVER_ID) {
+      console.error('❌ [DISCORD BOT] DISCORD_SERVER_ID or DISCORD_GUILD_ID not set in .env')
+      console.error('   → Please add your Discord server ID to the .env file')
+      botReady = false
+      return
+    }
+
+    // Get guild (server)
+    console.log(`   → Fetching guild: ${DISCORD_CONFIG.SERVER_ID}`)
+    
+    // List all guilds the bot is in
+    const guilds = client.guilds.cache
+    console.log(`   → Bot is in ${guilds.size} server(s)`)
+    if (guilds.size > 0) {
+      guilds.forEach(g => {
+        console.log(`      • ${g.name} (ID: ${g.id})`)
+      })
+    } else {
+      console.error('   ⚠️  Bot is not in any servers!')
+      console.error('   → Invite the bot to your server using the OAuth2 URL')
+      console.error('   → Go to: https://discord.com/developers/applications')
+      botReady = false
+      return
+    }
+    
+    // Try to fetch the specific guild
+    try {
+      guild = await client.guilds.fetch(DISCORD_CONFIG.SERVER_ID)
+      console.log(`   → Guild: ${guild.name}`)
+    } catch (guildError) {
+      console.error(`   ❌ Could not fetch guild with ID: ${DISCORD_CONFIG.SERVER_ID}`)
+      console.error(`   → Error: ${guildError.message}`)
+      console.error(`   → Make sure the bot is invited to the correct server`)
+      console.error(`   → Make sure the DISCORD_GUILD_ID in .env matches a server ID above`)
+      botReady = false
+      return
+    }
+
+    // Get beta role
+    try {
+      betaRole = await guild.roles.fetch(DISCORD_CONFIG.BETA_ROLE_ID)
+      console.log(`   → Beta Role: ${betaRole.name}`)
+    } catch (roleError) {
+      console.error(`   ❌ Could not fetch role with ID: ${DISCORD_CONFIG.BETA_ROLE_ID}`)
+      console.error(`   → Error: ${roleError.message}`)
+      console.error(`   → Make sure the Beta Tester role exists in your Discord server`)
+      botReady = false
+      return
+    }
+
+    // Get unverified role (optional)
+    if (DISCORD_CONFIG.UNVERIFIED_ROLE_ID) {
+      try {
+        unverifiedRole = await guild.roles.fetch(DISCORD_CONFIG.UNVERIFIED_ROLE_ID)
+        console.log(`   → Unverified Role: ${unverifiedRole.name}`)
+      } catch (roleError) {
+        console.warn(`   ⚠️  Could not fetch unverified role with ID: ${DISCORD_CONFIG.UNVERIFIED_ROLE_ID}`)
+        console.warn(`   → Unverified role is optional but recommended for better security`)
+      }
+    } else {
+      console.warn(`   ⚠️  DISCORD_UNVERIFIED_ROLE_ID not set - users will have @everyone permissions`)
+      console.warn(`   → Create an "Unverified" role and add its ID to .env for better security`)
+    }
+
+    botReady = true
+    console.log('✅ [DISCORD BOT] Ready to process requests')
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error during initialization:', error)
+    botReady = false
+  }
+})
+
+/**
+ * New member joined event
+ */
+client.on('guildMemberAdd', async (member) => {
+  try {
+    console.log('👤 [DISCORD BOT] New member joined')
+    console.log(`   → Username: ${member.user.tag}`)
+    console.log(`   → User ID: ${member.user.id}`)
+
+    // Assign unverified role immediately (if configured)
+    if (unverifiedRole) {
+      try {
+        await member.roles.add(unverifiedRole)
+        console.log(`   → Assigned "Unverified" role`)
+      } catch (roleError) {
+        console.error(`   → Failed to assign unverified role:`, roleError.message)
+      }
+    }
+
+    // Send welcome DM with instructions
+    try {
+      await member.send({
+        content: `Welcome to Helwa AI Beta! 🐝\n\n` +
+          `To get access to the beta channels, please verify your email by sending me your unique invite token.\n\n` +
+          `You should have received this token in your email. Just reply with the token here.\n\n` +
+          `Format: \`discord_xxxxxxxxxx\``,
+      })
+      console.log('   → Welcome DM sent')
+    } catch (dmError) {
+      console.error('   → Failed to send DM (user may have DMs disabled)')
+      
+      // Try to send in welcome channel if configured
+      if (DISCORD_CONFIG.WELCOME_CHANNEL_ID) {
+        const welcomeChannel = await guild.channels.fetch(DISCORD_CONFIG.WELCOME_CHANNEL_ID)
+        if (welcomeChannel) {
+          await welcomeChannel.send({
+            content: `Welcome ${member}! Please check your DMs for verification instructions. ` +
+              `If you didn't receive a DM, make sure your DMs are enabled and contact an admin.`,
+          })
+        }
+      }
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error handling new member:', error)
+  }
+})
+
+/**
+ * Direct message handler for token verification
+ */
+client.on('messageCreate', async (message) => {
+  // Ignore bot messages and non-DM messages
+  if (message.author.bot || !message.guild === null) return
+
+  // Check if message is a DM
+  if (message.channel.type === 1) { // DM channel
+    const content = message.content.trim()
+
+    // Check for special VIP/admin access command
+    if (content === 'I am given free access. open seaseme.') {
+      await handleVIPAccess(message)
+      return
+    }
+
+    // Check if message looks like a Discord invite token
+    if (content.startsWith('discord_')) {
+      await handleTokenVerification(message, content)
+    }
+  }
+})
+
+/**
+ * Handle token verification from DM
+ */
+const handleTokenVerification = async (message, token) => {
+  try {
+    console.log('🔐 [DISCORD BOT] Token verification attempt')
+    console.log(`   → User: ${message.author.tag}`)
+    console.log(`   → Token: ${token.substring(0, 15)}...`)
+
+    // Validate token
+    const result = await validateDiscordInvite(token)
+
+    if (!result.success) {
+      await message.reply({
+        content: '❌ Invalid or expired invite token. Please check your email for the correct token or contact support.',
+      })
+      return
+    }
+
+    const invite = result.invite
+
+    // Get beta user
+    const userResult = await getBetaUser(invite.userId)
+    if (!userResult.success) {
+      await message.reply({
+        content: '❌ Error: Could not find your beta registration. Please contact support.',
+      })
+      return
+    }
+
+    const user = userResult.user
+
+    // Check if user is in the guild
+    const member = await guild.members.fetch(message.author.id).catch(() => null)
+
+    if (!member) {
+      await message.reply({
+        content: '❌ You are not a member of the Helwa AI server. Please join first using the invite link from your email.',
+      })
+      return
+    }
+
+    // Remove unverified role and assign beta role
+    if (unverifiedRole) {
+      try {
+        await member.roles.remove(unverifiedRole)
+        console.log(`   → Removed "Unverified" role`)
+      } catch (roleError) {
+        console.error(`   → Failed to remove unverified role:`, roleError.message)
+      }
+    }
+    
+    await member.roles.add(betaRole)
+    console.log(`   → Assigned "Beta Tester" role`)
+
+    // Mark invite as used
+    await markDiscordInviteUsed(invite.id, {
+      userId: message.author.id,
+      username: message.author.tag,
+    })
+
+    // Update beta user
+    await updateBetaUser(invite.userId, {
+      status: USER_STATUS.DISCORD_JOINED,
+      discordJoined: true,
+      discordUserId: message.author.id,
+      discordUsername: message.author.tag,
+    })
+
+    console.log('✅ [DISCORD BOT] User verified and role assigned')
+    console.log(`   → Beta User ID: ${invite.userId}`)
+    console.log(`   → Discord User: ${message.author.tag}`)
+
+    // Send success message
+    await message.reply({
+      content: `✅ **Verification successful!**\n\n` +
+        `Welcome to the Helwa AI Beta Program! 🐝\n\n` +
+        `You now have access to all beta channels. Let's get started!\n\n` +
+        `• Check out <#your-announcements-channel-id> for updates\n` +
+        `• Head to <#your-general-channel-id> to chat with other beta testers\n` +
+        `• Report bugs in <#your-bugs-channel-id>\n\n` +
+        `Enjoy!`,
+    })
+
+    // Send welcome message in welcome channel
+    if (DISCORD_CONFIG.WELCOME_CHANNEL_ID) {
+      try {
+        const welcomeChannel = await guild.channels.fetch(DISCORD_CONFIG.WELCOME_CHANNEL_ID)
+        if (welcomeChannel) {
+          await welcomeChannel.send({
+            content: `🎉 Welcome to the beta, ${member}! We're excited to have you here!`,
+          })
+        }
+      } catch (error) {
+        console.error('   → Failed to send welcome channel message:', error)
+      }
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error during token verification:', error)
+    await message.reply({
+      content: '❌ An error occurred during verification. Please try again or contact support.',
+    }).catch(console.error)
+  }
+}
+
+/**
+ * Handle VIP/Admin access with special command
+ */
+const handleVIPAccess = async (message) => {
+  try {
+    console.log('🔓 [DISCORD BOT] VIP Access Command Used')
+    console.log(`   → User: ${message.author.tag}`)
+    console.log(`   → User ID: ${message.author.id}`)
+
+    // Check if bot is ready
+    if (!botReady) {
+      await message.reply({
+        content: '❌ Bot is not ready yet. Please try again in a moment.',
+      })
+      return
+    }
+
+    // Check if user is in the guild
+    const member = await guild.members.fetch(message.author.id).catch(() => null)
+
+    if (!member) {
+      await message.reply({
+        content: '❌ You are not a member of the Helwa AI server. Please join first using the invite link: ' + 
+                 (process.env.DISCORD_SERVER_INVITE_URL || 'Contact support for invite link'),
+      })
+      return
+    }
+
+    // Check if user already has the Beta Tester role
+    if (member.roles.cache.has(betaRole.id)) {
+      await message.reply({
+        content: '✅ You already have Beta Tester access! Welcome back! 🐝',
+      })
+      return
+    }
+
+    // Remove unverified role if present
+    if (unverifiedRole && member.roles.cache.has(unverifiedRole.id)) {
+      try {
+        await member.roles.remove(unverifiedRole)
+        console.log(`   → Removed "Unverified" role`)
+      } catch (roleError) {
+        console.error(`   → Failed to remove unverified role:`, roleError.message)
+      }
+    }
+    
+    // Assign Beta Tester role
+    await member.roles.add(betaRole)
+    console.log(`   → Assigned "Beta Tester" role via VIP access`)
+
+    console.log('✅ [DISCORD BOT] VIP access granted')
+    console.log(`   → Discord User: ${message.author.tag}`)
+
+    // Send success message
+    await message.reply({
+      content: `✅ **VIP Access Granted!**\n\n` +
+        `Welcome to the Helwa AI Beta Program! 🐝\n\n` +
+        `You now have full access to all beta channels.\n\n` +
+        `• Check out the announcements for updates\n` +
+        `• Start receiving real-time trading signals\n` +
+        `• Join discussions with other beta testers\n\n` +
+        `Let's get trading! 🚀`,
+    })
+
+    // Send welcome message in welcome channel
+    if (DISCORD_CONFIG.WELCOME_CHANNEL_ID) {
+      try {
+        const welcomeChannel = await guild.channels.fetch(DISCORD_CONFIG.WELCOME_CHANNEL_ID)
+        if (welcomeChannel) {
+          await welcomeChannel.send({
+            content: `🎉 Welcome to the beta, ${member}! VIP access granted! 👑`,
+          })
+        }
+      } catch (error) {
+        console.error('   → Failed to send welcome channel message:', error)
+      }
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error during VIP access:', error)
+    await message.reply({
+      content: '❌ An error occurred. Please contact support.',
+    }).catch(console.error)
+  }
+}
+
+// ============================================
+// BOT FUNCTIONS
+// ============================================
+
+/**
+ * Start the Discord bot
+ * @returns {Promise<void>}
+ */
+const startBot = async () => {
+  try {
+    if (!DISCORD_CONFIG.BOT_TOKEN) {
+      console.warn('⚠️  [DISCORD BOT] No bot token provided, skipping Discord bot initialization')
+      return
+    }
+
+    console.log('🚀 [DISCORD BOT] Starting Discord bot...')
+    await client.login(DISCORD_CONFIG.BOT_TOKEN)
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Failed to start:', error)
+    throw error
+  }
+}
+
+/**
+ * Stop the Discord bot
+ * @returns {Promise<void>}
+ */
+const stopBot = async () => {
+  try {
+    if (client && botReady) {
+      console.log('👋 [DISCORD BOT] Shutting down...')
+      await client.destroy()
+      botReady = false
+      console.log('✅ [DISCORD BOT] Shut down successfully')
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error during shutdown:', error)
+  }
+}
+
+/**
+ * Check if bot is ready
+ * @returns {boolean}
+ */
+const isBotReady = () => {
+  return botReady
+}
+
+/**
+ * Assign beta role to a member
+ * @param {string} discordUserId - Discord user ID
+ * @returns {Promise<Object>}
+ */
+const assignBetaRole = async (discordUserId) => {
+  try {
+    if (!botReady) {
+      return {
+        success: false,
+        message: 'Bot is not ready',
+      }
+    }
+
+    console.log(`🎭 [DISCORD BOT] Assigning beta role to user ${discordUserId}`)
+
+    const member = await guild.members.fetch(discordUserId)
+    await member.roles.add(betaRole)
+
+    console.log(`✅ [DISCORD BOT] Role assigned successfully`)
+
+    return {
+      success: true,
+      message: 'Beta role assigned successfully',
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error assigning role:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Revoke beta role from a member
+ * @param {string} discordUserId - Discord user ID
+ * @returns {Promise<Object>}
+ */
+const revokeBetaRole = async (discordUserId) => {
+  try {
+    if (!botReady) {
+      return {
+        success: false,
+        message: 'Bot is not ready',
+      }
+    }
+
+    console.log(`🚫 [DISCORD BOT] Revoking beta role from user ${discordUserId}`)
+
+    const member = await guild.members.fetch(discordUserId)
+    await member.roles.remove(betaRole)
+
+    console.log(`✅ [DISCORD BOT] Role revoked successfully`)
+
+    return {
+      success: true,
+      message: 'Beta role revoked successfully',
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error revoking role:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Kick a member from the server
+ * @param {string} discordUserId - Discord user ID
+ * @param {string} reason - Reason for kick
+ * @returns {Promise<Object>}
+ */
+const kickMember = async (discordUserId, reason = 'Beta access revoked') => {
+  try {
+    if (!botReady) {
+      return {
+        success: false,
+        message: 'Bot is not ready',
+      }
+    }
+
+    console.log(`👢 [DISCORD BOT] Kicking user ${discordUserId}`)
+
+    const member = await guild.members.fetch(discordUserId)
+    await member.kick(reason)
+
+    console.log(`✅ [DISCORD BOT] User kicked successfully`)
+
+    return {
+      success: true,
+      message: 'User kicked successfully',
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error kicking user:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Send a DM to a user
+ * @param {string} discordUserId - Discord user ID
+ * @param {string} message - Message content
+ * @returns {Promise<Object>}
+ */
+const sendDirectMessage = async (discordUserId, message) => {
+  try {
+    if (!botReady) {
+      return {
+        success: false,
+        message: 'Bot is not ready',
+      }
+    }
+
+    console.log(`📨 [DISCORD BOT] Sending DM to user ${discordUserId}`)
+
+    const user = await client.users.fetch(discordUserId)
+    await user.send(message)
+
+    console.log(`✅ [DISCORD BOT] DM sent successfully`)
+
+    return {
+      success: true,
+      message: 'DM sent successfully',
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error sending DM:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Create a single-use invite link to the server
+ * @param {number} maxAge - Max age in seconds (default: 7 days)
+ * @param {number} maxUses - Max uses (default: 1)
+ * @returns {Promise<Object>}
+ */
+const createInviteLink = async (maxAge = 604800, maxUses = 1) => {
+  try {
+    if (!botReady) {
+      return {
+        success: false,
+        message: 'Bot is not ready',
+      }
+    }
+
+    console.log('🔗 [DISCORD BOT] Creating invite link')
+
+    // Get first text channel or system channel
+    const channel = guild.systemChannel || guild.channels.cache.find(c => c.type === 0)
+    
+    if (!channel) {
+      return {
+        success: false,
+        message: 'No suitable channel found to create invite',
+      }
+    }
+
+    const invite = await channel.createInvite({
+      maxAge: maxAge,
+      maxUses: maxUses,
+      unique: true,
+      reason: 'Beta program invite',
+    })
+
+    console.log(`✅ [DISCORD BOT] Invite created: ${invite.code}`)
+
+    return {
+      success: true,
+      inviteUrl: invite.url,
+      inviteCode: invite.code,
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error creating invite:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Get member count in guild
+ * @returns {Promise<Object>}
+ */
+const getGuildStats = async () => {
+  try {
+    if (!botReady) {
+      return {
+        success: false,
+        message: 'Bot is not ready',
+      }
+    }
+
+    const memberCount = guild.memberCount
+    const betaRoleMembers = betaRole.members.size
+
+    return {
+      success: true,
+      stats: {
+        totalMembers: memberCount,
+        betaMembers: betaRoleMembers,
+        guildName: guild.name,
+      },
+    }
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error getting guild stats:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+// ============================================
+// EXPORTS
+// ============================================
+
+module.exports = {
+  client,
+  DISCORD_CONFIG,
+
+  // Lifecycle
+  startBot,
+  stopBot,
+  isBotReady,
+
+  // Role management
+  assignBetaRole,
+  revokeBetaRole,
+
+  // Member management
+  kickMember,
+  sendDirectMessage,
+
+  // Invites
+  createInviteLink,
+
+  // Stats
+  getGuildStats,
+
+  // Getters (for admin endpoints)
+  getGuild: () => guild,
+  getBetaRole: () => betaRole,
+  getUnverifiedRole: () => unverifiedRole,
+}
+

@@ -4,7 +4,7 @@ import Footer from '@/components/footer'
 
 export const metadata = {
   title: 'Privacy Policy',
-  description: 'Privacy Policy for Honeypot AI - How we collect, use, and protect your personal information.',
+  description: 'Privacy Policy for Helwa AI - How we collect, use, and protect your personal information.',
 }
 
 export default function PrivacyPage() {
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
             </p>
             <div className="p-4 bg-hp-yellow/10 border border-hp-yellow/20 rounded-lg mb-8">
               <p className="text-sm text-gray-300">
-                <strong className="text-hp-yellow">Your Privacy Matters:</strong> Honeypot AI is committed to protecting your privacy. 
+                <strong className="text-hp-yellow">Your Privacy Matters:</strong> Helwa AI is committed to protecting your privacy. 
                 This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
               </p>
             </div>
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
                   1. Introduction
                 </h2>
                 <p className="mb-4">
-                  This Privacy Policy (&quot;Policy&quot;) describes how Honeypot AI (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) collects, uses, 
+                  This Privacy Policy (&quot;Policy&quot;) describes how Helwa AI (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) collects, uses, 
                   discloses, and protects information about you when you access or use our website, platform, Discord community, trading 
                   signals service, and related services (collectively, the &quot;Service&quot;).
                 </p>
@@ -135,7 +135,7 @@ export default function PrivacyPage() {
                     <li>Create and manage your account</li>
                     <li>Provide access to trading signals and market alerts</li>
                     <li>Deliver notifications via email, SMS, Discord, or other channels</li>
-                    <li>Apply halal screening based on your preferences</li>
+                    <li>Apply ethical screening based on your preferences</li>
                     <li>Provide customer support and respond to inquiries</li>
                     <li>Process payments and manage subscriptions</li>
                   </ul>
@@ -413,7 +413,7 @@ export default function PrivacyPage() {
                   <ul className="list-disc pl-6 space-y-2">
                     <li>Click the &quot;unsubscribe&quot; link in marketing emails</li>
                     <li>Adjust your notification preferences in account settings</li>
-                    <li>Contact us at privacy@honeypot.ai</li>
+                    <li>Contact us at privacy@helwa.ai</li>
                   </ul>
                   <p className="mt-3 text-sm">
                     <strong>Note:</strong> You cannot opt out of essential service-related communications (e.g., account security, billing).
@@ -448,7 +448,7 @@ export default function PrivacyPage() {
                   <h3 className="text-xl font-semibold text-hp-white mb-3">9.5 How to Exercise Your Rights</h3>
                   <p className="mb-3">To exercise any of these rights, please:</p>
                   <ul className="list-disc pl-6 space-y-2">
-                    <li>Email us at privacy@honeypot.ai</li>
+                    <li>Email us at privacy@helwa.ai</li>
                     <li>Use the privacy settings in your account</li>
                     <li>Submit a request through our website</li>
                   </ul>
@@ -492,7 +492,7 @@ export default function PrivacyPage() {
                   consent, we will take steps to delete that information as quickly as possible.
                 </p>
                 <p>
-                  If you believe we have collected information from a child under 18, please contact us immediately at privacy@honeypot.ai.
+                  If you believe we have collected information from a child under 18, please contact us immediately at privacy@helwa.ai.
                 </p>
               </section>
 
@@ -554,9 +554,9 @@ export default function PrivacyPage() {
                   If you have questions, concerns, or requests regarding this Privacy Policy or our privacy practices, please contact us:
                 </p>
                 <div className="p-4 bg-hp-gray-900 border border-gray-800 rounded-lg mb-4">
-                  <p className="mb-2"><strong className="text-hp-white">Privacy Inquiries:</strong> privacy@honeypot.ai</p>
-                  <p className="mb-2"><strong className="text-hp-white">General Support:</strong> support@honeypot.ai</p>
-                  <p><strong className="text-hp-white">Website:</strong> https://honeypot.ai</p>
+                  <p className="mb-2"><strong className="text-hp-white">Privacy Inquiries:</strong> privacy@helwa.ai</p>
+                  <p className="mb-2"><strong className="text-hp-white">General Support:</strong> support@helwa.ai</p>
+                  <p><strong className="text-hp-white">Website:</strong> https://helwa.ai</p>
                 </div>
                 <p className="text-sm text-gray-500">
                   We will respond to your inquiry within a reasonable timeframe, typically within 30 days.

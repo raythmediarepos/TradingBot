@@ -5,12 +5,12 @@
 # ============================================
 GMAIL_USER=your-email@gmail.com
 GMAIL_APP_PASSWORD=your-16-char-app-password-no-spaces
-EMAIL_FROM_NAME=Honeypot AI
+EMAIL_FROM_NAME=Helwa AI
 ADMIN_EMAIL=your-email@gmail.com
 
 # How to get GMAIL_APP_PASSWORD:
 # 1. Go to: https://myaccount.google.com/apppasswords
-# 2. Create app password for "Mail" → "Honeypot AI Backend"
+# 2. Create app password for "Mail" → "Helwa AI Backend"
 # 3. Copy the 16-character password (remove spaces!)
 # 4. See GMAIL_SMTP_SETUP.md for full instructions
 

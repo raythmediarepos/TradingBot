@@ -8,9 +8,9 @@ const ValueCards = () => {
   const values = [
     {
       icon: Shield,
-      title: 'Halal by Design',
+      title: 'Ethical by Design',
       description:
-        'Screened tickers and no derivatives—ever. Built from the ground up with compliance in mind.',
+        'Screened tickers with transparent criteria. Built from the ground up with principles in mind.',
       color: 'hp-yellow',
     },
     {
@@ -50,7 +50,7 @@ const ValueCards = () => {
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-hp-white mb-4">
-            Why Traders Choose Honeypot
+            Why Traders Choose Helwa
           </h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
             Powerful features designed for traders who value speed, transparency, and compliance

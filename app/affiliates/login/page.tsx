@@ -149,8 +149,8 @@ const AffiliateLoginPage = () => {
                   </p>
                   <p className="text-xs text-gray-500">
                     Need help? Contact{' '}
-                    <a href="mailto:affiliates@honeypotai.com" className="text-hp-yellow hover:underline">
-                      affiliates@honeypotai.com
+                    <a href="mailto:affiliates@helwaai.com" className="text-hp-yellow hover:underline">
+                      affiliates@helwaai.com
                     </a>
                   </p>
                 </div>

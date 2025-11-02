@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🧪 Testing Honeypot AI Backend on Render"
+echo "🧪 Testing Helwa AI Backend on Render"
 echo "=========================================="
 echo ""
 

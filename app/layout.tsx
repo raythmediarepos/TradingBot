@@ -8,8 +8,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Honeypot AI - Halal-First Trading Alerts',
-  description: 'Real-time halal-compliant buy/sell signals with transparent rationale. No haram sectors, no options. Research Chatbot coming soon.',
+  title: 'Helwa AI - Ethical Trading Alerts',
+  description: 'Real-time ethical trading signals with transparent rationale and AI-powered analysis. Smart, transparent, and principled trading decisions.',
   icons: {
     icon: [
       { url: '/bee-icon.svg', type: 'image/svg+xml' },

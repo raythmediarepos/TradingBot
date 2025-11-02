@@ -196,7 +196,7 @@ const completeAffiliateSetup = async (affiliateId, setupData) => {
         details: setupData.paymentInfo.details
       },
       affiliateCode: affiliateCode,
-      affiliateLink: `https://honeypotai.com/?ref=${affiliateCode}`,
+      affiliateLink: `https://helwaai.com/?ref=${affiliateCode}`,
       setupCompleted: true,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     })
@@ -213,7 +213,7 @@ const completeAffiliateSetup = async (affiliateId, setupData) => {
     return {
       success: true,
       affiliateCode: affiliateCode,
-      affiliateLink: `https://honeypotai.com/?ref=${affiliateCode}`,
+      affiliateLink: `https://helwaai.com/?ref=${affiliateCode}`,
       message: 'Setup completed! Your affiliate code has been generated.'
     }
 

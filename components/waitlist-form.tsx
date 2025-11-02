@@ -85,7 +85,7 @@ const WaitlistForm = () => {
               Join the Trading Bot Waitlist
             </h2>
             <p className="text-gray-400 text-lg">
-              Be the first to get early access to Honeypot AI halal-compliant trading signals
+              Be the first to get early access to Helwa AI ethical trading signals
             </p>
             {remainingSpots !== null && (
               <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-hp-yellow/10 border border-hp-yellow/30 rounded-full">
@@ -178,7 +178,7 @@ const WaitlistForm = () => {
                 {/* Info Box */}
                 <div className="p-4 bg-hp-yellow/5 border border-hp-yellow/20 rounded-lg">
                   <p className="text-sm text-gray-300 text-center">
-                    <span className="font-semibold text-hp-yellow">Trading Bot Waitlist:</span> Get early access to halal-compliant trading signals
+                    <span className="font-semibold text-hp-yellow">Trading Bot Waitlist:</span> Get early access to ethical trading signals
                   </p>
                   <p className="text-xs text-gray-400 text-center mt-2">
                     Research Chatbot waitlist coming soon
@@ -211,7 +211,7 @@ const WaitlistForm = () => {
 
                 {/* Privacy Note */}
                 <p className="text-xs text-gray-500 text-center">
-                  By subscribing, you agree to receive updates from Honeypot AI.
+                  By subscribing, you agree to receive updates from Helwa AI.
                   We respect your privacy and you can unsubscribe anytime.
                 </p>
               </form>

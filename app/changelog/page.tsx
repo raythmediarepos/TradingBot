@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 
 export const metadata = {
   title: 'Changelog',
-  description: 'Latest updates and improvements to Honeypot AI trading platform.',
+  description: 'Latest updates and improvements to Helwa AI trading platform.',
 }
 
 type ChangelogEntry = {
@@ -23,8 +23,8 @@ const changelogEntries: ChangelogEntry[] = [
     changes: [
       'Official Trading Bot v1 launch',
       'Full production release with all core features',
-      'Real-time halal-compliant trading signals',
-      'Complete halal screening engine',
+      'Real-time ethical trading signals',
+      'Complete ethical screening engine',
       'Multi-ticker support',
       'Signal rationale and datapoints',
     ],
@@ -94,7 +94,7 @@ export default function ChangelogPage() {
               Changelog
             </h1>
             <p className="text-gray-400 text-lg mb-12">
-              Track all updates, new features, and improvements to Honeypot AI
+              Track all updates, new features, and improvements to Helwa AI
             </p>
 
             <div className="space-y-12">

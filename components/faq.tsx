@@ -33,7 +33,7 @@ const FAQ = () => {
             Frequently Asked Questions
           </h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Everything you need to know about Honeypot AI
+            Everything you need to know about Helwa AI
           </p>
         </motion.div>
 
@@ -78,7 +78,7 @@ const FAQ = () => {
         >
           <p className="text-gray-400 mb-4">Still have questions?</p>
           <a
-            href="mailto:support@honeypot.ai"
+            href="mailto:support@helwa.ai"
             className="text-hp-yellow hover:text-hp-yellow600 font-medium"
           >
             Contact our support team

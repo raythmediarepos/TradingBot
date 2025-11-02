@@ -77,7 +77,7 @@ const PricingTiers = () => {
           <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
             No performance fees. No hidden charges. Cancel anytime.
             <br />
-            <span className="text-hp-white font-medium">All plans include halal screening.</span>
+            <span className="text-hp-white font-medium">All plans include ethical screening.</span>
           </p>
 
           {/* Billing Toggle */}
@@ -257,7 +257,7 @@ const PricingTiers = () => {
               <tbody className="divide-y divide-hp-yellow/10">
                 {[
                   { feature: 'Real-time alerts', free: false, pro: true, team: true },
-                  { feature: 'Halal screening', free: true, pro: true, team: true },
+                  { feature: 'Ethical screening', free: true, pro: true, team: true },
                   { feature: 'Email notifications', free: true, pro: true, team: true },
                   { feature: 'SMS & Telegram alerts', free: false, pro: true, team: true },
                   { feature: 'Signal rationale', free: false, pro: true, team: true },
@@ -310,7 +310,7 @@ const PricingTiers = () => {
           </p>
           <p className="text-gray-400">
             Need a custom plan?{' '}
-            <a href="mailto:sales@honeypot.ai" className="text-hp-yellow hover:underline font-semibold">
+            <a href="mailto:sales@helwa.ai" className="text-hp-yellow hover:underline font-semibold">
               Contact our sales team
             </a>
           </p>

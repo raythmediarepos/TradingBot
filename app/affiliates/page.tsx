@@ -163,7 +163,7 @@ const AffiliatesPage = () => {
             </h1>
             
             <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Become a Honeypot AI affiliate and earn lifetime recurring commissions. 
+              Become a Helwa AI affiliate and earn lifetime recurring commissions. 
               Share your unique link, get paid 10% every single month for as long as your referrals stay subscribed.
             </p>
 
@@ -388,7 +388,7 @@ const AffiliatesPage = () => {
                   Perfect For
                 </h2>
                 <p className="text-gray-400 text-lg">
-                  Our affiliate program is ideal for anyone with an audience interested in halal investing and trading.
+                  Our affiliate program is ideal for anyone with an audience interested in ethical investing and trading.
                 </p>
               </div>
 
@@ -497,7 +497,7 @@ const AffiliatesPage = () => {
 
                   <div>
                     <label htmlFor="platform" className="block text-sm font-semibold text-gray-300 mb-2">
-                      Where will you promote Honeypot AI? *
+                      Where will you promote Helwa AI? *
                     </label>
                     <select
                       id="platform"

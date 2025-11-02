@@ -1,9 +1,12 @@
 const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
+const cookieParser = require('cookie-parser')
 require('dotenv').config()
 
 const apiRoutes = require('./api/routes')
+const { startBot, stopBot } = require('./services/discordBotService')
+const { initializeCleanupJobs } = require('./jobs/cleanupJobs')
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -18,6 +21,7 @@ app.use(helmet())
 // CORS configuration - Allow multiple origins
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:3001',
   'https://trading-bot-dusky-two.vercel.app',
   'https://trading-bot-7fi8.vercel.app',
   process.env.FRONTEND_URL,
@@ -49,6 +53,9 @@ app.use(cors(corsOptions))
 // Body parsing
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+// Cookie parsing
+app.use(cookieParser())
 
 // Enhanced request logging (all environments)
 app.use((req, res, next) => {
@@ -92,7 +99,7 @@ app.use('/api', apiRoutes)
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: 'Honeypot AI Backend API',
+    message: 'Helwa AI Backend API',
     version: '1.0.0',
     endpoints: {
       waitlist: {
@@ -139,20 +146,36 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ============================================
 
-app.listen(PORT, () => {
-  console.log(`🚀 Honeypot AI Backend running on port ${PORT}`)
+app.listen(PORT, async () => {
+  console.log(`🚀 Helwa AI Backend running on port ${PORT}`)
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
   console.log(`📡 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`)
+  
+  // Start Discord bot
+  try {
+    await startBot()
+  } catch (error) {
+    console.error('⚠️  Failed to start Discord bot (continuing without bot):', error.message)
+  }
+  
+  // Initialize cleanup jobs
+  try {
+    initializeCleanupJobs()
+  } catch (error) {
+    console.error('⚠️  Failed to initialize cleanup jobs:', error.message)
+  }
 })
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...')
+  await stopBot()
   process.exit(0)
 })
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...')
+  await stopBot()
   process.exit(0)
 })
 

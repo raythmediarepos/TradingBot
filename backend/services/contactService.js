@@ -94,7 +94,7 @@ const submitContactMessage = async (contactData) => {
 const sendAdminNotification = async (contactData) => {
   // TODO: Implement admin notification
   // Options:
-  // 1. Email to support@honeypot.ai
+  // 1. Email to support@helwa.ai
   // 2. Slack notification
   // 3. Discord webhook
   // 4. SMS to admin phone
@@ -126,11 +126,11 @@ const sendContactConfirmationEmail = async (contactData) => {
   console.log('📧 [STUBBED] Sending confirmation email to:', contactData.email)
   console.log(`
     To: ${contactData.email}
-    Subject: We received your message - Honeypot AI
+    Subject: We received your message - Helwa AI
 
     Hi ${contactData.firstName},
 
-    Thank you for reaching out to Honeypot AI!
+    Thank you for reaching out to Helwa AI!
 
     We've received your message and one of our team members will get back 
     to you within 24-48 hours.
@@ -140,10 +140,10 @@ const sendContactConfirmationEmail = async (contactData) => {
     "${contactData.message}"
 
     If you have any urgent questions, please reply to this email or 
-    contact us directly at support@honeypot.ai
+    contact us directly at support@helwa.ai
 
     Best regards,
-    The Honeypot AI Team 🍯
+    The Helwa AI Team 🍯
   `)
 
   return {

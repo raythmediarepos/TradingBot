@@ -27,6 +27,7 @@ const Header = () => {
   }, [])
 
   const navigation: NavigationItem[] = [
+    { name: 'Beta Program', href: '/beta/signup', badge: 'LIVE' },
     { name: 'Features', href: '#features' },
     { name: 'FAQ', href: '#faq' },
     { name: 'Affiliates', href: '/affiliates' },
@@ -64,10 +65,10 @@ const Header = () => {
                 <div className="flex items-center justify-center gap-2 text-xs text-hp-yellow">
                   <Sparkles className="w-3 h-3" />
                   <span className="font-medium">
-                    Research Chatbot Beta launching soon — Join the waitlist today
+                    🐝 Beta NOW OPEN — 100 Spots (First 20 FREE)
                   </span>
-                  <Link href="#waitlist" className="underline font-semibold hover:text-hp-yellow600">
-                    Sign Up →
+                  <Link href="/beta/signup" className="underline font-semibold hover:text-hp-yellow600">
+                    Join Beta →
                   </Link>
                 </div>
               </div>
@@ -88,11 +89,11 @@ const Header = () => {
               </motion.div>
               <div className="flex flex-col">
                 <span className="text-hp-white font-bold text-lg md:text-xl tracking-tight">
-                  Honeypot AI
+                  Helwa AI
                 </span>
-                <span className="text-[10px] text-gray-500 -mt-1 hidden md:block">
-                  Halal Trading Signals
-                </span>
+                  <span className="text-[10px] text-gray-500 -mt-1 hidden md:block">
+                    Ethical Trading Signals
+                  </span>
               </div>
             </Link>
 
@@ -135,6 +136,26 @@ const Header = () => {
               >
                 <Link href="#faq">
                   Learn More
+                </Link>
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                asChild
+                className="text-gray-300 hover:text-hp-yellow border-hp-yellow/20 hover:border-hp-yellow/40"
+              >
+                <Link href="/login">
+                  Login
+                </Link>
+              </Button>
+              <Button 
+                size="sm"
+                asChild
+                className="shadow-lg shadow-hp-yellow/20 hover:shadow-hp-yellow/30 transition-all"
+              >
+                <Link href="/beta/signup" className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Join Beta
                 </Link>
               </Button>
             </div>
@@ -205,7 +226,7 @@ const Header = () => {
                     <div className="w-8 h-8 bg-hp-yellow rounded-lg flex items-center justify-center font-bold text-hp-black">
                       H
                     </div>
-                    <span className="text-hp-white font-semibold">Honeypot AI</span>
+                    <span className="text-hp-white font-semibold">Helwa AI</span>
                   </div>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -248,7 +269,18 @@ const Header = () => {
                   transition={{ delay: 0.4 }}
                   className="space-y-3"
                 >
+                  <Button size="lg" className="w-full" asChild>
+                    <Link href="/beta/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Join Beta Program
+                    </Link>
+                  </Button>
                   <Button size="lg" variant="outline" className="w-full" asChild>
+                    <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      Login
+                    </Link>
+                  </Button>
+                  <Button size="lg" variant="ghost" className="w-full" asChild>
                     <Link href="#faq" onClick={() => setIsMobileMenuOpen(false)}>
                       Learn More
                     </Link>
@@ -263,7 +295,7 @@ const Header = () => {
                   className="mt-8 pt-8 border-t border-hp-yellow/10"
                 >
                   <p className="text-sm text-gray-500 mb-4">
-                    Advanced halal-compliant trading signals powered by data
+                    Advanced ethical trading signals powered by data
                   </p>
                   <div className="flex items-center gap-4">
                     <div className="text-center">

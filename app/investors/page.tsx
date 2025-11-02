@@ -33,7 +33,7 @@ const InvestorsPage = () => {
     {
       icon: Shield,
       title: 'Unique Value Proposition',
-      description: 'First AI-powered trading platform exclusively for halal-compliant investing with transparent Shariah screening.'
+      description: 'First AI-powered trading platform exclusively for ethical investing with transparent Shariah screening.'
     },
     {
       icon: Zap,
@@ -100,7 +100,7 @@ const InvestorsPage = () => {
             <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-hp-white via-hp-yellow to-hp-white bg-clip-text text-transparent">
               Invest in the Future of
               <br />
-              Halal Trading Intelligence
+              ethical Trading Intelligence
             </h1>
             
             <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
@@ -114,7 +114,7 @@ const InvestorsPage = () => {
                 className="bg-hp-yellow hover:bg-hp-yellow600 text-hp-black font-bold text-lg px-8"
                 asChild
               >
-                <a href="mailto:investors@honeypotai.com">
+                <a href="mailto:investors@helwaai.com">
                   <Mail className="w-5 h-5 mr-2" />
                   Contact Us
                 </a>
@@ -182,7 +182,7 @@ const InvestorsPage = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-hp-white mb-4">
-              Why Invest in Honeypot AI?
+              Why Invest in Helwa AI?
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
               We're not just building software—we're creating the infrastructure for ethical investing at scale.
@@ -319,7 +319,7 @@ const InvestorsPage = () => {
                 className="bg-hp-yellow hover:bg-hp-yellow600 text-hp-black font-bold text-lg px-8"
                 asChild
               >
-                <a href="mailto:investors@honeypotai.com?subject=Investment Inquiry">
+                <a href="mailto:investors@helwaai.com?subject=Investment Inquiry">
                   <Mail className="w-5 h-5 mr-2" />
                   Request Investment Deck
                 </a>
@@ -339,7 +339,7 @@ const InvestorsPage = () => {
             
             <div className="mt-8 pt-8 border-t border-hp-yellow/20">
               <p className="text-sm text-gray-500">
-                Contact us at <a href="mailto:investors@honeypotai.com" className="text-hp-yellow hover:underline">investors@honeypotai.com</a> or schedule a call to discuss partnership opportunities.
+                Contact us at <a href="mailto:investors@helwaai.com" className="text-hp-yellow hover:underline">investors@helwaai.com</a> or schedule a call to discuss partnership opportunities.
               </p>
             </div>
           </motion.div>

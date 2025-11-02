@@ -6,7 +6,7 @@ import FAQ from '@/components/faq'
 
 export const metadata = {
   title: 'Pricing',
-  description: 'Simple, transparent pricing for Honeypot AI trading alerts. No performance fees, cancel anytime.',
+  description: 'Simple, transparent pricing for Helwa AI trading alerts. No performance fees, cancel anytime.',
 }
 
 export default function PricingPage() {

@@ -41,7 +41,7 @@ const sendWaitlistConfirmation = async (email, firstName, lastName, position) =>
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-    const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
 
     console.log(`   → From: ${fromName} <${fromEmail}>`)
     console.log(`   → Resend API Key: ${process.env.RESEND_API_KEY ? '✓ Set' : '✗ Missing'}`)
@@ -49,23 +49,23 @@ const sendWaitlistConfirmation = async (email, firstName, lastName, position) =>
     const data = await resendClient.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [email],
-      subject: `You're on the Honeypot AI Waitlist - Position #${position}`,
+      subject: `You're on the Helwa AI Waitlist - Position #${position}`,
       text: `
 Hi ${firstName},
 
-Thank you for joining the Honeypot AI waitlist! You're confirmed at position #${position}.
+Thank you for joining the Helwa AI waitlist! You're confirmed at position #${position}.
 
-About Honeypot AI
+About Helwa AI
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-We're building the first AI-powered trading assistant designed with Islamic principles at its core. Our platform provides real-time, halal-compliant trading signals with full transparency on every recommendation.
+We're building the first AI-powered trading assistant designed with Islamic principles at its core. Our platform provides real-time, ethical trading signals with full transparency on every recommendation.
 
 What You'll Get
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✓ Real-time buy/sell signals for halal-compliant stocks
+✓ Real-time buy/sell signals for ethical stocks
 ✓ Detailed rationale and risk analysis for every trade
 ✓ Automatic screening: No options, no haram sectors
 ✓ Direct delivery to your Discord server
-✓ Educational resources on halal investing
+✓ Educational resources on ethical investing
 
 Launch Timeline
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -77,20 +77,20 @@ We'll email you as soon as it's your turn to join. In the meantime, you can foll
 
 Stay Connected
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Website: https://honeypotai.com
-Twitter: @HoneypotAI
+Website: https://helwaai.com
+Twitter: @HelwaAI
 Discord: Coming Soon
 
 Have questions? Reply to this email – we read every message.
 
 Best regards,
-The Honeypot AI Team
+The Helwa AI Team
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Honeypot AI · Halal-First Trading Intelligence
-© ${new Date().getFullYear()} Honeypot AI. All rights reserved.
+Helwa AI · Ethical Trading Intelligence
+© ${new Date().getFullYear()} Helwa AI. All rights reserved.
 
-You're receiving this email because you joined our waitlist at honeypotai.com
+You're receiving this email because you joined our waitlist at helwaai.com
       `.trim(),
       html: `
 <!DOCTYPE html>
@@ -99,7 +99,7 @@ You're receiving this email because you joined our waitlist at honeypotai.com
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Welcome to Honeypot AI</title>
+  <title>Welcome to Helwa AI</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A; line-height: 1.6;">
   
@@ -120,10 +120,10 @@ You're receiving this email because you joined our waitlist at honeypotai.com
           <tr>
             <td style="padding: 48px 48px 32px 48px; text-align: center; background: linear-gradient(180deg, rgba(245, 197, 24, 0.08) 0%, transparent 100%);">
               <h1 style="margin: 0; color: #FFFFFF; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">
-                Honeypot AI
+                Helwa AI
               </h1>
               <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px; font-weight: 500; letter-spacing: 0.5px;">
-                Halal Trading Signals
+                ethical Trading Signals
               </p>
             </td>
           </tr>
@@ -138,7 +138,7 @@ You're receiving this email because you joined our waitlist at honeypotai.com
               </p>
               
               <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px; line-height: 1.6;">
-                Thank you for joining the Honeypot AI waitlist! We're excited to have you as part of our early community.
+                Thank you for joining the Helwa AI waitlist! We're excited to have you as part of our early community.
               </p>
               
               <!-- Position Badge -->
@@ -160,10 +160,10 @@ You're receiving this email because you joined our waitlist at honeypotai.com
               
               <!-- About Section -->
               <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 22px; font-weight: 700; line-height: 1.3;">
-                About Honeypot AI
+                About Helwa AI
               </h2>
               <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 15px; line-height: 1.7;">
-                We're building the first AI-powered trading assistant designed with Islamic principles at its core. Our platform provides real-time, halal-compliant trading signals with complete transparency on every recommendation.
+                We're building the first AI-powered trading assistant designed with Islamic principles at its core. Our platform provides real-time, ethical trading signals with complete transparency on every recommendation.
               </p>
               
               <!-- Features Section -->
@@ -178,7 +178,7 @@ You're receiving this email because you joined our waitlist at honeypotai.com
                       <tr>
                         <td style="padding: 10px 0;">
                           <span style="color: #F5C518; font-size: 18px; margin-right: 10px; font-weight: bold;">✓</span>
-                          <span style="color: #E5E5E5; font-size: 15px; line-height: 1.6;">Real-time buy/sell signals for halal-compliant stocks</span>
+                          <span style="color: #E5E5E5; font-size: 15px; line-height: 1.6;">Real-time buy/sell signals for ethical stocks</span>
                         </td>
                       </tr>
                       <tr>
@@ -202,7 +202,7 @@ You're receiving this email because you joined our waitlist at honeypotai.com
                       <tr>
                         <td style="padding: 10px 0;">
                           <span style="color: #F5C518; font-size: 18px; margin-right: 10px; font-weight: bold;">✓</span>
-                          <span style="color: #E5E5E5; font-size: 15px; line-height: 1.6;">Educational resources on halal investing</span>
+                          <span style="color: #E5E5E5; font-size: 15px; line-height: 1.6;">Educational resources on ethical investing</span>
                         </td>
                       </tr>
                     </table>
@@ -254,7 +254,7 @@ You're receiving this email because you joined our waitlist at honeypotai.com
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
                 <tr>
                   <td align="center">
-                    <a href="https://honeypotai.com" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); color: #0A0A0A; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 8px 24px rgba(245, 197, 24, 0.4); letter-spacing: 0.3px;">
+                    <a href="https://helwaai.com" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); color: #0A0A0A; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 8px 24px rgba(245, 197, 24, 0.4); letter-spacing: 0.3px;">
                       Visit Our Website →
                     </a>
                   </td>
@@ -268,7 +268,7 @@ You're receiving this email because you joined our waitlist at honeypotai.com
               
               <p style="margin: 0; color: #D4D4D4; font-size: 15px; line-height: 1.6;">
                 <strong style="color: #FFFFFF;">Best regards,</strong><br>
-                <span style="color: #A3A3A3;">The Honeypot AI Team</span>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
               </p>
               
             </td>
@@ -284,17 +284,17 @@ You're receiving this email because you joined our waitlist at honeypotai.com
                     <div style="height: 2px; background: linear-gradient(90deg, transparent 0%, #F5C518 50%, transparent 100%); margin-bottom: 24px; opacity: 0.3;"></div>
                     
                     <p style="margin: 0 0 16px 0; color: #A3A3A3; font-size: 13px;">
-                      <a href="https://honeypotai.com" style="color: #F5C518; text-decoration: none; font-weight: 600; transition: opacity 0.2s;">Website</a>
+                      <a href="https://helwaai.com" style="color: #F5C518; text-decoration: none; font-weight: 600; transition: opacity 0.2s;">Website</a>
                       <span style="color: #525252; margin: 0 10px;">•</span>
-                      <a href="https://twitter.com/HoneypotAI" style="color: #F5C518; text-decoration: none; font-weight: 600; transition: opacity 0.2s;">Twitter</a>
+                      <a href="https://twitter.com/HelwaAI" style="color: #F5C518; text-decoration: none; font-weight: 600; transition: opacity 0.2s;">Twitter</a>
                       <span style="color: #525252; margin: 0 10px;">•</span>
                       <span style="color: #737373;">Discord (Coming Soon)</span>
                     </p>
                     <p style="margin: 0 0 8px 0; color: #737373; font-size: 12px; line-height: 1.5;">
-                      © ${new Date().getFullYear()} Honeypot AI. All rights reserved.
+                      © ${new Date().getFullYear()} Helwa AI. All rights reserved.
                     </p>
                     <p style="margin: 0; color: #525252; font-size: 11px; line-height: 1.5;">
-                      You're receiving this email because you joined our waitlist at honeypotai.com
+                      You're receiving this email because you joined our waitlist at helwaai.com
                     </p>
                   </td>
                 </tr>
@@ -374,7 +374,7 @@ const sendContactNotification = async (email, firstName, lastName, message, subj
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-    const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
     const adminEmail = process.env.ADMIN_EMAIL || 'raythmedia.repo@gmail.com'
 
     console.log(`   → To Admin: ${adminEmail}`)
@@ -461,12 +461,12 @@ const sendAffiliateApplicationEmail = async (email, name, affiliateCode) => {
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-    const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
 
     const data = await resendClient.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [email],
-      subject: `Affiliate Application Received - Honeypot AI`,
+      subject: `Affiliate Application Received - Helwa AI`,
       html: `
 <!DOCTYPE html>
 <html lang="en">
@@ -495,7 +495,7 @@ const sendAffiliateApplicationEmail = async (email, name, affiliateCode) => {
                 Hi <strong style="color: #F5C518;">${name}</strong>,
               </p>
               <p style="margin: 0 0 24px 0; color: #D4D4D4; font-size: 16px;">
-                Thank you for applying to become a Honeypot AI affiliate! We've received your application and are reviewing it.
+                Thank you for applying to become a Helwa AI affiliate! We've received your application and are reviewing it.
               </p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
                 <tr>
@@ -520,18 +520,18 @@ const sendAffiliateApplicationEmail = async (email, name, affiliateCode) => {
                 </tr>
               </table>
               <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 15px;">
-                Questions? Reply to this email or contact us at <a href="mailto:affiliates@honeypotai.com" style="color: #F5C518; text-decoration: none;">affiliates@honeypotai.com</a>
+                Questions? Reply to this email or contact us at <a href="mailto:affiliates@helwaai.com" style="color: #F5C518; text-decoration: none;">affiliates@helwaai.com</a>
               </p>
               <p style="margin: 24px 0 0 0; color: #D4D4D4; font-size: 15px;">
                 <strong style="color: #FFFFFF;">Best regards,</strong><br>
-                <span style="color: #A3A3A3;">The Honeypot AI Team</span>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
               <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
-                © ${new Date().getFullYear()} Honeypot AI. All rights reserved.
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
               </p>
             </td>
           </tr>
@@ -574,7 +574,7 @@ const sendAffiliateApprovalEmail = async (email, name, affiliateCode, tempPasswo
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-    const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
     const frontendUrl = process.env.FRONTEND_URL || 'https://trading-bot-dusky-two.vercel.app'
     const affiliateLink = `${frontendUrl}/?ref=${affiliateCode}`
     const loginUrl = `${frontendUrl}/affiliates/login`
@@ -582,7 +582,7 @@ const sendAffiliateApprovalEmail = async (email, name, affiliateCode, tempPasswo
     const data = await resendClient.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [email],
-      subject: `🎉 You're Approved! Welcome to Honeypot AI Affiliates`,
+      subject: `🎉 You're Approved! Welcome to Helwa AI Affiliates`,
       html: `
 <!DOCTYPE html>
 <html lang="en">
@@ -659,14 +659,14 @@ const sendAffiliateApprovalEmail = async (email, name, affiliateCode, tempPasswo
 
               <p style="margin: 0; color: #D4D4D4; font-size: 15px;">
                 <strong style="color: #FFFFFF;">Best regards,</strong><br>
-                <span style="color: #A3A3A3;">The Honeypot AI Team</span>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
               <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
-                © ${new Date().getFullYear()} Honeypot AI. All rights reserved.
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
               </p>
             </td>
           </tr>
@@ -708,21 +708,21 @@ const sendAffiliateWelcomeEmail = async (email, name, tempPassword) => {
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-    const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
     const frontendUrl = process.env.FRONTEND_URL || 'https://trading-bot-dusky-two.vercel.app'
     const loginUrl = `${frontendUrl}/affiliates/login`
 
     const data = await resendClient.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [email],
-      subject: `🎉 Welcome to Honeypot AI Affiliates!`,
+      subject: `🎉 Welcome to Helwa AI Affiliates!`,
       html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to Honeypot AI Affiliates</title>
+  <title>Welcome to Helwa AI Affiliates</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
@@ -745,7 +745,7 @@ const sendAffiliateWelcomeEmail = async (email, name, tempPassword) => {
                 Hi <strong style="color: #F5C518;">${name}</strong>!
               </p>
               <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
-                Your Honeypot AI affiliate account has been created! To start earning 10% recurring commissions, please log in and complete your profile setup with your address and payment information.
+                Your Helwa AI affiliate account has been created! To start earning 10% recurring commissions, please log in and complete your profile setup with your address and payment information.
               </p>
               
               <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 22px; font-weight: 700;">Your Login Credentials</h2>
@@ -782,14 +782,14 @@ const sendAffiliateWelcomeEmail = async (email, name, tempPassword) => {
 
               <p style="margin: 0; color: #D4D4D4; font-size: 15px;">
                 <strong style="color: #FFFFFF;">Best regards,</strong><br>
-                <span style="color: #A3A3A3;">The Honeypot AI Team</span>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
               <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
-                © ${new Date().getFullYear()} Honeypot AI. All rights reserved.
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
               </p>
             </td>
           </tr>
@@ -831,7 +831,7 @@ const sendAffiliateSetupCompleteEmail = async (email, name, affiliateCode) => {
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-    const fromName = process.env.EMAIL_FROM_NAME || 'Honeypot AI'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
     const frontendUrl = process.env.FRONTEND_URL || 'https://trading-bot-dusky-two.vercel.app'
     const affiliateLink = `${frontendUrl}/?ref=${affiliateCode}`
 
@@ -913,14 +913,14 @@ const sendAffiliateSetupCompleteEmail = async (email, name, affiliateCode) => {
 
               <p style="margin: 0; color: #D4D4D4; font-size: 15px;">
                 <strong style="color: #FFFFFF;">Best regards,</strong><br>
-                <span style="color: #A3A3A3;">The Honeypot AI Team</span>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
               <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
-                © ${new Date().getFullYear()} Honeypot AI. All rights reserved.
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
               </p>
             </td>
           </tr>
@@ -943,6 +943,394 @@ const sendAffiliateSetupCompleteEmail = async (email, name, affiliateCode) => {
   }
 }
 
+/**
+ * Send beta welcome email with email verification link
+ * @param {string} email - User's email
+ * @param {string} firstName - User's first name
+ * @param {string} position - Position in beta program
+ * @param {boolean} isFree - Is this a free slot?
+ * @param {string} verificationToken - Email verification token
+ * @returns {Promise<boolean>}
+ */
+const sendBetaWelcomeEmail = async (email, firstName, position, isFree, verificationToken) => {
+  console.log('📧 [EMAIL] Sending beta welcome email...')
+  console.log(`   → To: ${email}`)
+  console.log(`   → Position: #${position}`)
+  console.log(`   → Type: ${isFree ? 'FREE' : 'PAID'}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    const verificationUrl = `${frontendUrl}/beta/verify?token=${verificationToken}`
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: `🎉 Welcome to Helwa AI Beta! - Position #${position}`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Beta</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #F5C518 0%, #D4A90E 50%, #F5C518 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">🐝</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 32px; font-weight: 700;">Welcome to Beta!</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Position #${position}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Hi <strong style="color: #F5C518;">${firstName}</strong>!
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                Congratulations! You've secured position #${position} in the Helwa AI Beta Program${isFree ? ' <strong style="color: #F5C518;">(FREE ACCESS)</strong>' : ''}.
+              </p>
+
+              ${isFree ? `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); border-radius: 12px; text-align: center;">
+                    <p style="margin: 0; color: #0A0A0A; font-size: 18px; font-weight: 800;">🎁 FREE BETA ACCESS</p>
+                    <p style="margin: 8px 0 0 0; color: #0A0A0A; font-size: 14px; font-weight: 600;">You're in the first 20!</p>
+                  </td>
+                </tr>
+              </table>
+              ` : `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(245, 197, 24, 0.1); border: 2px solid #F5C518; border-radius: 12px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #F5C518; font-size: 16px; font-weight: 700;">Beta Access: $29.99/month</p>
+                    <p style="margin: 0; color: #A3A3A3; font-size: 14px;">After verification, you'll be directed to payment</p>
+                  </td>
+                </tr>
+              </table>
+              `}
+
+              <h2 style="margin: 0 0 20px 0; color: #F5C518; font-size: 22px; font-weight: 700;">Next Step: Verify Your Email</h2>
+              
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${verificationUrl}" style="display: inline-block; padding: 18px 48px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); color: #0A0A0A; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 8px 24px rgba(245, 197, 24, 0.4);">
+                      Verify Email & Continue →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background-color: rgba(245, 197, 24, 0.05); border-left: 4px solid #F5C518; border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: #F5C518; font-size: 15px; font-weight: 700;">After verification:</p>
+                    <p style="margin: 0 0 8px 0; color: #E5E5E5; font-size: 14px;">✓ Log in to your dashboard</p>
+                    <p style="margin: 0 0 8px 0; color: #E5E5E5; font-size: 14px;">${isFree ? '✓ Get instant Discord access (FREE!)' : '✓ Complete payment to unlock Discord'}</p>
+                    <p style="margin: 0; color: #E5E5E5; font-size: 14px;">✓ Start receiving trading signals</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; color: #A3A3A3; font-size: 13px; line-height: 1.6;">
+                This link expires in 24 hours. If you didn't sign up for the beta program, please ignore this email.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    })
+
+    console.log('✅ [EMAIL SUCCESS] Beta welcome email sent!')
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error('❌ [EMAIL ERROR] Failed to send beta welcome email')
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
+/**
+ * Send Discord invite email
+ * @param {string} email - User's email
+ * @param {string} firstName - User's first name
+ * @param {string} discordToken - Discord invite token
+ * @returns {Promise<boolean>}
+ */
+const sendDiscordInviteEmail = async (email, firstName, discordToken) => {
+  console.log('📧 [EMAIL] Sending Discord invite email...')
+  console.log(`   → To: ${email}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
+    const discordServerInvite = process.env.DISCORD_SERVER_INVITE_URL || 'https://discord.gg/your-server'
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: `🎮 Your Discord Access is Ready! - Helwa AI Beta`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Access Ready</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #F5C518 0%, #D4A90E 50%, #F5C518 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">🎮</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 32px; font-weight: 700;">Join Our Discord!</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Your access is ready</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Hey <strong style="color: #F5C518;">${firstName}</strong>!
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                Your beta access is confirmed! Follow these steps to join our exclusive Discord community and start receiving trading signals.
+              </p>
+
+              <h2 style="margin: 0 0 20px 0; color: #F5C518; font-size: 22px; font-weight: 700;">How to Join:</h2>
+              
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 24px; background-color: rgba(245, 197, 24, 0.05); border: 1px solid rgba(245, 197, 24, 0.15); border-radius: 10px;">
+                    <p style="margin: 0 0 16px 0; color: #F5C518; font-size: 16px; font-weight: 700;">Step 1: Join the Server</p>
+                    <p style="margin: 0 0 20px 0; color: #D4D4D4; font-size: 14px;">Click the button below to join our Discord server.</p>
+                    
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 24px 0;">
+                      <tr>
+                        <td align="center">
+                          <a href="${discordServerInvite}" style="display: inline-block; padding: 14px 32px; background: #5865F2; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                            Join Discord Server →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin: 0 0 16px 0; color: #F5C518; font-size: 16px; font-weight: 700;">Step 2: Verify Your Access</p>
+                    <p style="margin: 0 0 12px 0; color: #D4D4D4; font-size: 14px;">After joining, you'll receive a DM from our bot. Send it this verification code:</p>
+                    
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 16px 0;">
+                      <tr>
+                        <td style="padding: 16px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); border-radius: 8px; text-align: center;">
+                          <p style="margin: 0; color: #0A0A0A; font-size: 18px; font-weight: 800; font-family: monospace; word-break: break-all;">${discordToken}</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin: 0 0 16px 0; color: #F5C518; font-size: 16px; font-weight: 700;">Step 3: Get Access</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 14px;">Once verified, you'll automatically get the Beta Tester role and access to all channels!</p>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(245, 197, 24, 0.08); border-left: 4px solid #F5C518; border-radius: 8px;">
+                    <p style="margin: 0 0 8px 0; color: #F5C518; font-size: 14px; font-weight: 700;">💡 Pro Tips:</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">• Make sure your Discord DMs are enabled</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">• Copy your verification code (it's unique to you)</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 13px;">• This code expires in 7 days</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 15px;">
+                Need help? Reply to this email or tag @admin in Discord.
+              </p>
+              <p style="margin: 24px 0 0 0; color: #D4D4D4; font-size: 15px;">
+                <strong style="color: #FFFFFF;">See you in Discord!</strong><br>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    })
+
+    console.log('✅ [EMAIL SUCCESS] Discord invite email sent!')
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error('❌ [EMAIL ERROR] Failed to send Discord invite email')
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
+/**
+ * Send payment confirmation email
+ * @param {string} email - User's email
+ * @param {string} firstName - User's first name
+ * @returns {Promise<boolean>}
+ */
+const sendPaymentConfirmationEmail = async (email, firstName) => {
+  console.log('📧 [EMAIL] Sending payment confirmation email...')
+  console.log(`   → To: ${email}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: `✅ Payment Confirmed - Welcome to Helwa AI Beta!`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Confirmed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #F5C518 0%, #D4A90E 50%, #F5C518 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 32px; font-weight: 700;">Payment Confirmed!</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Beta Access Activated</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Welcome <strong style="color: #F5C518;">${firstName}</strong>!
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                Your payment of $29.99/month has been confirmed and your beta access is now active! Check your inbox for your Discord invite.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 24px; background: linear-gradient(135deg, rgba(245, 197, 24, 0.15) 0%, rgba(212, 169, 14, 0.08) 100%); border: 1px solid rgba(245, 197, 24, 0.3); border-radius: 10px;">
+                    <p style="margin: 0 0 16px 0; color: #F5C518; font-size: 16px; font-weight: 700;">✓ Subscription Active</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">Amount: $29.99/month</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">Next billing: ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+                    <p style="margin: 0; color: #A3A3A3; font-size: 13px;">You can manage your subscription anytime</p>
+                  </td>
+                </tr>
+              </table>
+
+              <h2 style="margin: 0 0 16px 0; color: #F5C518; font-size: 20px; font-weight: 700;">What's Next?</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background-color: rgba(245, 197, 24, 0.05); border-left: 4px solid #F5C518; border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 14px;">✓ Check your email for Discord invite</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 14px;">✓ Join our exclusive Discord server</p>
+                    <p style="margin: 0 0 12px 0; color: #E5E5E5; font-size: 14px;">✓ Complete verification to get beta role</p>
+                    <p style="margin: 0; color: #E5E5E5; font-size: 14px;">✓ Start receiving trading signals!</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; color: #D4D4D4; font-size: 15px;">
+                <strong style="color: #FFFFFF;">Welcome aboard!</strong><br>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    })
+
+    console.log('✅ [EMAIL SUCCESS] Payment confirmation email sent!')
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error('❌ [EMAIL ERROR] Failed to send payment confirmation email')
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
 module.exports = {
   sendWaitlistConfirmation,
   sendContactNotification,
@@ -950,4 +1338,8 @@ module.exports = {
   sendAffiliateApprovalEmail,
   sendAffiliateWelcomeEmail,
   sendAffiliateSetupCompleteEmail,
+  // Beta program emails
+  sendBetaWelcomeEmail,
+  sendDiscordInviteEmail,
+  sendPaymentConfirmationEmail,
 }

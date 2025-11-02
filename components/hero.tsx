@@ -12,7 +12,7 @@ const Hero = () => {
   const scale = useTransform(scrollY, [0, 600], [1, 0.95])
 
   const trustMetrics = [
-    { icon: Shield, label: 'Halal Screened', value: '100%', description: 'No options trading' },
+    { icon: Shield, label: 'Ethically Screened', value: '100%', description: 'Transparent criteria' },
     { icon: Zap, label: 'Ultra-Fast', value: '<1s', description: 'Signal latency' },
     { icon: TrendingUp, label: 'Uptime', value: '99.9%', description: 'Service reliability' },
     { icon: CheckCircle, label: 'Transparent', value: 'Full', description: 'Signal rationale' },
@@ -21,7 +21,7 @@ const Hero = () => {
   const stats = [
     { value: '1B+', label: 'Data Points' },
     { value: '24/7', label: 'Market Monitoring' },
-    { value: '50+', label: 'Halal Stocks' },
+    { value: '50+', label: 'Verified Stocks' },
   ]
 
   return (
@@ -73,7 +73,7 @@ const Hero = () => {
           >
             <Sparkles className="text-hp-yellow w-4 h-4" />
             <span className="text-hp-yellow text-sm font-semibold tracking-wide">
-              Halal-Compliant Trading Alerts
+              AI-Powered Ethical Trading
             </span>
             <span className="bg-hp-yellow/20 text-hp-yellow text-xs font-bold px-2 py-0.5 rounded-full">
               NEW
@@ -102,7 +102,7 @@ const Hero = () => {
             <br />
             <span className="text-gray-300">and</span>{' '}
             <span className="bg-gradient-to-r from-hp-yellow via-hp-yellow to-hp-yellow600 bg-clip-text text-transparent">
-              compliance
+              clarity
             </span>
           </motion.h1>
 
@@ -113,36 +113,45 @@ const Hero = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-xl md:text-2xl text-gray-400 mb-4 max-w-3xl mx-auto leading-relaxed font-light"
           >
-            Real-time halal-compliant trading signals with{' '}
+            Real-time ethical trading signals with{' '}
             <span className="text-hp-white font-medium">transparent rationale</span>
-            —no haram sectors, no options, no compromises.
+            —powered by AI, guided by principles, built for results.
           </motion.p>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6 }}
-            className="text-base text-gray-500 mb-10 flex items-center justify-center gap-2"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/10 to-green-400/10 border border-green-500/30 rounded-full mb-6"
           >
-            <BarChart3 className="w-4 h-4 text-hp-yellow" />
-            Coming soon • Join the waitlist for early access
-          </motion.p>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span className="text-sm text-green-400 font-semibold">
+              Beta Program NOW OPEN — 100 Spots Available (First 20 FREE)
+            </span>
+          </motion.div>
 
           {/* Enhanced CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.8 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8"
           >
             <Button 
               size="lg" 
               asChild 
-              className="w-full sm:w-auto text-base px-8 h-14 shadow-lg shadow-hp-yellow/20 hover:shadow-xl hover:shadow-hp-yellow/30 transition-all group"
+              className="w-full sm:w-auto text-base px-8 h-14 shadow-lg shadow-hp-yellow/20 hover:shadow-xl hover:shadow-hp-yellow/30 transition-all group relative overflow-hidden"
             >
-              <Link href="#waitlist" className="flex items-center gap-2">
-                Join Trading Bot Waitlist
+              <Link href="/beta/signup" className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Join Beta Program
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <span className="absolute top-0 right-0 px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-bl-lg">
+                  LIVE
+                </span>
               </Link>
             </Button>
             <Button
@@ -151,12 +160,21 @@ const Hero = () => {
               asChild
               className="w-full sm:w-auto text-base px-8 h-14 border-2 hover:bg-hp-yellow/5 group"
             >
-              <Link href="#features" className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Learn More
+              <Link href="#waitlist" className="flex items-center gap-2">
+                Or Join Waitlist
               </Link>
             </Button>
           </motion.div>
+          
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-sm text-gray-500 mb-12 flex items-center justify-center gap-2"
+          >
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            First 20 users get <strong className="text-hp-yellow mx-1">FREE</strong> access • $49.99 one-time after • Valid until Dec 31, 2025
+          </motion.p>
 
           {/* Stats Bar */}
           <motion.div

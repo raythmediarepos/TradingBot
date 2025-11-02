@@ -19,15 +19,15 @@ const Footer = () => {
     company: [
       { name: 'About', href: '#' },
       { name: 'Blog', href: '#' },
-      { name: 'Contact', href: 'mailto:hello@honeypot.ai' },
+      { name: 'Contact', href: 'mailto:hello@helwa.ai' },
     ],
   }
 
   const socialLinks = [
-    { name: 'Twitter', icon: Twitter, href: 'https://twitter.com/honeypotai' },
-    { name: 'LinkedIn', icon: Linkedin, href: 'https://linkedin.com/company/honeypotai' },
-    { name: 'GitHub', icon: Github, href: 'https://github.com/honeypotai' },
-    { name: 'Email', icon: Mail, href: 'mailto:hello@honeypot.ai' },
+    { name: 'Twitter', icon: Twitter, href: 'https://twitter.com/helwaai' },
+    { name: 'LinkedIn', icon: Linkedin, href: 'https://linkedin.com/company/helwaai' },
+    { name: 'GitHub', icon: Github, href: 'https://github.com/helwaai' },
+    { name: 'Email', icon: Mail, href: 'mailto:hello@helwa.ai' },
   ]
 
   return (
@@ -41,11 +41,11 @@ const Footer = () => {
                 H
               </div>
               <span className="text-hp-white font-semibold text-lg">
-                Honeypot AI
+                Helwa AI
               </span>
             </Link>
             <p className="text-gray-400 text-sm mb-4 max-w-xs">
-              Halal-first trading alerts with transparent rationale. Fast,
+              Ethical trading alerts with transparent rationale. Fast,
               compliant, and trustworthy.
             </p>
             <div className="flex items-center space-x-4">
@@ -124,7 +124,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center gap-4 mb-4 md:mb-0">
               <p className="text-gray-500 text-sm">
-                © {currentYear} Honeypot AI. All rights reserved.
+                © {currentYear} Helwa AI. All rights reserved.
               </p>
               <Link 
                 href="/admin/login" 

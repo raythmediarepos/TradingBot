@@ -1,0 +1,479 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { User, CreditCard, LogOut, CheckCircle2, XCircle, Loader2, Shield, ExternalLink, Copy } from 'lucide-react'
+import { fetchWithAuth, logout, getUserData } from '@/lib/auth'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
+
+// Helper function to format date from various formats
+const formatDate = (dateValue: any): string => {
+  if (!dateValue) return 'N/A'
+  
+  try {
+    // Check if it's a Firestore Timestamp with seconds property
+    if (dateValue.seconds) {
+      return new Date(dateValue.seconds * 1000).toLocaleDateString()
+    }
+    
+    // Check if it's a serialized Firestore Timestamp with _seconds
+    if (dateValue._seconds) {
+      return new Date(dateValue._seconds * 1000).toLocaleDateString()
+    }
+    
+    // Check if it's an ISO string or valid date string
+    if (typeof dateValue === 'string') {
+      const date = new Date(dateValue)
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString()
+      }
+    }
+    
+    // Try direct Date conversion as last resort
+    const date = new Date(dateValue)
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString()
+    }
+    
+    return 'N/A'
+  } catch (error) {
+    console.error('Error formatting date:', error)
+    return 'N/A'
+  }
+}
+
+function DashboardContent() {
+  const router = useRouter()
+  const user = getUserData()
+  const [betaStatus, setBetaStatus] = useState<any>(null)
+  const [subscription, setSubscription] = useState<any>(null)
+  const [discordStatus, setDiscordStatus] = useState<any>(null)
+  const [discordInvite, setDiscordInvite] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [generatingInvite, setGeneratingInvite] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // First refresh the current user data from API
+        const { getCurrentUser } = await import('@/lib/auth')
+        await getCurrentUser()
+        
+        const [betaRes, subRes, discordRes] = await Promise.all([
+          fetchWithAuth('/api/user/beta-status'),
+          fetchWithAuth('/api/user/subscription'),
+          fetchWithAuth('/api/user/discord-status'),
+        ])
+
+        const betaData = await betaRes.json()
+        const subData = await subRes.json()
+        const discordData = await discordRes.json()
+
+        console.log('📊 Dashboard Data:', { betaData, subData, discordData })
+
+        if (betaData.success) setBetaStatus(betaData.data)
+        if (subData.success) setSubscription(subData.data)
+        if (discordData.success) setDiscordStatus(discordData.data)
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const handleLogout = async () => {
+    await logout()
+    router.push('/login')
+  }
+
+  const generateDiscordInvite = async () => {
+    setGeneratingInvite(true)
+    setInviteError(null)
+    
+    try {
+      const response = await fetchWithAuth('/api/user/generate-discord-invite', {
+        method: 'POST',
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setDiscordInvite(data.data)
+      } else {
+        setInviteError(data.message || 'Failed to generate Discord invite')
+        if (data.redirectTo) {
+          setTimeout(() => router.push(data.redirectTo), 2000)
+        }
+      }
+    } catch (error) {
+      console.error('Error generating Discord invite:', error)
+      setInviteError('Failed to generate Discord invite. Please try again.')
+    } finally {
+      setGeneratingInvite(false)
+    }
+  }
+
+  const copyInviteLink = () => {
+    if (discordInvite?.inviteLink) {
+      navigator.clipboard.writeText(discordInvite.inviteLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-hp-black text-hp-white">
+      {/* Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-radial from-hp-yellow/10 to-transparent blur-3xl" />
+      </div>
+
+      {/* Header */}
+      <header className="border-b border-white/10 relative z-10">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="text-2xl font-bold text-hp-yellow hover:text-hp-yellow600 transition-colors">
+              🐝 Helwa AI
+            </Link>
+            <div className="flex items-center gap-4">
+              {user?.role === 'admin' && (
+                <Link
+                  href="/admin/beta-users"
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-lg hover:bg-purple-500/30 transition-colors"
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin Panel
+                </Link>
+              )}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-6 py-12 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-4xl mx-auto"
+        >
+          {/* Welcome Section */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-hp-white mb-2">
+              Welcome back, {user?.firstName}! 👋
+            </h1>
+            <p className="text-gray-400">Manage your beta access</p>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-12 h-12 text-hp-yellow animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Beta Status Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-hp-gray900 border border-hp-yellow/20 rounded-2xl p-6"
+              >
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <User className="w-5 h-5 text-hp-yellow" />
+                  Beta Status
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">Position</p>
+                    <p className="text-2xl font-bold text-hp-yellow">#{betaStatus?.position}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">Access Type</p>
+                    <p className="text-lg font-bold">
+                      {betaStatus?.isFree ? (
+                        <span className="text-green-500">FREE</span>
+                      ) : (
+                        <span className="text-blue-500">PAID</span>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">Email Status</p>
+                    <p className="text-lg flex items-center gap-2">
+                      {betaStatus?.emailVerified ? (
+                        <>
+                          <CheckCircle2 className="w-5 h-5 text-green-500" />
+                          <span className="text-sm">Verified</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-5 h-5 text-red-500" />
+                          <span className="text-sm">Pending</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">Discord</p>
+                    <p className="text-lg flex items-center gap-2">
+                      {betaStatus?.discordJoined ? (
+                        <>
+                          <CheckCircle2 className="w-5 h-5 text-green-500" />
+                          <span className="text-sm">Connected</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-5 h-5 text-yellow-500" />
+                          <span className="text-sm">Not Connected</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Subscription Card */}
+              {!betaStatus?.isFree && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-hp-gray900 border border-hp-yellow/20 rounded-2xl p-6"
+                >
+                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-hp-yellow" />
+                    Payment Status
+                  </h2>
+                  {subscription?.hasSubscription || betaStatus?.paymentStatus === 'paid' ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-green-500 font-medium flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5" />
+                            Paid
+                          </p>
+                          <p className="text-2xl font-bold mt-2">$49.99<span className="text-sm text-gray-400"> one-time</span></p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-400">Access Until</p>
+                          <p className="text-green-500 font-medium">Dec 31, 2025</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <XCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+                      <p className="text-yellow-500 font-medium mb-2">Payment Required</p>
+                      <p className="text-sm text-gray-400 mb-4">
+                        Complete your payment to access the Discord community
+                      </p>
+                      <Link
+                        href={`/beta/payment?userId=${user?.id}`}
+                        className="inline-block px-6 py-3 bg-gradient-to-r from-hp-yellow to-hp-yellow600 text-hp-black font-bold rounded-lg hover:shadow-lg hover:shadow-hp-yellow/30 transition-all"
+                      >
+                        Complete Payment
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Discord Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/30 rounded-2xl p-6"
+              >
+                <h2 className="text-xl font-bold mb-4">🎮 Discord Access</h2>
+                
+                {/* Already Joined */}
+                {discordStatus?.discordJoined ? (
+                  <div className="text-center py-4">
+                    <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                    <p className="text-xl font-bold text-green-500 mb-2">Connected!</p>
+                    <p className="text-gray-300 mb-4">
+                      You're already a member of our Discord community
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Discord: {discordStatus.discordUsername || 'Connected'}
+                    </p>
+                  </div>
+                ) : discordInvite ? (
+                  /* Invite Generated */
+                  <div className="space-y-4">
+                    <div className="text-center py-2">
+                      <p className="text-green-500 font-medium flex items-center justify-center gap-2 mb-4">
+                        <CheckCircle2 className="w-5 h-5" />
+                        Your Discord Invite is Ready!
+                      </p>
+                    </div>
+                    
+                    {/* Step 1: Join Server */}
+                    <div className="bg-hp-black/50 border border-indigo-500/30 rounded-lg p-4">
+                      <p className="text-sm font-bold text-indigo-400 mb-3">Step 1: Join Discord Server</p>
+                      <a
+                        href={discordInvite.inviteLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all text-center flex items-center justify-center gap-2"
+                      >
+                        Join Discord Server
+                        <ExternalLink className="w-5 h-5" />
+                      </a>
+                    </div>
+
+                    {/* Step 2: Verification Token */}
+                    <div className="bg-gradient-to-br from-hp-yellow/10 to-hp-yellow/5 border border-hp-yellow/30 rounded-lg p-4">
+                      <p className="text-sm font-bold text-hp-yellow mb-3">Step 2: Send This Code to the Bot</p>
+                      <p className="text-xs text-gray-400 mb-3">
+                        After joining, our bot will DM you. Send this verification code:
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 bg-black/50 px-4 py-3 rounded-lg text-hp-yellow font-mono text-base break-all">
+                          {discordInvite.token}
+                        </code>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(discordInvite.token)
+                            setCopied(true)
+                            setTimeout(() => setCopied(false), 2000)
+                          }}
+                          className="flex items-center gap-2 px-4 py-3 bg-hp-yellow/20 border border-hp-yellow/30 text-hp-yellow rounded-lg hover:bg-hp-yellow/30 transition-colors whitespace-nowrap"
+                        >
+                          {copied ? (
+                            <>
+                              <CheckCircle2 className="w-4 h-4" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4 h-4" />
+                              Copy
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-3 text-center">
+                        💡 Copy this code and paste it in the Discord DM from our bot
+                      </p>
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 text-center">
+                      ⏰ Expires: {new Date(discordInvite.expiresAt).toLocaleString()}
+                    </p>
+                  </div>
+                ) : (
+                  /* Generate Invite Button */
+                  <div className="space-y-4">
+                    {!betaStatus?.emailVerified ? (
+                      <div className="text-center py-4">
+                        <XCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+                        <p className="text-yellow-500 font-medium mb-2">Email Verification Required</p>
+                        <p className="text-sm text-gray-400">
+                          Please verify your email to access Discord
+                        </p>
+                      </div>
+                    ) : betaStatus?.requiresPayment ? (
+                      <div className="text-center py-4">
+                        <XCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+                        <p className="text-yellow-500 font-medium mb-2">Payment Required</p>
+                        <p className="text-sm text-gray-400 mb-4">
+                          Complete your $49.99 one-time payment to unlock Discord access
+                        </p>
+                        <Link
+                          href={`/beta/payment?userId=${user?.id}`}
+                          className="inline-block px-6 py-3 bg-gradient-to-r from-hp-yellow to-hp-yellow/80 text-hp-black font-bold rounded-lg hover:shadow-lg hover:shadow-hp-yellow/30 transition-all"
+                        >
+                          Complete Payment
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-gray-300 mb-4">
+                          {betaStatus?.isFree 
+                            ? '🎉 You have FREE access! Click below to get your Discord invite.'
+                            : 'Click below to generate your Discord invite link'}
+                        </p>
+                        <button
+                          onClick={generateDiscordInvite}
+                          disabled={generatingInvite}
+                          className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                        >
+                          {generatingInvite ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              Generate Discord Invite
+                              <ExternalLink className="w-5 h-5" />
+                            </>
+                          )}
+                        </button>
+                        
+                        {inviteError && (
+                          <p className="mt-4 text-sm text-red-400">{inviteError}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Account Info */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-hp-gray900 border border-gray-700 rounded-2xl p-6"
+              >
+                <h2 className="text-xl font-bold mb-4">Account Information</h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Email</span>
+                    <span className="text-white">{user?.email}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Name</span>
+                    <span className="text-white">{user?.firstName} {user?.lastName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Member Since</span>
+                    <span className="text-white">
+                      {formatDate(user?.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute requireAuth={true}>
+      <DashboardContent />
+    </ProtectedRoute>
+  )
+}
+

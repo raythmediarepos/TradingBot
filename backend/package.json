@@ -1,7 +1,7 @@
 {
-  "name": "honeypot-ai-backend",
+  "name": "helwa-ai-backend",
   "version": "1.0.0",
-  "description": "Backend services for Honeypot AI Trading Bot",
+  "description": "Backend services for Helwa AI Trading Bot",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,19 +10,26 @@
   },
   "keywords": [
     "trading",
-    "halal",
+    "ethical",
     "firebase",
     "api"
   ],
-  "author": "Honeypot AI",
+  "author": "Helwa AI",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "discord.js": "^14.24.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.1.0",
     "firebase-admin": "^12.0.0",
     "helmet": "^7.1.0",
-    "resend": "^3.0.0"
+    "jsonwebtoken": "^9.0.2",
+    "node-cron": "^4.2.1",
+    "resend": "^3.0.0",
+    "stripe": "^19.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

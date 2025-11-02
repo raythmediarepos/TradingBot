@@ -5,12 +5,12 @@
     "priceMonthly": "$0",
     "priceYearly": "$0",
     "billing": "Forever",
-    "description": "Perfect for trying out Honeypot AI with basic features",
+    "description": "Perfect for trying out Helwa AI with basic features",
     "features": [
       "Delayed alerts (15-min delay)",
       "Up to 5 tickers",
       "Email notifications only",
-      "Basic halal screening",
+      "Basic ethical screening",
       "Community support"
     ],
     "cta": "Join Waitlist",
@@ -31,7 +31,7 @@
       "Real-time alerts (sub-second)",
       "Unlimited tickers",
       "Email, SMS, Telegram & Discord",
-      "Advanced halal screening filters",
+      "Advanced ethical screening filters",
       "Signal rationale & datapoints",
       "Priority support",
       "Research Chatbot access (when available)"
@@ -62,7 +62,7 @@
       "API access (beta)"
     ],
     "cta": "Contact Sales",
-    "ctaLink": "mailto:team@honeypot.ai",
+    "ctaLink": "mailto:team@helwa.ai",
     "highlighted": false
   }
 ]

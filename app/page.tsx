@@ -1,7 +1,6 @@
 import * as React from 'react'
 import Header from '@/components/header'
 import Hero from '@/components/hero'
-import HalalExplainer from '@/components/halal-explainer'
 import HowItWorks from '@/components/how-it-works'
 import ValueCards from '@/components/value-cards'
 import SignalsTable from '@/components/signals-table'
@@ -17,7 +16,6 @@ export default function HomePage() {
       <HoneyEffects />
       <Header />
       <Hero />
-      <HalalExplainer />
       <HowItWorks />
       <ValueCards />
       <SignalsTable />

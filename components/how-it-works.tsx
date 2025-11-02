@@ -23,9 +23,9 @@ const HowItWorks = () => {
     {
       icon: ShieldCheck,
       number: '03',
-      title: 'Halal Compliance Check',
+      title: 'Ethical Screening',
       description:
-        'Every call is thoroughly screened to ensure it meets halal investing principles—no haram sectors, no options.',
+        'Every call is thoroughly screened to ensure it meets ethical investing principles and transparent criteria.',
     },
     {
       icon: Bell,
@@ -53,7 +53,7 @@ const HowItWorks = () => {
             How It Works
           </h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Get started with Honeypot AI in four simple steps
+            Get started with Helwa AI in four simple steps
           </p>
         </motion.div>
 

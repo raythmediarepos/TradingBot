@@ -4,7 +4,7 @@ import Footer from '@/components/footer'
 
 export const metadata = {
   title: 'Risk Disclaimer',
-  description: 'Comprehensive risk disclaimer for Honeypot AI - Important information about trading risks, limitations, and user responsibilities.',
+  description: 'Comprehensive risk disclaimer for Helwa AI - Important information about trading risks, limitations, and user responsibilities.',
 }
 
 export default function DisclaimerPage() {
@@ -34,7 +34,7 @@ export default function DisclaimerPage() {
               <p className="text-gray-300 text-sm">
                 Trading and investing in financial markets involves substantial risk of loss. This disclaimer contains important 
                 information about the limitations of our Service, the risks involved in trading, and your responsibilities as a user. 
-                By using Honeypot AI, you acknowledge that you have read, understood, and agree to this disclaimer.
+                By using Helwa AI, you acknowledge that you have read, understood, and agree to this disclaimer.
               </p>
             </div>
 
@@ -50,7 +50,7 @@ export default function DisclaimerPage() {
                 </div>
                 <p className="mb-4">
                   <strong className="text-hp-white">1.1 Educational Purpose Only:</strong> All content, alerts, signals, analysis, 
-                  research tools, and information provided through Honeypot AI (the &quot;Service&quot;) are for educational and informational 
+                  research tools, and information provided through Helwa AI (the &quot;Service&quot;) are for educational and informational 
                   purposes only. They do not constitute:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 mb-4">
@@ -63,7 +63,7 @@ export default function DisclaimerPage() {
                 </ul>
                 <p className="mb-4">
                   <strong className="text-hp-white">1.2 No Advisory Relationship:</strong> Use of the Service does not create an 
-                  advisor-client, fiduciary, attorney-client, or any professional relationship between you and Honeypot AI. We are 
+                  advisor-client, fiduciary, attorney-client, or any professional relationship between you and Helwa AI. We are 
                   not acting as your broker, advisor, attorney, accountant, or agent.
                 </p>
                 <p className="mb-4">
@@ -125,7 +125,7 @@ export default function DisclaimerPage() {
                   3. No Guarantees or Warranties
                 </h2>
                 <p className="mb-4">
-                  Honeypot AI makes no representations, warranties, or guarantees of any kind, express or implied, regarding:
+                  Helwa AI makes no representations, warranties, or guarantees of any kind, express or implied, regarding:
                 </p>
                 
                 <div className="mb-6">
@@ -154,7 +154,7 @@ export default function DisclaimerPage() {
                   <h3 className="text-xl font-semibold text-hp-white mb-3">3.3 Data and Information</h3>
                   <ul className="list-disc pl-6 space-y-2">
                     <li>The accuracy of market data, prices, or financial information</li>
-                    <li>The completeness of our halal screening process</li>
+                    <li>The completeness of our ethical screening process</li>
                     <li>The quality or reliability of third-party data sources</li>
                     <li>The absence of errors, omissions, or inaccuracies in our content</li>
                   </ul>
@@ -298,15 +298,15 @@ export default function DisclaimerPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold text-hp-white mb-4">
-                  7. Halal Screening Disclaimer
+                  7. ethical Screening Disclaimer
                 </h2>
                 <p className="mb-4">
                   <strong className="text-hp-white">7.1 Not Religious Guidance:</strong> While we make efforts to screen securities 
-                  according to principles commonly associated with Islamic finance, Honeypot AI is not a religious authority, Islamic 
+                  according to principles commonly associated with Islamic finance, Helwa AI is not a religious authority, Islamic 
                   scholar, or certification body. We do not provide religious guidance or certification.
                 </p>
                 <p className="mb-4">
-                  <strong className="text-hp-white">7.2 Methodology Limitations:</strong> Our halal screening is based on:
+                  <strong className="text-hp-white">7.2 Methodology Limitations:</strong> Our ethical screening is based on:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 mb-4">
                   <li>Publicly available financial data which may be incomplete, outdated, or inaccurate</li>
@@ -316,7 +316,7 @@ export default function DisclaimerPage() {
                 </ul>
                 <p className="mb-4">
                   <strong className="text-hp-white">7.3 Scholarly Differences:</strong> Islamic scholars and authorities have varying 
-                  interpretations and opinions regarding what constitutes halal investing. Our screening may not align with all scholarly 
+                  interpretations and opinions regarding what constitutes ethical investing. Our screening may not align with all scholarly 
                   views or your personal interpretation.
                 </p>
                 <p className="mb-4">
@@ -335,7 +335,7 @@ export default function DisclaimerPage() {
                   <li>Consider multiple screening methodologies</li>
                 </ul>
                 <p>
-                  <strong className="text-hp-white">7.6 Subject to Change:</strong> A security&apos;s halal status can change over time due to 
+                  <strong className="text-hp-white">7.6 Subject to Change:</strong> A security&apos;s ethical status can change over time due to 
                   changes in business activities, financial ratios, or scholarly interpretations. Past screening results do not guarantee 
                   current or future compliance.
                 </p>
@@ -374,7 +374,7 @@ export default function DisclaimerPage() {
                   9. No Automatic Trading or Account Access
                 </h2>
                 <p className="mb-4">
-                  <strong className="text-hp-white">9.1 Manual Trading Only:</strong> Honeypot AI does not execute trades on your behalf. 
+                  <strong className="text-hp-white">9.1 Manual Trading Only:</strong> Helwa AI does not execute trades on your behalf. 
                   We do not have access to your brokerage accounts, funds, or trading authority.
                 </p>
                 <p className="mb-4">
@@ -432,7 +432,7 @@ export default function DisclaimerPage() {
                   11. Regulatory Status and Disclosures
                 </h2>
                 <p className="mb-4">
-                  <strong className="text-hp-white">11.1 Not a Regulated Entity:</strong> Honeypot AI is not:
+                  <strong className="text-hp-white">11.1 Not a Regulated Entity:</strong> Helwa AI is not:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 mb-4">
                   <li>A registered investment advisor (RIA)</li>
@@ -501,7 +501,7 @@ export default function DisclaimerPage() {
                   14. Your Responsibilities as a User
                 </h2>
                 <p className="mb-4">
-                  By using Honeypot AI, you acknowledge and agree that you are solely responsible for:
+                  By using Helwa AI, you acknowledge and agree that you are solely responsible for:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 mb-4">
                   <li><strong className="text-hp-white">Trading Decisions:</strong> All trading and investment decisions and their consequences</li>
@@ -538,9 +538,9 @@ export default function DisclaimerPage() {
                   For questions or concerns about this Risk Disclaimer:
                 </p>
                 <div className="p-4 bg-hp-gray-900 border border-gray-800 rounded-lg">
-                  <p className="mb-2"><strong className="text-hp-white">Legal Inquiries:</strong> legal@honeypot.ai</p>
-                  <p className="mb-2"><strong className="text-hp-white">General Support:</strong> support@honeypot.ai</p>
-                  <p><strong className="text-hp-white">Website:</strong> https://honeypot.ai</p>
+                  <p className="mb-2"><strong className="text-hp-white">Legal Inquiries:</strong> legal@helwa.ai</p>
+                  <p className="mb-2"><strong className="text-hp-white">General Support:</strong> support@helwa.ai</p>
+                  <p><strong className="text-hp-white">Website:</strong> https://helwa.ai</p>
                 </div>
               </section>
 
@@ -549,7 +549,7 @@ export default function DisclaimerPage() {
                   Acknowledgment and Agreement
                 </p>
                 <p className="text-gray-300 mb-3">
-                  By using Honeypot AI, you acknowledge that you have read, understood, and agree to this Risk Disclaimer in its entirety. 
+                  By using Helwa AI, you acknowledge that you have read, understood, and agree to this Risk Disclaimer in its entirety. 
                   You understand the risks involved in trading and agree to:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 text-gray-300 text-sm">
@@ -557,7 +557,7 @@ export default function DisclaimerPage() {
                   <li>Conduct your own research and due diligence</li>
                   <li>Only trade with money you can afford to lose</li>
                   <li>Consult with qualified professionals before making financial decisions</li>
-                  <li>Not hold Honeypot AI liable for any losses</li>
+                  <li>Not hold Helwa AI liable for any losses</li>
                 </ul>
               </div>
             </div>

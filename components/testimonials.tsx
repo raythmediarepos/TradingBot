@@ -18,7 +18,7 @@ const Testimonials = () => {
 
   const trustBadges = [
     { icon: Users, value: '1B+', label: 'Data Points Analyzed' },
-    { icon: TrendingUp, value: '50+', label: 'Halal Stocks Screened' },
+    { icon: TrendingUp, value: '50+', label: 'Stocks Screened' },
     { icon: Award, value: '24/7', label: 'Market Coverage' },
   ]
 
@@ -59,7 +59,7 @@ const Testimonials = () => {
             </span>
           </h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Join thousands of satisfied traders making informed, halal-compliant decisions
+            Join thousands of satisfied traders making informed, ethical decisions
           </p>
         </motion.div>
 

@@ -1,8 +1,8 @@
 [
   {
     "id": "1",
-    "question": "What makes Honeypot halal-compliant?",
-    "answer": "Honeypot applies comprehensive halal screening to all tickers. We exclude prohibited sectors (alcohol, gambling, adult entertainment, conventional banking/interest-heavy businesses). We also screen for financial ratios including interest income thresholds and leverage limits. Most importantly, we never provide signals for options, calls, puts, or any derivative instruments—only direct equity and compliant crypto holdings."
+    "question": "What makes Helwa halal-compliant?",
+    "answer": "Helwa applies comprehensive halal screening to all tickers. We exclude prohibited sectors (alcohol, gambling, adult entertainment, conventional banking/interest-heavy businesses). We also screen for financial ratios including interest income thresholds and leverage limits. Most importantly, we never provide signals for options, calls, puts, or any derivative instruments—only direct equity and compliant crypto holdings."
   },
   {
     "id": "2",
@@ -12,7 +12,7 @@
   {
     "id": "3",
     "question": "Do you place trades automatically?",
-    "answer": "No. Honeypot AI is an alert and research platform, not a trading bot. We provide you with signals and insights, but you remain in complete control of all trading decisions. We do not have access to your brokerage accounts and cannot execute trades on your behalf."
+    "answer": "No. Helwa AI is an alert and research platform, not a trading bot. We provide you with signals and insights, but you remain in complete control of all trading decisions. We do not have access to your brokerage accounts and cannot execute trades on your behalf."
   },
   {
     "id": "4",
@@ -32,7 +32,7 @@
   {
     "id": "7",
     "question": "Is this financial advice?",
-    "answer": "No. Honeypot AI provides educational alerts and research tools, not personalized financial advice. All signals are based on technical analysis and quantitative models. Past performance is not indicative of future results. You should consult with a qualified financial advisor before making investment decisions. Trading carries risk of loss."
+    "answer": "No. Helwa AI provides educational alerts and research tools, not personalized financial advice. All signals are based on technical analysis and quantitative models. Past performance is not indicative of future results. You should consult with a qualified financial advisor before making investment decisions. Trading carries risk of loss."
   },
   {
     "id": "8",
