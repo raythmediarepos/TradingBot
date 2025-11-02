@@ -4,8 +4,7 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "outputDirectory": ".next",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
-  "regions": ["pdx1"],
+  "regions": ["iad1"],
   "github": {
     "silent": true
   }
