@@ -206,9 +206,9 @@ export const getCurrentUser = async (): Promise<User | null> => {
 export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = getAuthToken()
 
-  const headers = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   }
 
   if (token) {
