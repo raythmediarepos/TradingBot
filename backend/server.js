@@ -40,6 +40,10 @@ const corsOptions = {
     else if (origin && origin.match(/https:\/\/.*\.vercel\.app$/)) {
       callback(null, true)
     }
+    // Allow helwa.ai custom domain
+    else if (origin && origin.match(/https:\/\/(www\.)?helwa\.ai$/)) {
+      callback(null, true)
+    }
     else {
       console.warn(`CORS blocked origin: ${origin}`)
       callback(new Error('Not allowed by CORS'))
