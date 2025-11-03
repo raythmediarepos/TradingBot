@@ -312,7 +312,7 @@ export default function BetaPaymentPage() {
                 )}
 
                 {/* Error Display */}
-                {error && status === 'error' && (
+                {error && (
                   <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                     <p className="text-red-400 text-sm">{error}</p>
                   </div>
