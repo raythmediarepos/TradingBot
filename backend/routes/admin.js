@@ -486,7 +486,7 @@ router.get('/discord/members', authenticate, requireAdmin, async (req, res) => {
 
     // Match Discord members with beta users
     const enrichedMembers = membersResult.members.map(member => {
-      const betaUser = betaUsers.find(u => u.discordJoined && u.discordUserId === member.id)
+      const betaUser = betaUsers.find(u => u.discordUserId === member.id)
       return {
         ...member,
         email: betaUser?.email || null,
