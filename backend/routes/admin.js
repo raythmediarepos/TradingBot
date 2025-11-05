@@ -102,6 +102,221 @@ router.get('/discord/status', authenticate, requireAdmin, async (req, res) => {
   }
 })
 
+// ============================================
+// DASHBOARD OVERVIEW
+// ============================================
+
+/**
+ * @route   GET /api/admin/dashboard
+ * @desc    Get dashboard overview with all stats
+ * @access  Admin only
+ */
+router.get('/dashboard', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { getAllBetaUsers } = require('../services/betaUserService')
+    const stripeService = require('../services/stripeService')
+    const discordBotService = require('../services/discordBotService')
+
+    // Fetch all data in parallel
+    const [usersResult, paymentsResult, discordStatsResult, analyticsResult] = await Promise.all([
+      getAllBetaUsers(),
+      stripeService.getAllPayments({ limit: 100 }),
+      discordBotService.getGuildStats(),
+      discordBotService.getAnalytics('7d'),
+    ])
+
+    const users = usersResult.success ? usersResult.users : []
+    const payments = paymentsResult.success ? paymentsResult.payments : []
+
+    // Calculate user stats
+    const now = new Date()
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startOfWeek = new Date(startOfToday)
+    startOfWeek.setDate(startOfToday.getDate() - 7)
+
+    const userStats = {
+      total: users.length,
+      free: users.filter(u => u.isFree).length,
+      paid: users.filter(u => !u.isFree && u.paymentStatus === 'paid').length,
+      verified: users.filter(u => u.emailVerified).length,
+      discordJoined: users.filter(u => u.discordJoined).length,
+      newToday: users.filter(u => {
+        const created = u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt)
+        return created >= startOfToday
+      }).length,
+      newThisWeek: users.filter(u => {
+        const created = u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt)
+        return created >= startOfWeek
+      }).length,
+    }
+
+    // Calculate revenue stats
+    const successfulPayments = payments.filter(p => p.status === 'succeeded')
+    const totalRevenue = successfulPayments.reduce((sum, p) => sum + p.amount, 0)
+    const todayRevenue = successfulPayments
+      .filter(p => new Date(p.created) >= startOfToday)
+      .reduce((sum, p) => sum + p.amount, 0)
+    const weekRevenue = successfulPayments
+      .filter(p => new Date(p.created) >= startOfWeek)
+      .reduce((sum, p) => sum + p.amount, 0)
+
+    // Last 7 days revenue for mini chart
+    const last7DaysRevenue = []
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(startOfToday)
+      date.setDate(startOfToday.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      
+      const dayRevenue = successfulPayments
+        .filter(p => {
+          const paymentDate = new Date(p.created).toISOString().split('T')[0]
+          return paymentDate === dateStr
+        })
+        .reduce((sum, p) => sum + p.amount, 0)
+      
+      last7DaysRevenue.push({
+        date: dateStr,
+        amount: dayRevenue,
+      })
+    }
+
+    // Last 7 days user signups for mini chart
+    const last7DaysSignups = []
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(startOfToday)
+      date.setDate(startOfToday.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      
+      const daySignups = users.filter(u => {
+        const created = u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt)
+        const createdStr = created.toISOString().split('T')[0]
+        return createdStr === dateStr
+      }).length
+      
+      last7DaysSignups.push({
+        date: dateStr,
+        count: daySignups,
+      })
+    }
+
+    // Discord stats
+    const discordStats = discordStatsResult.success ? {
+      totalMembers: discordStatsResult.stats.totalMembers,
+      verifiedMembers: discordStatsResult.stats.verifiedMembers,
+      unverifiedMembers: discordStatsResult.stats.unverifiedMembers,
+      botOnline: discordStatsResult.stats.botOnline,
+    } : {
+      totalMembers: 0,
+      verifiedMembers: 0,
+      unverifiedMembers: 0,
+      botOnline: false,
+    }
+
+    // Analytics stats
+    const analyticsStats = analyticsResult.success ? {
+      totalMessages: analyticsResult.data.totalMessages,
+      activeUsers: analyticsResult.data.topCommenters.length,
+    } : {
+      totalMessages: 0,
+      activeUsers: 0,
+    }
+
+    // Recent activity - last 10 signups
+    const recentSignups = users
+      .sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt)
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt)
+        return dateB - dateA
+      })
+      .slice(0, 10)
+      .map(u => ({
+        type: 'signup',
+        user: {
+          id: u.id,
+          email: u.email,
+          name: `${u.firstName} ${u.lastName}`,
+          isFree: u.isFree,
+        },
+        timestamp: u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt),
+      }))
+
+    // Recent payments - last 10
+    const recentPayments = successfulPayments
+      .sort((a, b) => new Date(b.created) - new Date(a.created))
+      .slice(0, 10)
+      .map(p => {
+        const user = users.find(u => u.stripePaymentIntentId === p.id || u.stripeCustomerId === p.customer?.id)
+        return {
+          type: 'payment',
+          payment: {
+            id: p.id,
+            amount: p.amount,
+            currency: p.currency,
+          },
+          user: user ? {
+            id: user.id,
+            email: user.email,
+            name: `${user.firstName} ${user.lastName}`,
+          } : null,
+          timestamp: new Date(p.created),
+        }
+      })
+
+    // Recent Discord joins - last 10
+    const recentDiscordJoins = users
+      .filter(u => u.discordJoined)
+      .sort((a, b) => {
+        const dateA = a.discordJoinedAt?.toDate ? a.discordJoinedAt.toDate() : new Date(a.discordJoinedAt || 0)
+        const dateB = b.discordJoinedAt?.toDate ? b.discordJoinedAt.toDate() : new Date(b.discordJoinedAt || 0)
+        return dateB - dateA
+      })
+      .slice(0, 10)
+      .map(u => ({
+        type: 'discord_join',
+        user: {
+          id: u.id,
+          email: u.email,
+          name: `${u.firstName} ${u.lastName}`,
+          discordUsername: u.discordUsername,
+        },
+        timestamp: u.discordJoinedAt?.toDate ? u.discordJoinedAt.toDate() : new Date(u.discordJoinedAt || 0),
+      }))
+
+    // Combine and sort all recent activity
+    const recentActivity = [...recentSignups, ...recentPayments, ...recentDiscordJoins]
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 15)
+
+    console.log(`✅ [ADMIN] Dashboard data retrieved`)
+
+    res.json({
+      success: true,
+      stats: {
+        users: userStats,
+        revenue: {
+          total: totalRevenue,
+          today: todayRevenue,
+          thisWeek: weekRevenue,
+          last7Days: last7DaysRevenue,
+        },
+        discord: discordStats,
+        analytics: analyticsStats,
+        signups: {
+          last7Days: last7DaysSignups,
+        },
+      },
+      recentActivity,
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error getting dashboard data:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get dashboard data',
+      error: error.message,
+    })
+  }
+})
+
 /**
  * @route   GET /api/admin/beta-users
  * @desc    Get all beta users with filtering and stats
