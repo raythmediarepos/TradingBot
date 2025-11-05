@@ -306,7 +306,7 @@ export default function AdminBetaUsersPage() {
             <div className="bg-hp-gray900 border border-hp-yellow/30 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <DollarSign className="w-4 h-4 text-hp-yellow" />
-                <p className="text-xs text-gray-400">Revenue</p>
+                <p className="text-xs text-gray-400">Total Beta Revenue</p>
               </div>
               <p className="text-2xl font-bold">${stats.revenue.toFixed(2)}</p>
             </div>

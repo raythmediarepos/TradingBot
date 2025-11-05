@@ -207,7 +207,9 @@ router.get('/beta-users', authenticate, requireAdmin, async (req, res) => {
     const verifiedEmails = users.filter(u => u.emailVerified).length
     const joinedDiscord = users.filter(u => u.discordJoined).length
     const activeUsers = users.filter(u => u.status === 'active').length
-    const totalRevenue = paidUsers * 49.99
+    // Revenue: Only count users who actually completed payment (paymentStatus === 'paid')
+    const confirmedPaidUsers = users.filter(u => u.paymentStatus === 'paid').length
+    const totalRevenue = confirmedPaidUsers * 49.99
 
     // Serialize user data
     const serializedUsers = users.map(user => serializeFirestoreData(user))
