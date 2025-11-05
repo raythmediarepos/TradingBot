@@ -219,7 +219,7 @@ export default function AdminDiscordPage() {
     }
   }
 
-  const handleToggleAdmin = async (userId: string, username: string, currentStatus: boolean) => {
+  const handleToggleAdmin = async (userId: string, username: string, discriminator: string, currentStatus: boolean) => {
     if (currentStatus) {
       const confirm = window.confirm(`Remove admin marker from ${username}?`)
       if (!confirm) return
@@ -230,7 +230,8 @@ export default function AdminDiscordPage() {
         `✅ Grant FREE access until Dec 31, 2025\n` +
         `✅ Activate their account (verified)\n` +
         `✅ Give them Beta Tester role\n` +
-        `✅ Send them a notification DM\n\n` +
+        `✅ Send them a notification DM\n` +
+        `✅ Create account if needed (for co-founders)\n\n` +
         `Continue?`
       )
       if (!confirm) return
@@ -240,7 +241,11 @@ export default function AdminDiscordPage() {
     try {
       const response = await fetchWithAuth(`/api/admin/discord/members/${userId}/toggle-admin`, {
         method: 'POST',
-        body: JSON.stringify({ isAdmin: !currentStatus }),
+        body: JSON.stringify({ 
+          isAdmin: !currentStatus,
+          username,
+          discriminator,
+        }),
       })
       const data = await response.json()
 
@@ -502,10 +507,10 @@ export default function AdminDiscordPage() {
                             </button>
                           )}
                           <button
-                            onClick={() => handleToggleAdmin(member.id, member.username, member.isMarkedAdmin || false)}
-                            disabled={actionLoading === `admin-${member.id}` || !member.betaUserId}
+                            onClick={() => handleToggleAdmin(member.id, member.username, member.discriminator, member.isMarkedAdmin || false)}
+                            disabled={actionLoading === `admin-${member.id}`}
                             className={`p-2 hover:bg-yellow-500/20 rounded-lg transition-colors ${member.isMarkedAdmin ? 'text-yellow-400' : 'text-gray-400'} disabled:opacity-50`}
-                            title={member.isMarkedAdmin ? "Remove Admin Marker" : "Mark as Admin"}
+                            title={member.isMarkedAdmin ? "Remove Admin Marker" : "Mark as Admin (Works for co-founders without beta account)"}
                           >
                             {actionLoading === `admin-${member.id}` ? (
                               <Loader2 className="w-4 h-4 animate-spin" />

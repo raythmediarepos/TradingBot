@@ -672,8 +672,10 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
   try {
     const { getAllBetaUsers, updateBetaUser, USER_STATUS, PAYMENT_STATUS } = require('../services/betaUserService')
     const discordBotService = require('../services/discordBotService')
+    const admin = require('firebase-admin')
+    const db = admin.firestore()
     const { userId } = req.params
-    const { isAdmin } = req.body
+    const { isAdmin, username, discriminator } = req.body
 
     // Find beta user with this Discord ID
     const usersResult = await getAllBetaUsers()
@@ -684,9 +686,38 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
       })
     }
 
-    const betaUser = usersResult.users.find(u => u.discordUserId === userId)
+    let betaUser = usersResult.users.find(u => u.discordUserId === userId)
     
-    if (!betaUser) {
+    // If no beta account exists and marking as admin, create one
+    if (!betaUser && isAdmin) {
+      console.log(`📝 [ADMIN] Creating beta account for Discord member ${userId}`)
+      
+      const userRef = db.collection('betaUsers').doc()
+      const newUserData = {
+        id: userRef.id,
+        email: `discord_${userId}@helwa.ai`, // Placeholder email
+        firstName: username || 'Discord',
+        lastName: 'Admin',
+        passwordHash: null, // No password for Discord-only accounts
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        emailVerified: true,
+        status: USER_STATUS.ACTIVE,
+        isFree: true,
+        paymentStatus: PAYMENT_STATUS.PAID,
+        accessExpiresAt: new Date('2025-12-31T23:59:59Z'),
+        discordUserId: userId,
+        discordJoined: true,
+        isMarkedAdmin: true,
+        markedAdminAt: new Date(),
+        markedAdminBy: req.user.email,
+      }
+      
+      await userRef.set(newUserData)
+      betaUser = { id: userRef.id, ...newUserData }
+      
+      console.log(`✅ [ADMIN] Created beta account ${userRef.id} for Discord user ${userId}`)
+    } else if (!betaUser && !isAdmin) {
       return res.status(404).json({
         success: false,
         message: 'Beta user not found for this Discord member',
@@ -707,14 +738,13 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
       updateData.emailVerified = true
       updateData.paymentStatus = PAYMENT_STATUS.PAID
       updateData.accessExpiresAt = new Date('2025-12-31T23:59:59Z')
+      updateData.discordJoined = true
+      updateData.discordUserId = userId
       
-      // If they haven't joined Discord yet, they'll need to verify
-      // But if they have, assign the Beta Tester role
-      if (betaUser.discordJoined) {
-        const roleResult = await discordBotService.assignBetaRole(userId)
-        if (!roleResult.success) {
-          console.warn(`⚠️ [ADMIN] Could not assign Beta role to ${userId}: ${roleResult.message}`)
-        }
+      // Assign the Beta Tester role
+      const roleResult = await discordBotService.assignBetaRole(userId)
+      if (!roleResult.success) {
+        console.warn(`⚠️ [ADMIN] Could not assign Beta role to ${userId}: ${roleResult.message}`)
       }
     }
 
