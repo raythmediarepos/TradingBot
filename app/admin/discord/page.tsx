@@ -220,9 +220,21 @@ export default function AdminDiscordPage() {
   }
 
   const handleToggleAdmin = async (userId: string, username: string, currentStatus: boolean) => {
-    const action = currentStatus ? 'remove admin marker from' : 'mark as admin'
-    const confirm = window.confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ${username}?`)
-    if (!confirm) return
+    if (currentStatus) {
+      const confirm = window.confirm(`Remove admin marker from ${username}?`)
+      if (!confirm) return
+    } else {
+      const confirm = window.confirm(
+        `Mark ${username} as admin?\n\n` +
+        `This will:\n` +
+        `✅ Grant FREE access until Dec 31, 2025\n` +
+        `✅ Activate their account (verified)\n` +
+        `✅ Give them Beta Tester role\n` +
+        `✅ Send them a notification DM\n\n` +
+        `Continue?`
+      )
+      if (!confirm) return
+    }
 
     setActionLoading(`admin-${userId}`)
     try {
@@ -233,6 +245,7 @@ export default function AdminDiscordPage() {
       const data = await response.json()
 
       if (data.success) {
+        alert(data.message)
         fetchData()
       } else {
         alert(`Failed: ${data.message}`)

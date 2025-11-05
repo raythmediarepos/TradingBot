@@ -670,7 +670,8 @@ router.post('/discord/announce', authenticate, requireAdmin, async (req, res) =>
  */
 router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { getAllBetaUsers, updateBetaUser } = require('../services/betaUserService')
+    const { getAllBetaUsers, updateBetaUser, USER_STATUS, PAYMENT_STATUS } = require('../services/betaUserService')
+    const discordBotService = require('../services/discordBotService')
     const { userId } = req.params
     const { isAdmin } = req.body
 
@@ -692,12 +693,33 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
       })
     }
 
-    // Update admin marker
-    const updateResult = await updateBetaUser(betaUser.id, {
+    // If marking as admin, grant them full access
+    const updateData = {
       isMarkedAdmin: isAdmin,
       markedAdminAt: isAdmin ? new Date() : null,
       markedAdminBy: isAdmin ? req.user.email : null,
-    })
+    }
+
+    if (isAdmin) {
+      // Grant full access when marking as admin
+      updateData.isFree = true
+      updateData.status = USER_STATUS.ACTIVE
+      updateData.emailVerified = true
+      updateData.paymentStatus = PAYMENT_STATUS.PAID
+      updateData.accessExpiresAt = new Date('2025-12-31T23:59:59Z')
+      
+      // If they haven't joined Discord yet, they'll need to verify
+      // But if they have, assign the Beta Tester role
+      if (betaUser.discordJoined) {
+        const roleResult = await discordBotService.assignBetaRole(userId)
+        if (!roleResult.success) {
+          console.warn(`⚠️ [ADMIN] Could not assign Beta role to ${userId}: ${roleResult.message}`)
+        }
+      }
+    }
+
+    // Update user in database
+    const updateResult = await updateBetaUser(betaUser.id, updateData)
 
     if (!updateResult.success) {
       return res.status(400).json({
@@ -706,11 +728,24 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
       })
     }
 
+    // Send Discord DM notification
+    if (isAdmin) {
+      const dmMessage = `🎉 **Congratulations!**\n\nYou have been marked as an **Admin** by ${req.user.email}.\n\nYour account has been granted:\n✅ **Free Access** until December 31, 2025\n✅ **Beta Tester** role access\n✅ All premium features unlocked\n\nThank you for being part of the Helwa AI team! 👑`
+      
+      const dmResult = await discordBotService.sendDirectMessage(userId, dmMessage)
+      if (!dmResult.success) {
+        console.warn(`⚠️ [ADMIN] Could not send DM to ${userId}: ${dmResult.message}`)
+      }
+    }
+
     console.log(`👑 [ADMIN] ${req.user.email} marked Discord user ${userId} as ${isAdmin ? 'admin' : 'non-admin'}`)
+    if (isAdmin) {
+      console.log(`   → Granted free access, active status, and Beta Tester role`)
+    }
 
     res.json({
       success: true,
-      message: `Successfully ${isAdmin ? 'marked as admin' : 'removed admin marker'}`,
+      message: `Successfully ${isAdmin ? 'marked as admin with full access granted' : 'removed admin marker'}`,
     })
   } catch (error) {
     console.error('❌ [ADMIN] Error toggling admin marker:', error)
