@@ -775,5 +775,58 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
   }
 })
 
+/**
+ * @route   GET /api/admin/discord/analytics
+ * @desc    Get Discord analytics data
+ * @access  Admin only
+ */
+router.get('/discord/analytics', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const discordBotService = require('../services/discordBotService')
+    const { timeRange = '30d' } = req.query
+
+    const result = await discordBotService.getAnalytics(timeRange)
+    
+    if (!result.success) {
+      return res.status(500).json(result)
+    }
+
+    res.json(result)
+  } catch (error) {
+    console.error('❌ [ADMIN] Error getting Discord analytics:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get Discord analytics',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   GET /api/admin/discord/member-growth
+ * @desc    Get Discord member growth data
+ * @access  Admin only
+ */
+router.get('/discord/member-growth', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const discordBotService = require('../services/discordBotService')
+
+    const result = await discordBotService.getMemberGrowth()
+    
+    if (!result.success) {
+      return res.status(500).json(result)
+    }
+
+    res.json(result)
+  } catch (error) {
+    console.error('❌ [ADMIN] Error getting member growth:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get member growth',
+      error: error.message,
+    })
+  }
+})
+
 module.exports = router
 

@@ -16,6 +16,7 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent, // For analytics - reading message content
     GatewayIntentBits.DirectMessages,
   ],
 })
@@ -171,11 +172,10 @@ client.on('guildMemberAdd', async (member) => {
  * Direct message handler for token verification
  */
 client.on('messageCreate', async (message) => {
-  // Ignore bot messages and non-DM messages
-  if (message.author.bot || !message.guild === null) return
+  // Handle DM messages
+  if (!message.guild) {
+    if (message.author.bot) return
 
-  // Check if message is a DM
-  if (message.channel.type === 1) { // DM channel
     const content = message.content.trim()
 
     // Check for special VIP/admin access command
@@ -188,7 +188,17 @@ client.on('messageCreate', async (message) => {
     if (content.startsWith('discord_')) {
       await handleTokenVerification(message, content)
     }
+    return
   }
+
+  // Handle guild messages for analytics
+  if (message.author.bot) return
+  
+  // Only track messages in our guild
+  if (message.guild.id !== DISCORD_CONFIG.SERVER_ID) return
+
+  // Track message for analytics
+  await trackMessage(message)
 })
 
 /**
@@ -840,6 +850,236 @@ const manuallyVerifyUser = async (userId) => {
 }
 
 // ============================================
+// ANALYTICS TRACKING
+// ============================================
+
+/**
+ * Track message for analytics
+ */
+const trackMessage = async (message) => {
+  try {
+    const admin = require('firebase-admin')
+    const db = admin.firestore()
+
+    // Extract emoji count from message
+    const emojiRegex = /<a?:[a-zA-Z0-9_]+:\d+>|[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu
+    const emojis = message.content.match(emojiRegex) || []
+    
+    // Store message analytics
+    await db.collection('discordAnalytics').add({
+      userId: message.author.id,
+      username: message.author.username,
+      channelId: message.channel.id,
+      channelName: message.channel.name,
+      messageLength: message.content.length,
+      emojiCount: emojis.length,
+      emojis: emojis.slice(0, 10), // Store up to 10 emojis
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD for daily aggregation
+      month: new Date().toISOString().substring(0, 7), // YYYY-MM for monthly aggregation
+    })
+  } catch (error) {
+    console.error('Error tracking message:', error.message)
+    // Don't throw - analytics shouldn't break the bot
+  }
+}
+
+/**
+ * Get analytics data
+ */
+const getAnalytics = async (timeRange = '30d') => {
+  try {
+    const admin = require('firebase-admin')
+    const db = admin.firestore()
+
+    // Calculate date range
+    const now = new Date()
+    const startDate = new Date()
+    
+    if (timeRange === '7d') {
+      startDate.setDate(now.getDate() - 7)
+    } else if (timeRange === '30d') {
+      startDate.setDate(now.getDate() - 30)
+    } else if (timeRange === '90d') {
+      startDate.setDate(now.getDate() - 90)
+    } else {
+      startDate.setFullYear(now.getFullYear() - 1) // All time
+    }
+
+    // Fetch analytics data
+    const snapshot = await db.collection('discordAnalytics')
+      .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(startDate))
+      .get()
+
+    if (snapshot.empty) {
+      return {
+        success: true,
+        data: {
+          totalMessages: 0,
+          topCommenters: [],
+          topEmojiUsers: [],
+          channelStats: [],
+          monthlyGrowth: [],
+        },
+      }
+    }
+
+    // Process data
+    const messages = []
+    const userMessageCount = {}
+    const userEmojiCount = {}
+    const channelMessageCount = {}
+    const monthlyData = {}
+
+    snapshot.forEach(doc => {
+      const data = doc.data()
+      messages.push(data)
+
+      // Count messages per user
+      userMessageCount[data.userId] = (userMessageCount[data.userId] || 0) + 1
+
+      // Count emojis per user
+      userEmojiCount[data.userId] = (userEmojiCount[data.userId] || 0) + (data.emojiCount || 0)
+
+      // Count messages per channel
+      const channelKey = `${data.channelId}|${data.channelName}`
+      channelMessageCount[channelKey] = (channelMessageCount[channelKey] || 0) + 1
+
+      // Monthly data
+      if (data.month) {
+        if (!monthlyData[data.month]) {
+          monthlyData[data.month] = { messages: 0, users: new Set() }
+        }
+        monthlyData[data.month].messages++
+        monthlyData[data.month].users.add(data.userId)
+      }
+    })
+
+    // Get usernames
+    const usernames = {}
+    messages.forEach(m => {
+      if (!usernames[m.userId]) {
+        usernames[m.userId] = m.username
+      }
+    })
+
+    // Top commenters
+    const topCommenters = Object.entries(userMessageCount)
+      .map(([userId, count]) => ({
+        userId,
+        username: usernames[userId] || 'Unknown',
+        messageCount: count,
+      }))
+      .sort((a, b) => b.messageCount - a.messageCount)
+      .slice(0, 10)
+
+    // Top emoji users
+    const topEmojiUsers = Object.entries(userEmojiCount)
+      .map(([userId, count]) => ({
+        userId,
+        username: usernames[userId] || 'Unknown',
+        emojiCount: count,
+      }))
+      .sort((a, b) => b.emojiCount - a.emojiCount)
+      .slice(0, 10)
+
+    // Channel stats
+    const channelStats = Object.entries(channelMessageCount)
+      .map(([key, count]) => {
+        const [channelId, channelName] = key.split('|')
+        return {
+          channelId,
+          channelName,
+          messageCount: count,
+          avgMessagesPerDay: (count / ((now - startDate) / (1000 * 60 * 60 * 24))).toFixed(1),
+        }
+      })
+      .sort((a, b) => b.messageCount - a.messageCount)
+
+    // Monthly growth
+    const monthlyGrowth = Object.entries(monthlyData)
+      .map(([month, data]) => ({
+        month,
+        messageCount: data.messages,
+        activeUsers: data.users.size,
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+
+    return {
+      success: true,
+      data: {
+        totalMessages: messages.length,
+        topCommenters,
+        topEmojiUsers,
+        channelStats,
+        monthlyGrowth,
+        timeRange,
+      },
+    }
+  } catch (error) {
+    console.error('Error getting analytics:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Get member growth data
+ */
+const getMemberGrowth = async () => {
+  try {
+    if (!botReady || !guild) {
+      return { success: false, message: 'Bot is not ready' }
+    }
+
+    // Fetch all members
+    await guild.members.fetch()
+    const members = guild.members.cache
+
+    // Group by join month
+    const monthlyJoins = {}
+    
+    members.forEach(member => {
+      if (member.user.bot) return
+      
+      const joinDate = member.joinedAt
+      if (!joinDate) return
+      
+      const month = joinDate.toISOString().substring(0, 7) // YYYY-MM
+      monthlyJoins[month] = (monthlyJoins[month] || 0) + 1
+    })
+
+    // Convert to array and calculate cumulative
+    const growthData = Object.entries(monthlyJoins)
+      .map(([month, joins]) => ({ month, joins }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+
+    let cumulative = 0
+    const cumulativeGrowth = growthData.map(item => {
+      cumulative += item.joins
+      return {
+        ...item,
+        total: cumulative,
+      }
+    })
+
+    return {
+      success: true,
+      data: cumulativeGrowth,
+      currentTotal: members.filter(m => !m.user.bot).size,
+    }
+  } catch (error) {
+    console.error('Error getting member growth:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+// ============================================
 // EXPORTS
 // ============================================
 
@@ -872,6 +1112,10 @@ module.exports = {
   // Announcements
   sendAnnouncement,
   getChannels,
+
+  // Analytics
+  getAnalytics,
+  getMemberGrowth,
 
   // Getters (for admin endpoints)
   getGuild: () => guild,
