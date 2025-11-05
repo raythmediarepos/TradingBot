@@ -409,5 +409,258 @@ router.post('/beta-users/:userId/revoke', authenticate, requireAdmin, async (req
   }
 })
 
+/**
+ * @route   GET /api/admin/discord/overview
+ * @desc    Get Discord server overview and stats
+ * @access  Admin only
+ */
+router.get('/discord/overview', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const discordBotService = require('../services/discordBotService')
+    
+    const isReady = discordBotService.isBotReady()
+    if (!isReady) {
+      return res.status(503).json({
+        success: false,
+        message: 'Discord bot is not ready',
+      })
+    }
+
+    const stats = await discordBotService.getGuildStats()
+    const guild = discordBotService.getGuild()
+    const betaRole = discordBotService.getBetaRole()
+    const unverifiedRole = discordBotService.getUnverifiedRole()
+
+    res.json({
+      success: true,
+      data: {
+        botStatus: 'online',
+        server: {
+          name: guild.name,
+          id: guild.id,
+          memberCount: guild.memberCount,
+        },
+        roles: {
+          beta: {
+            name: betaRole.name,
+            id: betaRole.id,
+            memberCount: betaRole.members.size,
+          },
+          unverified: unverifiedRole ? {
+            name: unverifiedRole.name,
+            id: unverifiedRole.id,
+            memberCount: unverifiedRole.members.size,
+          } : null,
+        },
+        stats: stats.success ? stats.data : null,
+      },
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error getting Discord overview:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get Discord overview',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   GET /api/admin/discord/members
+ * @desc    Get all Discord members with verification status
+ * @access  Admin only
+ */
+router.get('/discord/members', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const discordBotService = require('../services/discordBotService')
+    const { getAllBetaUsers } = require('../services/betaUserService')
+    
+    const membersResult = await discordBotService.getAllMembers()
+    if (!membersResult.success) {
+      return res.status(500).json(membersResult)
+    }
+
+    // Get beta users to match Discord users with emails
+    const usersResult = await getAllBetaUsers()
+    const betaUsers = usersResult.success ? usersResult.users : []
+
+    // Match Discord members with beta users
+    const enrichedMembers = membersResult.members.map(member => {
+      const betaUser = betaUsers.find(u => u.discordJoined && u.discordUserId === member.id)
+      return {
+        ...member,
+        email: betaUser?.email || null,
+        betaUserId: betaUser?.id || null,
+      }
+    })
+
+    res.json({
+      success: true,
+      data: {
+        members: enrichedMembers,
+        total: enrichedMembers.length,
+      },
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error getting Discord members:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get Discord members',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   POST /api/admin/discord/members/:userId/kick
+ * @desc    Kick a member from Discord
+ * @access  Admin only
+ */
+router.post('/discord/members/:userId/kick', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const discordBotService = require('../services/discordBotService')
+    const { userId } = req.params
+    const { reason } = req.body
+
+    const result = await discordBotService.kickMember(userId, reason || 'Kicked by admin')
+    
+    if (!result.success) {
+      return res.status(400).json(result)
+    }
+
+    console.log(`👢 [ADMIN] ${req.user.email} kicked Discord user ${userId}`)
+
+    res.json(result)
+  } catch (error) {
+    console.error('❌ [ADMIN] Error kicking member:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to kick member',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   POST /api/admin/discord/members/:userId/ban
+ * @desc    Ban a member from Discord
+ * @access  Admin only
+ */
+router.post('/discord/members/:userId/ban', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const discordBotService = require('../services/discordBotService')
+    const { userId } = req.params
+    const { reason } = req.body
+
+    const result = await discordBotService.banMember(userId, reason || 'Banned by admin')
+    
+    if (!result.success) {
+      return res.status(400).json(result)
+    }
+
+    console.log(`⛔ [ADMIN] ${req.user.email} banned Discord user ${userId}`)
+
+    res.json(result)
+  } catch (error) {
+    console.error('❌ [ADMIN] Error banning member:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to ban member',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   POST /api/admin/discord/members/:userId/verify
+ * @desc    Manually verify a Discord member
+ * @access  Admin only
+ */
+router.post('/discord/members/:userId/verify', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const discordBotService = require('../services/discordBotService')
+    const { userId } = req.params
+
+    const result = await discordBotService.manuallyVerifyUser(userId)
+    
+    if (!result.success) {
+      return res.status(400).json(result)
+    }
+
+    console.log(`✅ [ADMIN] ${req.user.email} manually verified Discord user ${userId}`)
+
+    res.json(result)
+  } catch (error) {
+    console.error('❌ [ADMIN] Error manually verifying member:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to manually verify member',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   GET /api/admin/discord/channels
+ * @desc    Get all Discord channels
+ * @access  Admin only
+ */
+router.get('/discord/channels', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const discordBotService = require('../services/discordBotService')
+    
+    const result = await discordBotService.getChannels()
+    
+    if (!result.success) {
+      return res.status(500).json(result)
+    }
+
+    res.json(result)
+  } catch (error) {
+    console.error('❌ [ADMIN] Error getting channels:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get channels',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   POST /api/admin/discord/announce
+ * @desc    Send announcement to a Discord channel
+ * @access  Admin only
+ */
+router.post('/discord/announce', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const discordBotService = require('../services/discordBotService')
+    const { channelId, message, isEmbed } = req.body
+
+    if (!channelId || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'Channel ID and message are required',
+      })
+    }
+
+    const result = await discordBotService.sendAnnouncement(channelId, message, isEmbed)
+    
+    if (!result.success) {
+      return res.status(400).json(result)
+    }
+
+    console.log(`📢 [ADMIN] ${req.user.email} sent announcement to channel ${channelId}`)
+
+    res.json(result)
+  } catch (error) {
+    console.error('❌ [ADMIN] Error sending announcement:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send announcement',
+      error: error.message,
+    })
+  }
+})
+
 module.exports = router
 

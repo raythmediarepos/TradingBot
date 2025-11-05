@@ -650,6 +650,185 @@ const getGuildStats = async () => {
   }
 }
 
+/**
+ * Get all members with their verification status
+ */
+const getAllMembers = async () => {
+  try {
+    if (!botReady || !guild) {
+      return { success: false, message: 'Bot is not ready' }
+    }
+
+    await guild.members.fetch()
+    const members = guild.members.cache
+
+    const memberList = members.map(member => ({
+      id: member.user.id,
+      username: member.user.username,
+      discriminator: member.user.discriminator,
+      tag: member.user.tag,
+      bot: member.user.bot,
+      joinedAt: member.joinedAt,
+      roles: member.roles.cache.map(role => ({
+        id: role.id,
+        name: role.name,
+      })),
+      hasVerified: member.roles.cache.has(DISCORD_CONFIG.BETA_ROLE_ID),
+      isUnverified: member.roles.cache.has(DISCORD_CONFIG.UNVERIFIED_ROLE_ID),
+    }))
+
+    return {
+      success: true,
+      members: memberList.filter(m => !m.bot), // Exclude bots
+    }
+  } catch (error) {
+    console.error('Error getting all members:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Ban a member from the server
+ */
+const banMember = async (userId, reason = 'No reason provided') => {
+  try {
+    if (!botReady || !guild) {
+      return { success: false, message: 'Bot is not ready' }
+    }
+
+    const member = await guild.members.fetch(userId)
+    if (!member) {
+      return { success: false, message: 'Member not found' }
+    }
+
+    await member.ban({ reason })
+    console.log(`⛔ [DISCORD] Banned user ${member.user.tag}. Reason: ${reason}`)
+
+    return {
+      success: true,
+      message: `Successfully banned ${member.user.tag}`,
+    }
+  } catch (error) {
+    console.error('Error banning member:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Send announcement to a channel
+ */
+const sendAnnouncement = async (channelId, message, isEmbed = false) => {
+  try {
+    if (!botReady || !guild) {
+      return { success: false, message: 'Bot is not ready' }
+    }
+
+    const channel = await guild.channels.fetch(channelId)
+    if (!channel || !channel.isTextBased()) {
+      return { success: false, message: 'Channel not found or is not a text channel' }
+    }
+
+    if (isEmbed) {
+      await channel.send({
+        embeds: [{
+          title: message.title || 'Announcement',
+          description: message.description,
+          color: 0xFFC107, // Yellow color
+          timestamp: new Date(),
+          footer: {
+            text: 'Helwa AI Team',
+          },
+        }],
+      })
+    } else {
+      await channel.send(message)
+    }
+
+    console.log(`📢 [DISCORD] Announcement sent to #${channel.name}`)
+
+    return {
+      success: true,
+      message: `Announcement sent to #${channel.name}`,
+    }
+  } catch (error) {
+    console.error('Error sending announcement:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Get all channels in the server
+ */
+const getChannels = async () => {
+  try {
+    if (!botReady || !guild) {
+      return { success: false, message: 'Bot is not ready' }
+    }
+
+    await guild.channels.fetch()
+    const channels = guild.channels.cache
+
+    const channelList = channels
+      .filter(channel => channel.isTextBased())
+      .map(channel => ({
+        id: channel.id,
+        name: channel.name,
+        type: channel.type,
+        position: channel.position,
+      }))
+      .sort((a, b) => a.position - b.position)
+
+    return {
+      success: true,
+      channels: channelList,
+    }
+  } catch (error) {
+    console.error('Error getting channels:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Manually assign beta role (admin override)
+ */
+const manuallyVerifyUser = async (userId) => {
+  try {
+    if (!botReady || !guild) {
+      return { success: false, message: 'Bot is not ready' }
+    }
+
+    const member = await guild.members.fetch(userId)
+    if (!member) {
+      return { success: false, message: 'Member not found' }
+    }
+
+    // Assign beta role
+    await member.roles.add(betaRole)
+    
+    // Remove unverified role if they have it
+    if (unverifiedRole && member.roles.cache.has(unverifiedRole.id)) {
+      await member.roles.remove(unverifiedRole)
+    }
+
+    // Send DM
+    try {
+      await member.send('✅ You have been manually verified by an administrator and now have access to the Helwa AI Beta channels!')
+    } catch (dmError) {
+      console.log(`   ⚠️  Could not send DM to ${member.user.tag}`)
+    }
+
+    console.log(`✅ [DISCORD] Manually verified user ${member.user.tag}`)
+
+    return {
+      success: true,
+      message: `Successfully verified ${member.user.tag}`,
+    }
+  } catch (error) {
+    console.error('Error manually verifying user:', error)
+    return { success: false, error: error.message }
+  }
+}
+
 // ============================================
 // EXPORTS
 // ============================================
@@ -669,13 +848,20 @@ module.exports = {
 
   // Member management
   kickMember,
+  banMember,
   sendDirectMessage,
+  getAllMembers,
+  manuallyVerifyUser,
 
   // Invites
   createInviteLink,
 
   // Stats
   getGuildStats,
+
+  // Announcements
+  sendAnnouncement,
+  getChannels,
 
   // Getters (for admin endpoints)
   getGuild: () => guild,
