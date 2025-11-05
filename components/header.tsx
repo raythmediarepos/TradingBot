@@ -91,9 +91,9 @@ const Header = () => {
                 <span className="text-hp-white font-bold text-lg md:text-xl tracking-tight">
                   Helwa AI
                 </span>
-                  <span className="text-[10px] text-gray-500 -mt-1 hidden md:block">
+                <span className="text-[10px] text-gray-500 -mt-1 hidden md:block">
                     Ethical Trading Signals
-                  </span>
+                </span>
               </div>
             </Link>
 

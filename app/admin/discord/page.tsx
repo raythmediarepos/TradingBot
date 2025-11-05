@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Shield, Users, MessageSquare, Activity, Search, RefreshCcw,
   CheckCircle2, XCircle, Clock, Loader2, X, Ban, UserX, Megaphone,
-  Hash, Send, AlertTriangle
+  Hash, Send, AlertTriangle, Crown
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout } from '@/lib/auth'
 
@@ -20,6 +20,7 @@ interface DiscordMember {
   isUnverified: boolean
   email?: string
   betaUserId?: string
+  isMarkedAdmin?: boolean
 }
 
 interface ServerOverview {
@@ -218,6 +219,31 @@ export default function AdminDiscordPage() {
     }
   }
 
+  const handleToggleAdmin = async (userId: string, username: string, currentStatus: boolean) => {
+    const action = currentStatus ? 'remove admin marker from' : 'mark as admin'
+    const confirm = window.confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ${username}?`)
+    if (!confirm) return
+
+    setActionLoading(`admin-${userId}`)
+    try {
+      const response = await fetchWithAuth(`/api/admin/discord/members/${userId}/toggle-admin`, {
+        method: 'POST',
+        body: JSON.stringify({ isAdmin: !currentStatus }),
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        fetchData()
+      } else {
+        alert(`Failed: ${data.message}`)
+      }
+    } catch (error) {
+      alert('Error toggling admin marker')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   const handleSendAnnouncement = async () => {
     if (!selectedChannel || !announcementMessage) {
       alert('Please select a channel and enter a message')
@@ -410,9 +436,19 @@ export default function AdminDiscordPage() {
                   filteredMembers.map((member) => (
                     <tr key={member.id} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <p className="text-sm font-medium">{member.username}</p>
-                          <p className="text-xs text-gray-400">#{member.discriminator}</p>
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <p className="text-sm font-medium flex items-center gap-2">
+                              {member.username}
+                              {member.isMarkedAdmin && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium">
+                                  <Crown className="w-3 h-3" />
+                                  Admin
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-gray-400">#{member.discriminator}</p>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
@@ -452,6 +488,18 @@ export default function AdminDiscordPage() {
                               )}
                             </button>
                           )}
+                          <button
+                            onClick={() => handleToggleAdmin(member.id, member.username, member.isMarkedAdmin || false)}
+                            disabled={actionLoading === `admin-${member.id}` || !member.betaUserId}
+                            className={`p-2 hover:bg-yellow-500/20 rounded-lg transition-colors ${member.isMarkedAdmin ? 'text-yellow-400' : 'text-gray-400'} disabled:opacity-50`}
+                            title={member.isMarkedAdmin ? "Remove Admin Marker" : "Mark as Admin"}
+                          >
+                            {actionLoading === `admin-${member.id}` ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Crown className="w-4 h-4" />
+                            )}
+                          </button>
                           <button
                             onClick={() => handleKickMember(member.id, member.username)}
                             disabled={actionLoading === `kick-${member.id}`}

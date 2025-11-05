@@ -258,14 +258,14 @@ router.get('/beta-status', authenticate, async (req, res) => {
     })
     
     const betaStatusData = serializeFirestoreData({
-      position: req.user.position,
-      isFree: req.user.isFree || false,
-      status: req.user.status,
-      paymentStatus: req.user.paymentStatus,
-      emailVerified: req.user.emailVerified || false,
-      discordJoined: req.user.discordJoined || false,
+        position: req.user.position,
+        isFree: req.user.isFree || false,
+        status: req.user.status,
+        paymentStatus: req.user.paymentStatus,
+        emailVerified: req.user.emailVerified || false,
+        discordJoined: req.user.discordJoined || false,
       requiresPayment: !req.user.isFree && req.user.paymentStatus !== 'paid' && req.user.paymentStatus !== 'free',
-      createdAt: req.user.createdAt,
+        createdAt: req.user.createdAt,
       accessExpiresAt: req.user.accessExpiresAt,
     })
     

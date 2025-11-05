@@ -491,6 +491,7 @@ router.get('/discord/members', authenticate, requireAdmin, async (req, res) => {
         ...member,
         email: betaUser?.email || null,
         betaUserId: betaUser?.id || null,
+        isMarkedAdmin: betaUser?.isMarkedAdmin || false,
       }
     })
 
@@ -657,6 +658,65 @@ router.post('/discord/announce', authenticate, requireAdmin, async (req, res) =>
     res.status(500).json({
       success: false,
       message: 'Failed to send announcement',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   POST /api/admin/discord/members/:userId/toggle-admin
+ * @desc    Toggle admin marker for a Discord member
+ * @access  Admin only
+ */
+router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { getAllBetaUsers, updateBetaUser } = require('../services/betaUserService')
+    const { userId } = req.params
+    const { isAdmin } = req.body
+
+    // Find beta user with this Discord ID
+    const usersResult = await getAllBetaUsers()
+    if (!usersResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch users',
+      })
+    }
+
+    const betaUser = usersResult.users.find(u => u.discordUserId === userId)
+    
+    if (!betaUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Beta user not found for this Discord member',
+      })
+    }
+
+    // Update admin marker
+    const updateResult = await updateBetaUser(betaUser.id, {
+      isMarkedAdmin: isAdmin,
+      markedAdminAt: isAdmin ? new Date() : null,
+      markedAdminBy: isAdmin ? req.user.email : null,
+    })
+
+    if (!updateResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to update admin marker',
+      })
+    }
+
+    console.log(`👑 [ADMIN] ${req.user.email} marked Discord user ${userId} as ${isAdmin ? 'admin' : 'non-admin'}`)
+
+    res.json({
+      success: true,
+      message: `Successfully ${isAdmin ? 'marked as admin' : 'removed admin marker'}`,
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error toggling admin marker:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle admin marker',
       error: error.message,
     })
   }
