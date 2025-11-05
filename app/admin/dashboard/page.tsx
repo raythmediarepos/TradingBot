@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Shield, Users, Settings, LogOut, Loader2 } from 'lucide-react'
-import { isAuthenticated, isAdmin, logout, getUser } from '@/lib/auth'
+import { isAuthenticated, isAdmin, logout, getUserData } from '@/lib/auth'
 
 export default function AdminDashboardPage() {
   const router = useRouter()
@@ -18,7 +18,7 @@ export default function AdminDashboardPage() {
       return
     }
 
-    const userData = getUser()
+    const userData = getUserData()
     setUser(userData)
     setLoading(false)
   }, [router])
