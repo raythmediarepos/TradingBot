@@ -221,17 +221,16 @@ export default function AdminDiscordPage() {
 
   const handleToggleAdmin = async (userId: string, username: string, discriminator: string, currentStatus: boolean) => {
     if (currentStatus) {
-      const confirm = window.confirm(`Remove admin marker from ${username}?`)
+      const confirm = window.confirm(`Remove admin status from ${username}?`)
       if (!confirm) return
     } else {
       const confirm = window.confirm(
-        `Mark ${username} as admin?\n\n` +
+        `Mark ${username} as a Server Admin?\n\n` +
         `This will:\n` +
-        `✅ Grant FREE access until Dec 31, 2025\n` +
-        `✅ Activate their account (verified)\n` +
-        `✅ Give them Beta Tester role\n` +
-        `✅ Send them a notification DM\n` +
-        `✅ Create account if needed (for co-founders)\n\n` +
+        `👑 Mark them as a co-founder/server owner\n` +
+        `📝 Create admin record in system\n` +
+        `📬 Send them a notification DM\n\n` +
+        `This is for leadership team only.\n\n` +
         `Continue?`
       )
       if (!confirm) return
@@ -510,7 +509,7 @@ export default function AdminDiscordPage() {
                             onClick={() => handleToggleAdmin(member.id, member.username, member.discriminator, member.isMarkedAdmin || false)}
                             disabled={actionLoading === `admin-${member.id}`}
                             className={`p-2 hover:bg-yellow-500/20 rounded-lg transition-colors ${member.isMarkedAdmin ? 'text-yellow-400' : 'text-gray-400'} disabled:opacity-50`}
-                            title={member.isMarkedAdmin ? "Remove Admin Marker" : "Mark as Admin (Works for co-founders without beta account)"}
+                            title={member.isMarkedAdmin ? "Remove Admin Status" : "Mark as Server Admin/Co-founder"}
                           >
                             {actionLoading === `admin-${member.id}` ? (
                               <Loader2 className="w-4 h-4 animate-spin" />

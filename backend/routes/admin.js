@@ -688,43 +688,38 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
 
     let betaUser = usersResult.users.find(u => u.discordUserId === userId)
     
-    // If no beta account exists and marking as admin, create one
+    // If no record exists and marking as admin, create minimal admin record
     if (!betaUser && isAdmin) {
-      console.log(`📝 [ADMIN] Creating beta account for Discord member ${userId}`)
+      console.log(`📝 [ADMIN] Creating admin record for Discord member ${userId}`)
       
       const userRef = db.collection('betaUsers').doc()
       const newUserData = {
         id: userRef.id,
-        email: `discord_${userId}@helwa.ai`, // Placeholder email
+        email: `admin_discord_${userId}@helwa.ai`, // Placeholder email for admin
         firstName: username || 'Discord',
         lastName: 'Admin',
-        passwordHash: null, // No password for Discord-only accounts
+        passwordHash: null, // No password needed
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        emailVerified: true,
-        status: USER_STATUS.ACTIVE,
-        isFree: true,
-        paymentStatus: PAYMENT_STATUS.PAID,
-        accessExpiresAt: new Date('2025-12-31T23:59:59Z'),
         discordUserId: userId,
-        discordJoined: true,
         isMarkedAdmin: true,
         markedAdminAt: new Date(),
         markedAdminBy: req.user.email,
+        role: 'admin', // Server owner/admin role
       }
       
       await userRef.set(newUserData)
       betaUser = { id: userRef.id, ...newUserData }
       
-      console.log(`✅ [ADMIN] Created beta account ${userRef.id} for Discord user ${userId}`)
+      console.log(`✅ [ADMIN] Created admin record ${userRef.id} for Discord user ${userId}`)
     } else if (!betaUser && !isAdmin) {
       return res.status(404).json({
         success: false,
-        message: 'Beta user not found for this Discord member',
+        message: 'User not found for this Discord member',
       })
     }
 
-    // If marking as admin, grant them full access
+    // Simple admin marker toggle - no beta access stuff
     const updateData = {
       isMarkedAdmin: isAdmin,
       markedAdminAt: isAdmin ? new Date() : null,
@@ -732,23 +727,11 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
     }
 
     if (isAdmin) {
-      // Grant full access when marking as admin
-      updateData.isFree = true
-      updateData.status = USER_STATUS.ACTIVE
-      updateData.emailVerified = true
-      updateData.paymentStatus = PAYMENT_STATUS.PAID
-      updateData.accessExpiresAt = new Date('2025-12-31T23:59:59Z')
-      updateData.discordJoined = true
       updateData.discordUserId = userId
-      
-      // Assign the Beta Tester role
-      const roleResult = await discordBotService.assignBetaRole(userId)
-      if (!roleResult.success) {
-        console.warn(`⚠️ [ADMIN] Could not assign Beta role to ${userId}: ${roleResult.message}`)
-      }
+      updateData.role = 'admin'
     }
 
-    // Update user in database
+    // Update record in database
     const updateResult = await updateBetaUser(betaUser.id, updateData)
 
     if (!updateResult.success) {
@@ -760,7 +743,7 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
 
     // Send Discord DM notification
     if (isAdmin) {
-      const dmMessage = `🎉 **Congratulations!**\n\nYou have been marked as an **Admin** by ${req.user.email}.\n\nYour account has been granted:\n✅ **Free Access** until December 31, 2025\n✅ **Beta Tester** role access\n✅ All premium features unlocked\n\nThank you for being part of the Helwa AI team! 👑`
+      const dmMessage = `👑 **You've been marked as an Admin!**\n\nYou have been designated as a **Server Admin** by ${req.user.email}.\n\nYou are now recognized as part of the Helwa AI leadership team.\n\nThank you for being a co-founder! 🚀`
       
       const dmResult = await discordBotService.sendDirectMessage(userId, dmMessage)
       if (!dmResult.success) {
@@ -768,14 +751,11 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
       }
     }
 
-    console.log(`👑 [ADMIN] ${req.user.email} marked Discord user ${userId} as ${isAdmin ? 'admin' : 'non-admin'}`)
-    if (isAdmin) {
-      console.log(`   → Granted free access, active status, and Beta Tester role`)
-    }
+    console.log(`👑 [ADMIN] ${req.user.email} marked Discord user ${userId} as ${isAdmin ? 'server admin' : 'removed admin'}`)
 
     res.json({
       success: true,
-      message: `Successfully ${isAdmin ? 'marked as admin with full access granted' : 'removed admin marker'}`,
+      message: `Successfully ${isAdmin ? 'marked as server admin' : 'removed admin marker'}`,
     })
   } catch (error) {
     console.error('❌ [ADMIN] Error toggling admin marker:', error)
