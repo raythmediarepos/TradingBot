@@ -487,6 +487,16 @@ router.get('/discord/members', authenticate, requireAdmin, async (req, res) => {
     // Match Discord members with beta users
     const enrichedMembers = membersResult.members.map(member => {
       const betaUser = betaUsers.find(u => u.discordUserId === member.id)
+      
+      // Debug log for admin users
+      if (betaUser?.isMarkedAdmin) {
+        console.log(`👑 [DEBUG] Admin found: ${member.username}`)
+        console.log(`   → Discord ID: ${member.id}`)
+        console.log(`   → Beta User ID: ${betaUser.id}`)
+        console.log(`   → isMarkedAdmin: ${betaUser.isMarkedAdmin}`)
+        console.log(`   → Email: ${betaUser.email}`)
+      }
+      
       return {
         ...member,
         email: betaUser?.email || null,
