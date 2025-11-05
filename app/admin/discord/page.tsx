@@ -469,10 +469,20 @@ export default function AdminDiscordPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        {member.email || <span className="text-gray-600">No email linked</span>}
+                        {member.isMarkedAdmin && member.email?.startsWith('admin_discord_') ? (
+                          <span className="text-yellow-400 font-medium">👑 Server Admin</span>
+                        ) : member.email ? (
+                          member.email
+                        ) : (
+                          <span className="text-gray-600">No email linked</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {member.hasVerified ? (
+                        {member.isMarkedAdmin ? (
+                          <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium flex items-center gap-1 w-fit">
+                            <Crown className="w-3 h-3" /> Admin
+                          </span>
+                        ) : member.hasVerified ? (
                           <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs font-medium flex items-center gap-1 w-fit">
                             <CheckCircle2 className="w-3 h-3" /> Verified
                           </span>
