@@ -659,7 +659,17 @@ const getAllMembers = async () => {
       return { success: false, message: 'Bot is not ready' }
     }
 
-    await guild.members.fetch()
+    // Try to fetch members with a timeout, fall back to cache if it fails
+    try {
+      await Promise.race([
+        guild.members.fetch(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Fetch timeout')), 5000))
+      ])
+    } catch (fetchError) {
+      console.warn('⚠️ [DISCORD] Member fetch timed out or failed, using cache:', fetchError.message)
+      // Continue with cached members
+    }
+    
     const members = guild.members.cache
 
     const memberList = members.map(member => ({
