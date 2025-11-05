@@ -507,7 +507,7 @@ const getAllPayments = async ({ limit = 100, startingAfter = null } = {}) => {
     
     const params = {
       limit,
-      expand: ['data.customer', 'data.payment_intent'],
+      expand: ['data.customer'], // Only expand customer, not payment_intent (we're already listing payment intents)
     }
     
     if (startingAfter) {
