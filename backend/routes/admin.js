@@ -687,16 +687,14 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
     const { userId } = req.params
     const { isAdmin, username, discriminator } = req.body
 
-    // Find beta user with this Discord ID
-    const usersResult = await getAllBetaUsers()
-    if (!usersResult.success) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch users',
-      })
+    // Find beta user with this Discord ID - search database directly to avoid duplicates
+    const usersSnapshot = await db.collection('betaUsers').where('discordUserId', '==', userId).limit(1).get()
+    
+    let betaUser = null
+    if (!usersSnapshot.empty) {
+      const doc = usersSnapshot.docs[0]
+      betaUser = { id: doc.id, ...doc.data() }
     }
-
-    let betaUser = usersResult.users.find(u => u.discordUserId === userId)
     
     // If no record exists and marking as admin, create minimal admin record
     if (!betaUser && isAdmin) {
