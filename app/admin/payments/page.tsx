@@ -312,11 +312,11 @@ export default function AdminPaymentsPage() {
             <select
               value={revenueView}
               onChange={(e) => setRevenueView(e.target.value as 'daily' | 'weekly' | 'monthly')}
-              className="px-3 py-1.5 bg-hp-gray800 border border-gray-700 rounded-lg text-sm text-white focus:border-green-500 focus:outline-none"
+              className="px-3 py-1.5 bg-hp-gray800 border border-gray-700 rounded-lg text-sm text-white focus:border-green-500 focus:outline-none [&>option]:bg-hp-gray800 [&>option]:text-white"
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
+              <option value="daily" className="bg-hp-gray800 text-white">Daily</option>
+              <option value="weekly" className="bg-hp-gray800 text-white">Weekly</option>
+              <option value="monthly" className="bg-hp-gray800 text-white">Monthly</option>
             </select>
           </div>
           {revenueChartData.length > 0 ? (
@@ -378,18 +378,18 @@ export default function AdminPaymentsPage() {
                 placeholder="Search by email, payment ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 px-4 py-2 bg-hp-gray800 border border-gray-700 rounded-lg text-white text-sm focus:border-purple-500 focus:outline-none"
+                className="flex-1 px-4 py-2 bg-hp-gray800 border border-gray-700 rounded-lg text-white placeholder:text-gray-500 text-sm focus:border-purple-500 focus:outline-none"
               />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 bg-hp-gray800 border border-gray-700 rounded-lg text-white text-sm focus:border-purple-500 focus:outline-none"
+                className="px-4 py-2 bg-hp-gray800 border border-gray-700 rounded-lg text-white text-sm focus:border-purple-500 focus:outline-none [&>option]:bg-hp-gray800 [&>option]:text-white"
               >
-                <option value="all">All Status</option>
-                <option value="succeeded">Succeeded</option>
-                <option value="failed">Failed</option>
-                <option value="processing">Processing</option>
-                <option value="requires_action">Requires Action</option>
+                <option value="all" className="bg-hp-gray800 text-white">All Status</option>
+                <option value="succeeded" className="bg-hp-gray800 text-white">Succeeded</option>
+                <option value="failed" className="bg-hp-gray800 text-white">Failed</option>
+                <option value="processing" className="bg-hp-gray800 text-white">Processing</option>
+                <option value="requires_action" className="bg-hp-gray800 text-white">Requires Action</option>
               </select>
             </div>
           </div>
@@ -525,11 +525,11 @@ export default function AdminPaymentsPage() {
               <select
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
-                className="w-full px-4 py-2 bg-hp-gray800 border border-gray-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                className="w-full px-4 py-2 bg-hp-gray800 border border-gray-700 rounded-lg text-white focus:border-red-500 focus:outline-none [&>option]:bg-hp-gray800 [&>option]:text-white"
               >
-                <option value="requested_by_customer">Requested by customer</option>
-                <option value="duplicate">Duplicate payment</option>
-                <option value="fraudulent">Fraudulent</option>
+                <option value="requested_by_customer" className="bg-hp-gray800 text-white">Requested by customer</option>
+                <option value="duplicate" className="bg-hp-gray800 text-white">Duplicate payment</option>
+                <option value="fraudulent" className="bg-hp-gray800 text-white">Fraudulent</option>
               </select>
             </div>
 
