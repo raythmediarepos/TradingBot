@@ -165,17 +165,23 @@ export default function AdminDashboardPage() {
                 onClick={() => router.push('/admin/beta-users')}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all"
               >
-                View Beta Users
+                Beta Users
+              </button>
+              <button
+                onClick={() => router.push('/admin/payments')}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-green-500/30 transition-all"
+              >
+                Payments
               </button>
               <button
                 onClick={() => router.push('/admin/discord')}
                 className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
               >
-                Discord Management
+                Discord
               </button>
               <button
                 onClick={() => router.push('/admin/analytics')}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-green-500/30 transition-all"
+                className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-orange-500/30 transition-all"
               >
                 Analytics
               </button>

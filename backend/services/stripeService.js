@@ -491,6 +491,154 @@ const cancelSubscription = async (subscriptionId, immediately = false) => {
 }
 
 // ============================================
+// PAYMENT MANAGEMENT (ADMIN)
+// ============================================
+
+/**
+ * Get all payment intents with customer details
+ * @param {Object} options - Query options
+ * @param {number} options.limit - Number of payments to retrieve
+ * @param {string} options.startingAfter - Pagination cursor
+ * @returns {Promise<Object>}
+ */
+const getAllPayments = async ({ limit = 100, startingAfter = null } = {}) => {
+  try {
+    console.log('💰 [STRIPE] Fetching all payments...')
+    
+    const params = {
+      limit,
+      expand: ['data.customer', 'data.payment_intent'],
+    }
+    
+    if (startingAfter) {
+      params.starting_after = startingAfter
+    }
+
+    // Get payment intents
+    const paymentIntents = await stripe.paymentIntents.list(params)
+
+    const payments = paymentIntents.data.map(payment => ({
+      id: payment.id,
+      amount: payment.amount / 100, // Convert from cents
+      currency: payment.currency.toUpperCase(),
+      status: payment.status,
+      created: new Date(payment.created * 1000),
+      customer: payment.customer ? {
+        id: typeof payment.customer === 'string' ? payment.customer : payment.customer.id,
+        email: typeof payment.customer === 'object' ? payment.customer.email : null,
+        name: typeof payment.customer === 'object' ? payment.customer.name : null,
+      } : null,
+      metadata: payment.metadata || {},
+      description: payment.description,
+      receiptEmail: payment.receipt_email,
+    }))
+
+    console.log(`✅ [STRIPE] Retrieved ${payments.length} payments`)
+
+    return {
+      success: true,
+      payments,
+      hasMore: paymentIntents.has_more,
+      lastId: paymentIntents.data.length > 0 ? paymentIntents.data[paymentIntents.data.length - 1].id : null,
+    }
+  } catch (error) {
+    console.error('❌ [STRIPE] Error fetching payments:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Create a refund for a payment
+ * @param {string} paymentIntentId - Stripe payment intent ID
+ * @param {Object} options - Refund options
+ * @param {number} options.amount - Amount to refund in cents (optional, full refund if not provided)
+ * @param {string} options.reason - Reason for refund (optional)
+ * @returns {Promise<Object>}
+ */
+const createRefund = async (paymentIntentId, { amount = null, reason = null } = {}) => {
+  try {
+    console.log('💸 [STRIPE] Creating refund...')
+    console.log(`   → Payment Intent: ${paymentIntentId}`)
+    
+    const refundParams = {
+      payment_intent: paymentIntentId,
+    }
+    
+    if (amount) {
+      refundParams.amount = amount // Already in cents
+    }
+    
+    if (reason) {
+      refundParams.reason = reason // 'duplicate', 'fraudulent', or 'requested_by_customer'
+    }
+
+    const refund = await stripe.refunds.create(refundParams)
+
+    console.log(`✅ [STRIPE] Refund created: ${refund.id}`)
+    console.log(`   → Amount: $${refund.amount / 100}`)
+    console.log(`   → Status: ${refund.status}`)
+
+    return {
+      success: true,
+      refund: {
+        id: refund.id,
+        amount: refund.amount / 100,
+        currency: refund.currency.toUpperCase(),
+        status: refund.status,
+        reason: refund.reason,
+        created: new Date(refund.created * 1000),
+      },
+    }
+  } catch (error) {
+    console.error('❌ [STRIPE] Error creating refund:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Get payment details
+ * @param {string} paymentIntentId - Stripe payment intent ID
+ * @returns {Promise<Object>}
+ */
+const getPaymentDetails = async (paymentIntentId) => {
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+      expand: ['customer', 'charges.data.balance_transaction'],
+    })
+
+    return {
+      success: true,
+      payment: {
+        id: paymentIntent.id,
+        amount: paymentIntent.amount / 100,
+        currency: paymentIntent.currency.toUpperCase(),
+        status: paymentIntent.status,
+        created: new Date(paymentIntent.created * 1000),
+        customer: paymentIntent.customer ? {
+          id: typeof paymentIntent.customer === 'string' ? paymentIntent.customer : paymentIntent.customer.id,
+          email: typeof paymentIntent.customer === 'object' ? paymentIntent.customer.email : null,
+          name: typeof paymentIntent.customer === 'object' ? paymentIntent.customer.name : null,
+        } : null,
+        charges: paymentIntent.charges?.data || [],
+        metadata: paymentIntent.metadata || {},
+      },
+    }
+  } catch (error) {
+    console.error('❌ [STRIPE] Error getting payment details:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+// ============================================
 // EXPORTS
 // ============================================
 
@@ -516,5 +664,10 @@ module.exports = {
   // Utilities
   getSubscription,
   cancelSubscription,
+
+  // Payment Management (Admin)
+  getAllPayments,
+  createRefund,
+  getPaymentDetails,
 }
 

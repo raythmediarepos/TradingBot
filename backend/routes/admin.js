@@ -828,5 +828,259 @@ router.get('/discord/member-growth', authenticate, requireAdmin, async (req, res
   }
 })
 
+// ============================================
+// PAYMENT MANAGEMENT
+// ============================================
+
+/**
+ * @route   GET /api/admin/payments
+ * @desc    Get all payments with revenue breakdown
+ * @access  Admin only
+ */
+router.get('/payments', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const stripeService = require('../services/stripeService')
+    const { getAllBetaUsers } = require('../services/betaUserService')
+    
+    // Get all payments from Stripe
+    const stripeResult = await stripeService.getAllPayments({ limit: 100 })
+    
+    if (!stripeResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch payments from Stripe',
+        error: stripeResult.error,
+      })
+    }
+
+    // Get all beta users for matching
+    const usersResult = await getAllBetaUsers()
+    const betaUsers = usersResult.success ? usersResult.users : []
+
+    // Match payments with beta users
+    const paymentsWithUsers = stripeResult.payments.map(payment => {
+      const betaUser = betaUsers.find(u => 
+        u.stripePaymentIntentId === payment.id || 
+        u.stripeCustomerId === payment.customer?.id
+      )
+
+      return {
+        ...payment,
+        betaUser: betaUser ? {
+          id: betaUser.id,
+          email: betaUser.email,
+          name: `${betaUser.firstName} ${betaUser.lastName}`,
+          position: betaUser.position,
+          isFree: betaUser.isFree,
+        } : null,
+      }
+    })
+
+    // Calculate revenue breakdown
+    const now = new Date()
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startOfWeek = new Date(startOfToday)
+    startOfWeek.setDate(startOfToday.getDate() - startOfToday.getDay())
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    const revenueStats = {
+      total: 0,
+      today: 0,
+      thisWeek: 0,
+      thisMonth: 0,
+      byDay: {},
+      byWeek: {},
+      byMonth: {},
+    }
+
+    const successfulPayments = paymentsWithUsers.filter(p => p.status === 'succeeded')
+
+    successfulPayments.forEach(payment => {
+      const amount = payment.amount
+      const date = new Date(payment.created)
+      const dayKey = date.toISOString().split('T')[0] // YYYY-MM-DD
+      const weekKey = getWeekKey(date)
+      const monthKey = date.toISOString().substring(0, 7) // YYYY-MM
+
+      // Total
+      revenueStats.total += amount
+
+      // Today
+      if (date >= startOfToday) {
+        revenueStats.today += amount
+      }
+
+      // This week
+      if (date >= startOfWeek) {
+        revenueStats.thisWeek += amount
+      }
+
+      // This month
+      if (date >= startOfMonth) {
+        revenueStats.thisMonth += amount
+      }
+
+      // By day
+      revenueStats.byDay[dayKey] = (revenueStats.byDay[dayKey] || 0) + amount
+
+      // By week
+      revenueStats.byWeek[weekKey] = (revenueStats.byWeek[weekKey] || 0) + amount
+
+      // By month
+      revenueStats.byMonth[monthKey] = (revenueStats.byMonth[monthKey] || 0) + amount
+    })
+
+    // Convert to arrays and sort
+    const dailyRevenue = Object.entries(revenueStats.byDay)
+      .map(([date, amount]) => ({ date, amount }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    const weeklyRevenue = Object.entries(revenueStats.byWeek)
+      .map(([week, amount]) => ({ week, amount }))
+      .sort((a, b) => a.week.localeCompare(b.week))
+
+    const monthlyRevenue = Object.entries(revenueStats.byMonth)
+      .map(([month, amount]) => ({ month, amount }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+
+    console.log(`✅ [ADMIN] Retrieved ${paymentsWithUsers.length} payments`)
+
+    res.json({
+      success: true,
+      payments: paymentsWithUsers,
+      revenue: {
+        total: revenueStats.total,
+        today: revenueStats.today,
+        thisWeek: revenueStats.thisWeek,
+        thisMonth: revenueStats.thisMonth,
+        daily: dailyRevenue,
+        weekly: weeklyRevenue,
+        monthly: monthlyRevenue,
+      },
+      stats: {
+        totalPayments: paymentsWithUsers.length,
+        successfulPayments: successfulPayments.length,
+        failedPayments: paymentsWithUsers.filter(p => p.status === 'failed').length,
+        pendingPayments: paymentsWithUsers.filter(p => p.status === 'processing' || p.status === 'requires_action').length,
+      },
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error getting payments:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get payments',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * Helper function to get week key (YYYY-WW)
+ */
+function getWeekKey(date) {
+  const startOfYear = new Date(date.getFullYear(), 0, 1)
+  const days = Math.floor((date - startOfYear) / (24 * 60 * 60 * 1000))
+  const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7)
+  return `${date.getFullYear()}-W${String(weekNumber).padStart(2, '0')}`
+}
+
+/**
+ * @route   POST /api/admin/payments/:paymentId/refund
+ * @desc    Create a refund for a payment
+ * @access  Admin only
+ */
+router.post('/payments/:paymentId/refund', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const stripeService = require('../services/stripeService')
+    const { updateBetaUser, getAllBetaUsers } = require('../services/betaUserService')
+    const { paymentId } = req.params
+    const { amount, reason } = req.body
+
+    console.log(`💸 [ADMIN] ${req.user.email} initiating refund for payment ${paymentId}`)
+
+    // Create refund in Stripe
+    const refundParams = {}
+    if (amount) {
+      refundParams.amount = Math.round(amount * 100) // Convert to cents
+    }
+    if (reason) {
+      refundParams.reason = reason
+    }
+
+    const result = await stripeService.createRefund(paymentId, refundParams)
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create refund',
+        error: result.error,
+      })
+    }
+
+    // Find and update beta user if applicable
+    const usersResult = await getAllBetaUsers()
+    if (usersResult.success) {
+      const betaUser = usersResult.users.find(u => u.stripePaymentIntentId === paymentId)
+      
+      if (betaUser) {
+        await updateBetaUser(betaUser.id, {
+          paymentStatus: 'refunded',
+          status: 'cancelled',
+        })
+        console.log(`   → Updated beta user ${betaUser.id} to refunded status`)
+      }
+    }
+
+    console.log(`✅ [ADMIN] Refund successful: ${result.refund.id}`)
+
+    res.json({
+      success: true,
+      refund: result.refund,
+      message: 'Refund created successfully',
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error creating refund:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create refund',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   GET /api/admin/payments/:paymentId
+ * @desc    Get payment details
+ * @access  Admin only
+ */
+router.get('/payments/:paymentId', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const stripeService = require('../services/stripeService')
+    const { paymentId } = req.params
+
+    const result = await stripeService.getPaymentDetails(paymentId)
+
+    if (!result.success) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found',
+        error: result.error,
+      })
+    }
+
+    res.json({
+      success: true,
+      payment: result.payment,
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error getting payment details:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get payment details',
+      error: error.message,
+    })
+  }
+})
+
 module.exports = router
 
