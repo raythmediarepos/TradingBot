@@ -1,316 +1,182 @@
 'use client'
 
-import * as React from 'react'
-import { motion } from 'framer-motion'
-import { Shield, Users, CheckCircle, XCircle, RefreshCw, LogOut, Mail, Link2, Calendar } from 'lucide-react'
-import Header from '@/components/header'
-import Footer from '@/components/footer'
-import { Button } from '@/components/ui/button'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { Shield, Users, Settings, LogOut, Loader2 } from 'lucide-react'
+import { isAuthenticated, isAdmin, logout, getUser } from '@/lib/auth'
 
-interface Affiliate {
-  id: string
-  name: string
-  email: string
-  platform: string
-  audienceSize?: string
-  websiteUrl?: string
-  status: string
-  setupCompleted: boolean
-  affiliateCode?: string
-  createdAt: any
-}
-
-const AdminDashboardPage = () => {
+export default function AdminDashboardPage() {
   const router = useRouter()
-  const [affiliates, setAffiliates] = React.useState<Affiliate[]>([])
-  const [isLoading, setIsLoading] = React.useState(true)
-  const [filter, setFilter] = React.useState<'all' | 'active' | 'pending'>('all')
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
 
-  React.useEffect(() => {
-    // Check admin auth
-    const adminAuth = localStorage.getItem('adminAuth')
-    if (!adminAuth) {
+  useEffect(() => {
+    // Check authentication
+    if (!isAuthenticated() || !isAdmin()) {
       router.push('/admin/login')
       return
     }
 
-    const auth = JSON.parse(adminAuth)
-    // Check if auth is less than 24 hours old
-    const hoursSinceAuth = (Date.now() - auth.timestamp) / (1000 * 60 * 60)
-    if (hoursSinceAuth > 24) {
-      localStorage.removeItem('adminAuth')
-      router.push('/admin/login')
-      return
-    }
-
-    fetchAffiliates()
+    const userData = getUser()
+    setUser(userData)
+    setLoading(false)
   }, [router])
 
-  const fetchAffiliates = async () => {
-    setIsLoading(true)
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tradingbot-w843.onrender.com'
-      const response = await fetch(`${apiUrl}/api/affiliates/all`)
-      
-      if (response.ok) {
-        const data = await response.json()
-        setAffiliates(data.affiliates || [])
-      }
-    } catch (error) {
-      console.error('Error fetching affiliates:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleLogout = () => {
-    localStorage.removeItem('adminAuth')
+    logout()
     router.push('/admin/login')
   }
 
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'N/A'
-    let date
-    if (timestamp._seconds) {
-      date = new Date(timestamp._seconds * 1000)
-    } else if (timestamp.toDate) {
-      date = timestamp.toDate()
-    } else {
-      date = new Date(timestamp)
-    }
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    })
-  }
-
-  const filteredAffiliates = affiliates.filter(affiliate => {
-    if (filter === 'all') return true
-    if (filter === 'active') return affiliate.setupCompleted
-    if (filter === 'pending') return !affiliate.setupCompleted
-    return true
-  })
-
-  const stats = {
-    total: affiliates.length,
-    active: affiliates.filter(a => a.setupCompleted).length,
-    pending: affiliates.filter(a => !a.setupCompleted).length
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-hp-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-hp-yellow animate-spin" />
+      </div>
+    )
   }
 
   return (
-    <main className="min-h-screen bg-hp-black relative">
-      <Header />
-      
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-40 left-1/4 w-96 h-96 bg-hp-yellow/10 rounded-full blur-[120px]" />
+    <div className="min-h-screen bg-hp-black text-hp-white">
+      {/* Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-radial from-purple-500/20 to-transparent blur-3xl"
+        />
       </div>
 
-      <section className="relative pt-32 pb-20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-hp-yellow/10 border border-hp-yellow/20 rounded-full">
-                  <Shield className="w-6 h-6 text-hp-yellow" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-hp-white">Admin Dashboard</h1>
-                  <p className="text-gray-400 text-sm">Manage affiliate applications</p>
-                </div>
-              </div>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                className="border-hp-yellow/30 text-hp-yellow hover:bg-hp-yellow/10"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
+      {/* Header */}
+      <header className="border-b border-white/10 relative z-10">
+        <div className="container mx-auto px-6 py-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-500/20 border-2 border-purple-500/30 rounded-full">
+              <Shield className="w-6 h-6 text-purple-400" />
             </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-hp-gray900 border border-hp-yellow/30 rounded-xl p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">Total Affiliates</p>
-                    <p className="text-3xl font-bold text-hp-white">{stats.total}</p>
-                  </div>
-                  <Users className="w-8 h-8 text-hp-yellow" />
-                </div>
-              </div>
-
-              <div className="bg-hp-gray900 border border-green-500/30 rounded-xl p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">Active</p>
-                    <p className="text-3xl font-bold text-hp-white">{stats.active}</p>
-                  </div>
-                  <CheckCircle className="w-8 h-8 text-green-500" />
-                </div>
-              </div>
-
-              <div className="bg-hp-gray900 border border-orange-500/30 rounded-xl p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">Pending Setup</p>
-                    <p className="text-3xl font-bold text-hp-white">{stats.pending}</p>
-                  </div>
-                  <RefreshCw className="w-8 h-8 text-orange-500" />
-                </div>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-hp-yellow">Helwa AI Admin</h1>
+              <p className="text-sm text-gray-400">Administrator Portal</p>
             </div>
-
-            {/* Filters */}
-            <div className="flex items-center gap-4 mb-6">
-              <Button
-                onClick={() => setFilter('all')}
-                variant={filter === 'all' ? 'default' : 'outline'}
-                className={filter === 'all' ? 'bg-hp-yellow text-hp-black' : 'border-hp-yellow/30 text-hp-yellow'}
-              >
-                All ({stats.total})
-              </Button>
-              <Button
-                onClick={() => setFilter('active')}
-                variant={filter === 'active' ? 'default' : 'outline'}
-                className={filter === 'active' ? 'bg-green-500 text-white' : 'border-green-500/30 text-green-500'}
-              >
-                Active ({stats.active})
-              </Button>
-              <Button
-                onClick={() => setFilter('pending')}
-                variant={filter === 'pending' ? 'default' : 'outline'}
-                className={filter === 'pending' ? 'bg-orange-500 text-white' : 'border-orange-500/30 text-orange-500'}
-              >
-                Pending ({stats.pending})
-              </Button>
-              <Button
-                onClick={fetchAffiliates}
-                variant="outline"
-                className="border-hp-yellow/30 text-hp-yellow ml-auto"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-gray-400">{user?.email}</p>
             </div>
-
-            {/* Affiliates List */}
-            <div className="bg-hp-gray900 border border-hp-yellow/30 rounded-xl overflow-hidden">
-              {isLoading ? (
-                <div className="p-12 text-center">
-                  <RefreshCw className="w-8 h-8 text-hp-yellow animate-spin mx-auto mb-4" />
-                  <p className="text-gray-400">Loading affiliates...</p>
-                </div>
-              ) : filteredAffiliates.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">No affiliates found</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-hp-black/50 border-b border-hp-yellow/20">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Affiliate
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Platform
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Code
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Joined
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-hp-yellow/10">
-                      {filteredAffiliates.map((affiliate) => (
-                        <tr key={affiliate.id} className="hover:bg-hp-black/30 transition-colors">
-                          <td className="px-6 py-4">
-                            <div>
-                              <p className="text-hp-white font-semibold">{affiliate.name}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Mail className="w-3 h-3 text-gray-500" />
-                                <p className="text-gray-400 text-sm">{affiliate.email}</p>
-                              </div>
-                              {affiliate.websiteUrl && (
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Link2 className="w-3 h-3 text-gray-500" />
-                                  <a 
-                                    href={affiliate.websiteUrl} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-hp-yellow text-xs hover:underline"
-                                  >
-                                    {affiliate.websiteUrl}
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div>
-                              <p className="text-hp-white capitalize">{affiliate.platform}</p>
-                              {affiliate.audienceSize && (
-                                <p className="text-gray-400 text-sm">{affiliate.audienceSize}</p>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            {affiliate.setupCompleted ? (
-                              <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full text-green-400 text-xs font-semibold">
-                                <CheckCircle className="w-3 h-3" />
-                                Active
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-500/20 border border-orange-500/30 rounded-full text-orange-400 text-xs font-semibold">
-                                <RefreshCw className="w-3 h-3" />
-                                Pending Setup
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            {affiliate.affiliateCode ? (
-                              <span className="font-mono text-hp-yellow font-semibold">
-                                {affiliate.affiliateCode}
-                              </span>
-                            ) : (
-                              <span className="text-gray-500 text-sm">-</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-gray-400 text-sm">
-                              <Calendar className="w-3 h-3" />
-                              {formatDate(affiliate.createdAt)}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </motion.div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/20 transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
-      </section>
+      </header>
 
-      <Footer />
-    </main>
+      {/* Main Content */}
+      <div className="container mx-auto px-6 py-12 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Welcome Section */}
+          <div className="mb-12">
+            <h2 className="text-4xl font-bold mb-4">Welcome Back, {user?.firstName}! 👋</h2>
+            <p className="text-gray-400">Manage your Helwa AI platform from this dashboard.</p>
+          </div>
+
+          {/* Quick Stats Grid */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {/* Users Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-hp-gray900 border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500/50 transition-all"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-500/20 border-2 border-blue-500/30 rounded-full">
+                  <Users className="w-6 h-6 text-blue-400" />
+                </div>
+                <span className="text-3xl font-bold">-</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-1">Total Users</h3>
+              <p className="text-sm text-gray-400">Coming soon...</p>
+            </motion.div>
+
+            {/* Beta Users Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-hp-gray900 border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500/50 transition-all"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-500/20 border-2 border-green-500/30 rounded-full">
+                  <Shield className="w-6 h-6 text-green-400" />
+                </div>
+                <span className="text-3xl font-bold">-</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-1">Beta Members</h3>
+              <p className="text-sm text-gray-400">Coming soon...</p>
+            </motion.div>
+
+            {/* Revenue Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-hp-gray900 border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500/50 transition-all"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-500/20 border-2 border-purple-500/30 rounded-full">
+                  <Settings className="w-6 h-6 text-purple-400" />
+                </div>
+                <span className="text-3xl font-bold">-</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-1">Revenue</h3>
+              <p className="text-sm text-gray-400">Coming soon...</p>
+            </motion.div>
+          </div>
+
+          {/* Coming Soon Section */}
+          <div className="bg-hp-gray900 border border-purple-500/30 rounded-2xl p-12 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-500/20 border-2 border-purple-500/30 rounded-full mb-6">
+              <Shield className="w-10 h-10 text-purple-400" />
+            </div>
+            <h3 className="text-2xl font-bold mb-4">Dashboard Coming Soon</h3>
+            <p className="text-gray-400 mb-8 max-w-md mx-auto">
+              We're building out comprehensive admin tools. Check back soon for user management, 
+              analytics, Discord moderation, and more!
+            </p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => router.push('/admin/beta-users')}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+              >
+                View Beta Users
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="px-6 py-3 bg-hp-gray800 border border-gray-700 text-white font-bold rounded-lg hover:bg-hp-gray700 transition-all"
+              >
+                Back to Home
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   )
 }
-
-export default AdminDashboardPage
-
