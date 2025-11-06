@@ -7,14 +7,22 @@ const { initializeBot, collectAnalytics } = require('./services/discordAnalytics
 // SERVERBOT - Discord Analytics Collector
 // ============================================
 
-console.log('🚀 [SERVERBOT] Starting Helwa AI Analytics Collector...')
-console.log('⏰ [SERVERBOT] Schedule: Every 6 hours')
-console.log('📊 [SERVERBOT] Target: Discord server analytics')
+console.log('')
+console.log('═'.repeat(60))
+console.log('🚀 [SERVERBOT] Starting Helwa AI Analytics Collector')
+console.log('═'.repeat(60))
+console.log('⏰ Schedule: Every 6 hours (cron: 0 */6 * * *)')
+console.log('📊 Target: Discord server analytics')
+console.log('💾 Storage: Firebase (serverAnalytics/discord)')
+console.log('🔄 Mode: Run immediately + scheduled')
+console.log('═'.repeat(60))
 console.log('')
 
 // Initialize Firebase
+console.log('🔧 [SERVERBOT] Initializing Firebase Admin...')
 try {
   initializeFirebase()
+  console.log('✅ [SERVERBOT] Firebase initialized successfully')
 } catch (error) {
   console.error('❌ [SERVERBOT] Failed to initialize Firebase:', error)
   process.exit(1)
@@ -73,29 +81,47 @@ const getNextRunTime = () => {
 const start = async () => {
   try {
     // Initialize Discord bot
-    console.log('🤖 [SERVERBOT] Initializing Discord bot...')
+    console.log('═'.repeat(60))
+    console.log('🤖 [SERVERBOT] Step 1: Initializing Discord Bot')
+    console.log('═'.repeat(60))
     await initializeBot()
     console.log('✅ [SERVERBOT] Discord bot ready')
     console.log('')
 
     // Run immediately on startup
-    console.log('🚀 [SERVERBOT] Running initial collection...')
+    console.log('═'.repeat(60))
+    console.log('🚀 [SERVERBOT] Step 2: Running Initial Collection')
+    console.log('═'.repeat(60))
+    console.log('⚡ [SERVERBOT] This will collect all analytics data now...')
+    console.log('')
     await runCollection()
 
     // Schedule to run every 6 hours
     // Cron pattern: 0 */6 * * * = At minute 0 past every 6th hour
+    console.log('═'.repeat(60))
+    console.log('⏰ [SERVERBOT] Step 3: Activating Scheduler')
+    console.log('═'.repeat(60))
     cron.schedule('0 */6 * * *', () => {
       runCollection()
     })
 
-    console.log('⏰ [SERVERBOT] Scheduler active - collecting every 6 hours')
+    console.log('✅ [SERVERBOT] Scheduler active - will run every 6 hours')
     console.log(`📅 [SERVERBOT] Next scheduled run: ${getNextRunTime()}`)
+    console.log('💡 [SERVERBOT] The serverbot is now running in the background')
+    console.log('   → Analytics will update automatically every 6 hours')
+    console.log('   → Data is stored in Firebase: serverAnalytics/discord')
+    console.log('   → View data at: /admin/analytics')
     console.log('')
-    console.log('💡 [SERVERBOT] Press Ctrl+C to stop')
+    console.log('🛑 [SERVERBOT] Press Ctrl+C to stop the serverbot')
+    console.log('═'.repeat(60))
     console.log('')
 
   } catch (error) {
-    console.error('❌ [SERVERBOT] Startup failed:', error)
+    console.error('═'.repeat(60))
+    console.error('❌ [SERVERBOT] Startup failed!')
+    console.error('═'.repeat(60))
+    console.error(error)
+    console.error('')
     process.exit(1)
   }
 }

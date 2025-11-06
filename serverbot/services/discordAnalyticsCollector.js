@@ -27,16 +27,24 @@ let botReady = false
 
 const initializeBot = () => {
   return new Promise((resolve, reject) => {
+    console.log('🔄 [SERVERBOT] Connecting to Discord...')
+    
     client.once('ready', async () => {
       console.log(`🤖 [SERVERBOT] Connected as ${client.user.tag}`)
+      console.log(`🆔 [SERVERBOT] Bot ID: ${client.user.id}`)
       
       try {
+        console.log(`🔍 [SERVERBOT] Fetching guild with ID: ${DISCORD_CONFIG.GUILD_ID}`)
         guild = await client.guilds.fetch(DISCORD_CONFIG.GUILD_ID)
         botReady = true
-        console.log(`✅ [SERVERBOT] Guild fetched: ${guild.name}`)
+        console.log(`✅ [SERVERBOT] Guild fetched successfully!`)
+        console.log(`   → Name: ${guild.name}`)
+        console.log(`   → ID: ${guild.id}`)
+        console.log(`   → Member count: ${guild.memberCount}`)
         resolve()
       } catch (error) {
         console.error('❌ [SERVERBOT] Error fetching guild:', error)
+        console.error('   → Make sure DISCORD_GUILD_ID is correct')
         reject(error)
       }
     })
@@ -45,7 +53,12 @@ const initializeBot = () => {
       console.error('❌ [SERVERBOT] Discord client error:', error)
     })
 
-    client.login(DISCORD_CONFIG.BOT_TOKEN).catch(reject)
+    console.log('🔐 [SERVERBOT] Logging in with bot token...')
+    client.login(DISCORD_CONFIG.BOT_TOKEN).catch((error) => {
+      console.error('❌ [SERVERBOT] Failed to login:', error)
+      console.error('   → Make sure DISCORD_BOT_TOKEN is correct')
+      reject(error)
+    })
   })
 }
 
@@ -62,11 +75,13 @@ const collectAnalytics = async () => {
   }
 
   console.log('📊 [SERVERBOT] Starting analytics collection...')
+  console.log(`🔍 [SERVERBOT] Guild: ${guild.name} (ID: ${guild.id})`)
 
   const admin = require('firebase-admin')
   const db = admin.firestore()
 
   // Fetch all members with timeout protection
+  console.log('👥 [SERVERBOT] Fetching guild members...')
   let members
   try {
     await Promise.race([
@@ -74,20 +89,24 @@ const collectAnalytics = async () => {
       new Promise((_, reject) => setTimeout(() => reject(new Error('Fetch timeout')), 10000))
     ])
     members = guild.members.cache
+    console.log(`✅ [SERVERBOT] Successfully fetched ${members.size} total members`)
   } catch (fetchError) {
     console.warn('⚠️ [SERVERBOT] Member fetch timed out, using cache')
     members = guild.members.cache
+    console.log(`📦 [SERVERBOT] Using cached members: ${members.size} total`)
   }
 
   // Filter out bots
   const realMembers = members.filter(m => !m.user.bot)
+  const botCount = members.size - realMembers.size
 
-  console.log(`👥 [SERVERBOT] Processing ${realMembers.size} members...`)
+  console.log(`👥 [SERVERBOT] Processing ${realMembers.size} real members (${botCount} bots filtered out)`)
 
   // ============================================
   // MEMBER ANALYTICS
   // ============================================
 
+  console.log('📋 [SERVERBOT] Analyzing member data...')
   const memberData = []
   const roleDistribution = {}
   const joinDates = []
@@ -118,6 +137,9 @@ const collectAnalytics = async () => {
     }
   })
 
+  console.log(`✅ [SERVERBOT] Processed ${memberData.length} member records`)
+  console.log(`📊 [SERVERBOT] Found ${Object.keys(roleDistribution).length} unique roles`)
+
   // Calculate monthly growth
   const monthlyGrowth = {}
   joinDates.forEach(month => {
@@ -140,11 +162,12 @@ const collectAnalytics = async () => {
   // MESSAGE ANALYTICS (from Firebase)
   // ============================================
 
-  console.log('📨 [SERVERBOT] Analyzing message data...')
+  console.log('📨 [SERVERBOT] Fetching message data from Firebase...')
 
   // Get message data from last 30 days
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  console.log(`📅 [SERVERBOT] Fetching messages since: ${thirtyDaysAgo.toISOString()}`)
 
   const messagesSnapshot = await db.collection('discordAnalytics')
     .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(thirtyDaysAgo))
@@ -155,7 +178,11 @@ const collectAnalytics = async () => {
     messages.push(doc.data())
   })
 
-  console.log(`💬 [SERVERBOT] Analyzed ${messages.length} messages from last 30 days`)
+  console.log(`💬 [SERVERBOT] Retrieved ${messages.length} messages from last 30 days`)
+  
+  if (messages.length === 0) {
+    console.warn('⚠️  [SERVERBOT] No messages found in discordAnalytics collection. Make sure message tracking is enabled.')
+  }
 
   // Calculate message stats
   const userMessageCount = {}
@@ -249,9 +276,17 @@ const collectAnalytics = async () => {
   const peakDay = dailyActivity.indexOf(Math.max(...dailyActivity))
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
+  console.log(`📊 [SERVERBOT] Calculated stats:`)
+  console.log(`   → Top commenters: ${topCommenters.length}`)
+  console.log(`   → Top emoji users: ${topEmojiUsers.length}`)
+  console.log(`   → Channels tracked: ${channelStats.length}`)
+  console.log(`   → Peak activity: ${dayNames[peakDay]} at ${peakHour}:00`)
+
   // ============================================
   // SAVE TO FIREBASE
   // ============================================
+
+  console.log('💾 [SERVERBOT] Preparing analytics data for Firebase...')
 
   const analyticsData = {
     collectedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -303,13 +338,19 @@ const collectAnalytics = async () => {
   }
 
   // Save to Firebase
+  console.log('💾 [SERVERBOT] Saving to Firebase: serverAnalytics/discord')
   await db.collection('serverAnalytics').doc('discord').set(analyticsData)
 
-  console.log('✅ [SERVERBOT] Analytics saved to Firebase')
-  console.log(`   → ${realMembers.size} members`)
-  console.log(`   → ${messages.length} messages`)
-  console.log(`   → ${channelStats.length} channels`)
+  console.log('✅ [SERVERBOT] Analytics saved successfully to Firebase!')
+  console.log('📊 [SERVERBOT] Summary:')
+  console.log(`   → ${realMembers.size} members analyzed`)
+  console.log(`   → ${messages.length} messages processed`)
+  console.log(`   → ${channelStats.length} channels tracked`)
   console.log(`   → ${Object.keys(userMessageCount).length} active users`)
+  console.log(`   → ${Object.keys(roleDistribution).length} roles`)
+  console.log(`   → ${monthlyActivity.length} months of data`)
+  console.log('')
+  console.log('🎉 [SERVERBOT] Collection complete! Data is now available in the admin dashboard.')
 
   return analyticsData
 }
