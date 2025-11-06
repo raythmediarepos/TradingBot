@@ -17,9 +17,11 @@ const getSheetsClient = () => {
       credentials = JSON.parse(
         Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('ascii')
       )
+      console.log('🔐 [SHEETS] Using credentials from environment variable')
     } else {
       // Development: Use local service account file
       credentials = require('../config/serviceAccountKey.json')
+      console.log('🔐 [SHEETS] Using credentials from serviceAccountKey.json')
     }
 
     const auth = new google.auth.GoogleAuth({
@@ -30,6 +32,7 @@ const getSheetsClient = () => {
     return google.sheets({ version: 'v4', auth })
   } catch (error) {
     console.error('❌ [SHEETS] Error initializing Google Sheets client:', error)
+    console.error('💡 [SHEETS] Make sure backend/config/serviceAccountKey.json exists')
     throw error
   }
 }
