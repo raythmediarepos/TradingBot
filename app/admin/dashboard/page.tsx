@@ -67,6 +67,8 @@ export default function AdminDashboardPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
+  const [expenseData, setExpenseData] = useState<any>(null)
+  const [profitMetrics, setProfitMetrics] = useState<any>(null)
 
   useEffect(() => {
     if (!isAuthenticated() || !isAdmin()) {
@@ -82,12 +84,50 @@ export default function AdminDashboardPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await fetchWithAuth('/api/admin/dashboard')
-      const result = await response.json()
       
-      if (result.success) {
-        setStats(result.stats)
-        setRecentActivity(result.recentActivity)
+      // Fetch dashboard stats and expenses in parallel
+      const [dashboardRes, expensesRes] = await Promise.all([
+        fetchWithAuth('/api/admin/dashboard'),
+        fetchWithAuth('/api/admin/expenses/data')
+      ])
+      
+      const dashboardResult = await dashboardRes.json()
+      const expensesResult = await expensesRes.json()
+      
+      if (dashboardResult.success) {
+        setStats(dashboardResult.stats)
+        setRecentActivity(dashboardResult.recentActivity)
+      }
+      
+      if (expensesResult.success) {
+        setExpenseData(expensesResult)
+        
+        // Calculate profit metrics
+        const totalRevenue = dashboardResult.stats?.revenue?.total || 0
+        const totalExpenses = expensesResult.metrics?.totalExpenses || 0
+        const totalProfit = totalRevenue - totalExpenses
+        const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
+        
+        // Monthly profit (last 30 days)
+        const last30DaysRevenue = dashboardResult.stats?.revenue?.last30Days || 0
+        const last30DaysExpenses = expensesResult.metrics?.last30DaysExpenses || 0
+        const monthlyProfit = last30DaysRevenue - last30DaysExpenses
+        
+        // Yearly profit (last 12 months)
+        const yearlyExpenses = expensesResult.metrics?.last12MonthsExpenses || 0
+        const yearlyProfit = totalRevenue - yearlyExpenses // Assuming all revenue is from this year
+        
+        setProfitMetrics({
+          totalProfit,
+          profitMargin,
+          monthlyProfit,
+          yearlyProfit,
+          totalRevenue,
+          totalExpenses,
+          last30DaysRevenue,
+          last30DaysExpenses,
+          yearlyExpenses
+        })
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
@@ -199,6 +239,110 @@ export default function AdminDashboardPage() {
       </header>
 
       <div className="container mx-auto px-6 py-8">
+        {/* Profit Metrics */}
+        {profitMetrics && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-400 mb-4 uppercase tracking-wider">Financial Performance</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Total Profit */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`bg-hp-gray900 border ${profitMetrics.totalProfit >= 0 ? 'border-green-500/30' : 'border-red-500/30'} rounded-xl p-6`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 ${profitMetrics.totalProfit >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'} rounded-lg`}>
+                    <TrendingUp className={`w-6 h-6 ${profitMetrics.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`} />
+                  </div>
+                  <span className={`text-xs font-semibold ${profitMetrics.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {profitMetrics.profitMargin.toFixed(1)}% margin
+                  </span>
+                </div>
+                <h3 className={`text-3xl font-bold mb-1 ${profitMetrics.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  ${Math.abs(profitMetrics.totalProfit).toFixed(2)}
+                </h3>
+                <p className="text-sm text-gray-400">Total Profit (All Time)</p>
+                <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
+                  <span className="text-green-400">${profitMetrics.totalRevenue.toFixed(2)}</span> revenue -{' '}
+                  <span className="text-red-400">${profitMetrics.totalExpenses.toFixed(2)}</span> expenses
+                </div>
+              </motion.div>
+
+              {/* Monthly Profit */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className={`bg-hp-gray900 border ${profitMetrics.monthlyProfit >= 0 ? 'border-blue-500/30' : 'border-red-500/30'} rounded-xl p-6`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 ${profitMetrics.monthlyProfit >= 0 ? 'bg-blue-500/20' : 'bg-red-500/20'} rounded-lg`}>
+                    <Calendar className={`w-6 h-6 ${profitMetrics.monthlyProfit >= 0 ? 'text-blue-400' : 'text-red-400'}`} />
+                  </div>
+                  <span className="text-xs text-gray-400">Last 30 days</span>
+                </div>
+                <h3 className={`text-3xl font-bold mb-1 ${profitMetrics.monthlyProfit >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                  ${Math.abs(profitMetrics.monthlyProfit).toFixed(2)}
+                </h3>
+                <p className="text-sm text-gray-400">Monthly Profit</p>
+                <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
+                  <span className="text-green-400">${profitMetrics.last30DaysRevenue.toFixed(2)}</span> -{' '}
+                  <span className="text-red-400">${profitMetrics.last30DaysExpenses.toFixed(2)}</span>
+                </div>
+              </motion.div>
+
+              {/* Yearly Profit */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className={`bg-hp-gray900 border ${profitMetrics.yearlyProfit >= 0 ? 'border-purple-500/30' : 'border-red-500/30'} rounded-xl p-6`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 ${profitMetrics.yearlyProfit >= 0 ? 'bg-purple-500/20' : 'bg-red-500/20'} rounded-lg`}>
+                    <Activity className={`w-6 h-6 ${profitMetrics.yearlyProfit >= 0 ? 'text-purple-400' : 'text-red-400'}`} />
+                  </div>
+                  <span className="text-xs text-gray-400">Last 12 months</span>
+                </div>
+                <h3 className={`text-3xl font-bold mb-1 ${profitMetrics.yearlyProfit >= 0 ? 'text-purple-400' : 'text-red-400'}`}>
+                  ${Math.abs(profitMetrics.yearlyProfit).toFixed(2)}
+                </h3>
+                <p className="text-sm text-gray-400">Yearly Profit</p>
+                <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
+                  Expenses: <span className="text-red-400">${profitMetrics.yearlyExpenses.toFixed(2)}</span>
+                </div>
+              </motion.div>
+
+              {/* Total Expenses */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-hp-gray900 border border-orange-500/30 rounded-xl p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-orange-500/20 rounded-lg">
+                    <CreditCard className="w-6 h-6 text-orange-400" />
+                  </div>
+                  <button
+                    onClick={() => router.push('/admin/expenses')}
+                    className="text-xs text-gray-400 hover:text-white transition-colors"
+                  >
+                    View All →
+                  </button>
+                </div>
+                <h3 className="text-3xl font-bold mb-1 text-orange-400">
+                  ${profitMetrics.totalExpenses.toFixed(2)}
+                </h3>
+                <p className="text-sm text-gray-400">Total Expenses</p>
+                <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
+                  {expenseData?.metrics?.totalCount || 0} transactions
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        )}
+
         {/* Quick Stats Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Users */}
