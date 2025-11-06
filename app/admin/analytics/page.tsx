@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from 'recharts'
 import {
   TrendingUp, MessageSquare, Users, Smile, Activity, Calendar,
-  Loader2, RefreshCcw, Award, Clock, Hash, TrendingDown, AlertCircle
+  Loader2, RefreshCcw, Award, Clock, Hash, TrendingDown, AlertCircle,
+  UserPlus, UserCheck, UserMinus, UserX, Zap, MessageCircle, Link2,
+  FileText, Target, BarChart3
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout } from '@/lib/auth'
 
@@ -87,7 +89,7 @@ export default function AdminAnalyticsPage() {
     )
   }
 
-  const { summary, members, messages, engagement } = analytics
+  const { summary, members, messages, engagement, userSegmentation, retention, messageQuality, comparative, leaderboards, recentActivity } = analytics
 
   return (
     <div className="min-h-screen bg-hp-black text-hp-white">
@@ -101,8 +103,8 @@ export default function AdminAnalyticsPage() {
               </button>
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                  <Activity className="w-6 h-6 text-purple-400" />
-                  Discord Analytics
+                  <BarChart3 className="w-6 h-6 text-purple-400" />
+                  Advanced Discord Analytics
                 </h1>
                 <p className="text-sm text-gray-400">
                   Last collected: {analytics.collectedAt ? new Date(analytics.collectedAt).toLocaleString() : 'N/A'} • 
@@ -128,44 +130,252 @@ export default function AdminAnalyticsPage() {
       </header>
 
       <div className="container mx-auto px-6 py-8">
-        {/* Overview Stats */}
-        <div className="grid md:grid-cols-5 gap-4 mb-8">
-          <div className="bg-hp-gray900 border border-purple-500/30 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="w-5 h-5 text-purple-400" />
-              <p className="text-xs text-gray-400">Total Members</p>
+        {/* NEW: Recent Activity Summary */}
+        {recentActivity && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-yellow-400" />
+              Recent Activity
+            </h2>
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="bg-hp-gray900 border border-yellow-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="w-5 h-5 text-yellow-400" />
+                  <p className="text-xs text-gray-400">Today</p>
+                </div>
+                <p className="text-3xl font-bold">{recentActivity.today?.messages || 0}</p>
+                {recentActivity.today?.change !== undefined && (
+                  <div className={`flex items-center gap-1 mt-2 text-sm ${recentActivity.today.trend === 'up' ? 'text-green-400' : recentActivity.today.trend === 'down' ? 'text-red-400' : 'text-gray-400'}`}>
+                    {recentActivity.today.trend === 'up' ? <TrendingUp className="w-4 h-4" /> : recentActivity.today.trend === 'down' ? <TrendingDown className="w-4 h-4" /> : null}
+                    {recentActivity.today.change > 0 ? '+' : ''}{recentActivity.today.change}% vs yesterday
+                  </div>
+                )}
+              </div>
+              <div className="bg-hp-gray900 border border-blue-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-5 h-5 text-blue-400" />
+                  <p className="text-xs text-gray-400">This Week</p>
+                </div>
+                <p className="text-3xl font-bold">{recentActivity.thisWeek?.messages || 0}</p>
+                <p className="text-xs text-gray-400 mt-2">messages</p>
+              </div>
+              <div className="bg-hp-gray900 border border-green-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserPlus className="w-5 h-5 text-green-400" />
+                  <p className="text-xs text-gray-400">New Members</p>
+                </div>
+                <p className="text-3xl font-bold">{recentActivity.thisWeek?.newMembers || 0}</p>
+                <p className="text-xs text-gray-400 mt-2">last 7 days</p>
+              </div>
+              <div className="bg-hp-gray900 border border-purple-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="w-5 h-5 text-purple-400" />
+                  <p className="text-xs text-gray-400">Active Users</p>
+                </div>
+                <p className="text-3xl font-bold">{summary?.activeUsers || 0}</p>
+                <p className="text-xs text-gray-400 mt-2">last 30 days</p>
+              </div>
             </div>
-            <p className="text-3xl font-bold">{summary?.totalMembers?.toLocaleString() || 0}</p>
           </div>
-          <div className="bg-hp-gray900 border border-blue-500/30 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <MessageSquare className="w-5 h-5 text-blue-400" />
-              <p className="text-xs text-gray-400">Total Messages</p>
+        )}
+
+        {/* Core Overview Stats */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4">Core Metrics</h2>
+          <div className="grid md:grid-cols-5 gap-4">
+            <div className="bg-hp-gray900 border border-purple-500/30 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="w-5 h-5 text-purple-400" />
+                <p className="text-xs text-gray-400">Total Members</p>
+              </div>
+              <p className="text-3xl font-bold">{summary?.totalMembers?.toLocaleString() || 0}</p>
             </div>
-            <p className="text-3xl font-bold">{summary?.totalMessages?.toLocaleString() || 0}</p>
-          </div>
-          <div className="bg-hp-gray900 border border-green-500/30 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Activity className="w-5 h-5 text-green-400" />
-              <p className="text-xs text-gray-400">Active Users</p>
+            <div className="bg-hp-gray900 border border-blue-500/30 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="w-5 h-5 text-blue-400" />
+                <p className="text-xs text-gray-400">Total Messages</p>
+              </div>
+              <p className="text-3xl font-bold">{summary?.totalMessages?.toLocaleString() || 0}</p>
             </div>
-            <p className="text-3xl font-bold">{summary?.activeUsers?.toLocaleString() || 0}</p>
-          </div>
-          <div className="bg-hp-gray900 border border-yellow-500/30 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Hash className="w-5 h-5 text-yellow-400" />
-              <p className="text-xs text-gray-400">Channels</p>
+            <div className="bg-hp-gray900 border border-green-500/30 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity className="w-5 h-5 text-green-400" />
+                <p className="text-xs text-gray-400">Active Users</p>
+              </div>
+              <p className="text-3xl font-bold">{summary?.activeUsers?.toLocaleString() || 0}</p>
             </div>
-            <p className="text-3xl font-bold">{summary?.totalChannels || 0}</p>
-          </div>
-          <div className="bg-hp-gray900 border border-orange-500/30 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Award className="w-5 h-5 text-orange-400" />
-              <p className="text-xs text-gray-400">Roles</p>
+            <div className="bg-hp-gray900 border border-yellow-500/30 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Hash className="w-5 h-5 text-yellow-400" />
+                <p className="text-xs text-gray-400">Channels</p>
+              </div>
+              <p className="text-3xl font-bold">{summary?.totalChannels || 0}</p>
             </div>
-            <p className="text-3xl font-bold">{summary?.totalRoles || 0}</p>
+            <div className="bg-hp-gray900 border border-orange-500/30 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Award className="w-5 h-5 text-orange-400" />
+                <p className="text-xs text-gray-400">Roles</p>
+              </div>
+              <p className="text-3xl font-bold">{summary?.totalRoles || 0}</p>
+            </div>
           </div>
         </div>
+
+        {/* NEW: User Segmentation */}
+        {userSegmentation && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-400" />
+              User Segmentation
+            </h2>
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="w-5 h-5 text-yellow-400" />
+                  <p className="text-xs text-gray-400">Power Users</p>
+                </div>
+                <p className="text-3xl font-bold text-yellow-400">{userSegmentation.counts?.powerUsers || 0}</p>
+                <p className="text-xs text-gray-500 mt-2">50+ messages or top 10%</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserCheck className="w-5 h-5 text-blue-400" />
+                  <p className="text-xs text-gray-400">Casual Users</p>
+                </div>
+                <p className="text-3xl font-bold text-blue-400">{userSegmentation.counts?.casualUsers || 0}</p>
+                <p className="text-xs text-gray-500 mt-2">5-49 messages</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserMinus className="w-5 h-5 text-purple-400" />
+                  <p className="text-xs text-gray-400">Lurkers</p>
+                </div>
+                <p className="text-3xl font-bold text-purple-400">{userSegmentation.counts?.lurkers || 0}</p>
+                <p className="text-xs text-gray-500 mt-2">1-4 messages</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserPlus className="w-5 h-5 text-green-400" />
+                  <p className="text-xs text-gray-400">New Users</p>
+                </div>
+                <p className="text-3xl font-bold text-green-400">{userSegmentation.counts?.newUsers || 0}</p>
+                <p className="text-xs text-gray-500 mt-2">Joined last 30 days</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserX className="w-5 h-5 text-orange-400" />
+                  <p className="text-xs text-gray-400">Inactive</p>
+                </div>
+                <p className="text-3xl font-bold text-orange-400">{userSegmentation.counts?.inactiveUsers || 0}</p>
+                <p className="text-xs text-gray-500 mt-2">No message 30+ days</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserX className="w-5 h-5 text-gray-400" />
+                  <p className="text-xs text-gray-400">Ghost Members</p>
+                </div>
+                <p className="text-3xl font-bold text-gray-400">{userSegmentation.counts?.ghostMembers || 0}</p>
+                <p className="text-xs text-gray-500 mt-2">Never messaged</p>
+              </div>
+            </div>
+
+            {/* User Segmentation Pie Chart */}
+            {userSegmentation.counts && (
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-bold mb-4">User Distribution</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Power Users', value: userSegmentation.counts.powerUsers, color: '#FFC107' },
+                        { name: 'Casual Users', value: userSegmentation.counts.casualUsers, color: '#2196F3' },
+                        { name: 'Lurkers', value: userSegmentation.counts.lurkers, color: '#9C27B0' },
+                        { name: 'Ghost Members', value: userSegmentation.counts.ghostMembers, color: '#9CA3AF' },
+                      ].filter(item => item.value > 0)}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={(entry) => `${entry.name}: ${entry.value}`}
+                    >
+                      {[
+                        { name: 'Power Users', value: userSegmentation.counts.powerUsers, color: '#FFC107' },
+                        { name: 'Casual Users', value: userSegmentation.counts.casualUsers, color: '#2196F3' },
+                        { name: 'Lurkers', value: userSegmentation.counts.lurkers, color: '#9C27B0' },
+                        { name: 'Ghost Members', value: userSegmentation.counts.ghostMembers, color: '#9CA3AF' },
+                      ].filter(item => item.value > 0).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* NEW: Retention & Engagement */}
+        {retention && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Target className="w-5 h-5 text-green-400" />
+              Retention & Engagement
+            </h2>
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">New Members (7d)</p>
+                <p className="text-2xl font-bold text-green-400">{retention.newMembersLast7Days || 0}</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">New Members (30d)</p>
+                <p className="text-2xl font-bold text-blue-400">{retention.newMembersLast30Days || 0}</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">Avg Days to 1st Message</p>
+                <p className="text-2xl font-bold text-purple-400">{retention.avgDaysToFirstMessage || '0'}</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">30-Day Retention Rate</p>
+                <p className="text-2xl font-bold text-yellow-400">{retention.retentionRate30Days || '0'}%</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* NEW: Message Quality */}
+        {messageQuality && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-blue-400" />
+              Message Quality
+            </h2>
+            <div className="grid md:grid-cols-5 gap-4">
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">Avg Length</p>
+                <p className="text-2xl font-bold text-blue-400">{messageQuality.avgMessageLength || 0}</p>
+                <p className="text-xs text-gray-500">characters</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">Reply Rate</p>
+                <p className="text-2xl font-bold text-purple-400">{messageQuality.replyRate || '0'}%</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">Question Rate</p>
+                <p className="text-2xl font-bold text-green-400">{messageQuality.questionRate || '0'}%</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">Links Shared</p>
+                <p className="text-2xl font-bold text-yellow-400">{messageQuality.linksShared || 0}</p>
+              </div>
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">Attachments</p>
+                <p className="text-2xl font-bold text-orange-400">{messageQuality.attachmentsShared || 0}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Engagement Metrics */}
         <div className="grid md:grid-cols-4 gap-4 mb-8">
@@ -189,7 +399,65 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
 
-        {/* Charts Row 1 */}
+        {/* NEW: Leaderboards */}
+        {leaderboards && (
+          <div className="grid lg:grid-cols-2 gap-6 mb-6">
+            {/* Weekly Top Users */}
+            {leaderboards.weeklyTopUsers && leaderboards.weeklyTopUsers.length > 0 && (
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Award className="w-5 h-5 text-yellow-400" />
+                  <h2 className="text-xl font-bold">🏆 Weekly Top Users</h2>
+                </div>
+                <div className="space-y-3">
+                  {leaderboards.weeklyTopUsers.slice(0, 10).map((user: any, index: number) => (
+                    <div key={user.userId} className="flex items-center justify-between bg-hp-black rounded-lg p-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl font-bold text-gray-500">#{index + 1}</span>
+                        <div>
+                          <p className="font-medium flex items-center gap-2">
+                            {user.username}
+                            {user.isNew && <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded">NEW</span>}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-purple-400">{user.messageCount}</p>
+                        <p className="text-xs text-gray-500">messages</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Top Reactions */}
+            {leaderboards.topReactions && leaderboards.topReactions.length > 0 && (
+              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Smile className="w-5 h-5 text-pink-400" />
+                  <h2 className="text-xl font-bold">❤️ Most Reactions Received</h2>
+                </div>
+                <div className="space-y-3">
+                  {leaderboards.topReactions.slice(0, 10).map((user: any, index: number) => (
+                    <div key={user.userId} className="flex items-center justify-between bg-hp-black rounded-lg p-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl font-bold text-gray-500">#{index + 1}</span>
+                        <p className="font-medium">{user.username}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-pink-400">{user.reactionCount}</p>
+                        <p className="text-xs text-gray-500">reactions</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Charts Row 1 - Top Commenters & Emoji Users */}
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Top Commenters */}
           <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
@@ -234,7 +502,7 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
 
-        {/* Charts Row 2 */}
+        {/* Charts Row 2 - Hourly & Daily Activity */}
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Hourly Activity */}
           <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
@@ -279,7 +547,7 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
 
-        {/* Charts Row 3 */}
+        {/* Charts Row 3 - Channel Distribution & Monthly Trends */}
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Channel Activity */}
           <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
