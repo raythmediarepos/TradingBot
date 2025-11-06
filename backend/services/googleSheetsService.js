@@ -99,9 +99,23 @@ const getSheetData = async (sheetName) => {
       return { sheetName, expenses: [], monthTotal: 0 }
     }
 
-    // First row is headers
-    const headers = rows[0]
-    const dataRows = rows.slice(1)
+    // Find the header row (first non-empty row with "Cost" or "Date" in it)
+    let headerRowIndex = 0
+    let headers = rows[0]
+    
+    // Check if first row is empty or doesn't contain expected headers
+    const firstRowHasHeaders = rows[0] && rows[0].some(cell => 
+      cell && String(cell).toLowerCase().match(/cost|date|reason|location/)
+    )
+    
+    if (!firstRowHasHeaders && rows.length > 1) {
+      // First row is empty, use second row as headers
+      console.log(`📋 [SHEETS] ${sheetName} - First row is empty, using row 2 as headers`)
+      headerRowIndex = 1
+      headers = rows[1]
+    }
+    
+    const dataRows = rows.slice(headerRowIndex + 1)
 
     console.log(`📋 [SHEETS] ${sheetName} - Headers found:`, headers)
     console.log(`📋 [SHEETS] ${sheetName} - Processing ${dataRows.length} data rows`)
