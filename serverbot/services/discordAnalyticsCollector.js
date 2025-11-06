@@ -184,20 +184,57 @@ const collectAnalytics = async () => {
     console.warn('⚠️  [SERVERBOT] No messages found in discordAnalytics collection. Make sure message tracking is enabled.')
   }
 
-  // Calculate message stats
+  // ============================================
+  // COMPREHENSIVE MESSAGE ANALYTICS
+  // ============================================
+  
+  console.log('🔍 [SERVERBOT] Calculating comprehensive message analytics...')
+  
+  // Basic counters
   const userMessageCount = {}
   const userEmojiCount = {}
+  const userReactionCount = {}
   const channelMessageCount = {}
   const hourlyActivity = Array(24).fill(0)
   const dailyActivity = Array(7).fill(0)
   const monthlyData = {}
+  
+  // New: Message quality metrics
+  const userMessageLengths = {}
+  const userReplyCount = {}
+  const userQuestionCount = {}
+  const userLinkCount = {}
+  const userAttachmentCount = {}
+  const userFirstMessageDate = {}
+  const userLastMessageDate = {}
+  
+  // New: Time-based tracking
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  let messagesToday = 0
+  let messagesYesterday = 0
+  let messagesThisWeek = 0
+  let messagesLastWeek = 0
 
   messages.forEach(msg => {
+    const userId = msg.userId
+    const msgDate = msg.timestamp?.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp)
+    
     // User message counts
-    userMessageCount[msg.userId] = (userMessageCount[msg.userId] || 0) + 1
+    userMessageCount[userId] = (userMessageCount[userId] || 0) + 1
 
     // User emoji counts
-    userEmojiCount[msg.userId] = (userEmojiCount[msg.userId] || 0) + (msg.emojiCount || 0)
+    userEmojiCount[userId] = (userEmojiCount[userId] || 0) + (msg.emojiCount || 0)
+    
+    // NEW: Reaction counts
+    if (msg.reactions) {
+      userReactionCount[userId] = (userReactionCount[userId] || 0) + msg.reactions
+    }
 
     // Channel message counts
     const channelKey = `${msg.channelId}|${msg.channelName}`
@@ -205,9 +242,8 @@ const collectAnalytics = async () => {
 
     // Hourly activity
     if (msg.timestamp) {
-      const date = msg.timestamp.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp)
-      const hour = date.getHours()
-      const dayOfWeek = date.getDay() // 0 = Sunday
+      const hour = msgDate.getHours()
+      const dayOfWeek = msgDate.getDay() // 0 = Sunday
       hourlyActivity[hour]++
       dailyActivity[dayOfWeek]++
     }
@@ -218,9 +254,59 @@ const collectAnalytics = async () => {
         monthlyData[msg.month] = { messages: 0, users: new Set() }
       }
       monthlyData[msg.month].messages++
-      monthlyData[msg.month].users.add(msg.userId)
+      monthlyData[msg.month].users.add(userId)
+    }
+    
+    // NEW: Message quality metrics
+    if (msg.content) {
+      const contentLength = msg.content.length
+      if (!userMessageLengths[userId]) userMessageLengths[userId] = []
+      userMessageLengths[userId].push(contentLength)
+      
+      // Count replies (messages starting with @mention or in thread)
+      if (msg.isReply || msg.content.startsWith('@')) {
+        userReplyCount[userId] = (userReplyCount[userId] || 0) + 1
+      }
+      
+      // Count questions (messages with ?)
+      if (msg.content.includes('?')) {
+        userQuestionCount[userId] = (userQuestionCount[userId] || 0) + 1
+      }
+      
+      // Count links
+      if (msg.content.includes('http://') || msg.content.includes('https://')) {
+        userLinkCount[userId] = (userLinkCount[userId] || 0) + 1
+      }
+    }
+    
+    // NEW: Track attachments
+    if (msg.hasAttachment) {
+      userAttachmentCount[userId] = (userAttachmentCount[userId] || 0) + 1
+    }
+    
+    // NEW: Track first and last message dates
+    if (!userFirstMessageDate[userId] || msgDate < userFirstMessageDate[userId]) {
+      userFirstMessageDate[userId] = msgDate
+    }
+    if (!userLastMessageDate[userId] || msgDate > userLastMessageDate[userId]) {
+      userLastMessageDate[userId] = msgDate
+    }
+    
+    // NEW: Time-based message counts
+    if (msgDate >= today) {
+      messagesToday++
+    } else if (msgDate >= yesterday && msgDate < today) {
+      messagesYesterday++
+    }
+    
+    if (msgDate >= sevenDaysAgo) {
+      messagesThisWeek++
     }
   })
+  
+  console.log('✅ [SERVERBOT] Message analytics calculated')
+  console.log(`   → ${messagesToday} messages today, ${messagesYesterday} yesterday`)
+  console.log(`   → ${messagesThisWeek} messages this week`)
 
   // Get usernames for user IDs
   const usernames = {}
@@ -276,11 +362,212 @@ const collectAnalytics = async () => {
   const peakDay = dailyActivity.indexOf(Math.max(...dailyActivity))
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-  console.log(`📊 [SERVERBOT] Calculated stats:`)
+  console.log(`📊 [SERVERBOT] Calculated basic stats:`)
   console.log(`   → Top commenters: ${topCommenters.length}`)
   console.log(`   → Top emoji users: ${topEmojiUsers.length}`)
   console.log(`   → Channels tracked: ${channelStats.length}`)
   console.log(`   → Peak activity: ${dayNames[peakDay]} at ${peakHour}:00`)
+  
+  // ============================================
+  // NEW: USER SEGMENTATION
+  // ============================================
+  
+  console.log('👥 [SERVERBOT] Calculating user segmentation...')
+  
+  const now = new Date()
+  const powerUsers = []
+  const casualUsers = []
+  const lurkers = []
+  const newUsers = []
+  const inactiveUsers = []
+  const ghostMembers = []
+  
+  realMembers.forEach(member => {
+    const userId = member.user.id
+    const messageCount = userMessageCount[userId] || 0
+    const joinedAt = member.joinedAt
+    const daysSinceJoin = joinedAt ? Math.floor((now - joinedAt) / (1000 * 60 * 60 * 24)) : 999
+    const lastMessage = userLastMessageDate[userId]
+    const daysSinceLastMessage = lastMessage ? Math.floor((now - lastMessage) / (1000 * 60 * 60 * 24)) : 999
+    
+    const userData = {
+      userId,
+      username: member.user.username,
+      messageCount,
+      daysSinceJoin,
+      daysSinceLastMessage,
+      joinedAt: joinedAt?.toISOString() || null,
+    }
+    
+    // Power users: Top 10% by activity OR 50+ messages
+    if (messageCount >= 50 || (messageCount > 0 && messageCount >= messages.length * 0.1 / realMembers.size)) {
+      powerUsers.push(userData)
+    }
+    // Casual users: 5-49 messages
+    else if (messageCount >= 5 && messageCount < 50) {
+      casualUsers.push(userData)
+    }
+    // Lurkers: 1-4 messages
+    else if (messageCount >= 1 && messageCount < 5) {
+      lurkers.push(userData)
+    }
+    
+    // New users: Joined in last 30 days
+    if (daysSinceJoin <= 30) {
+      newUsers.push(userData)
+    }
+    
+    // Inactive users: No message in 30+ days (but have messaged before)
+    if (messageCount > 0 && daysSinceLastMessage >= 30) {
+      inactiveUsers.push(userData)
+    }
+    
+    // Ghost members: Joined but never messaged
+    if (messageCount === 0) {
+      ghostMembers.push(userData)
+    }
+  })
+  
+  console.log(`✅ [SERVERBOT] User segmentation complete:`)
+  console.log(`   → Power users: ${powerUsers.length}`)
+  console.log(`   → Casual users: ${casualUsers.length}`)
+  console.log(`   → Lurkers: ${lurkers.length}`)
+  console.log(`   → New users (30d): ${newUsers.length}`)
+  console.log(`   → Inactive (30d+): ${inactiveUsers.length}`)
+  console.log(`   → Ghost members: ${ghostMembers.length}`)
+  
+  // ============================================
+  // NEW: RETENTION & ENGAGEMENT METRICS
+  // ============================================
+  
+  console.log('📈 [SERVERBOT] Calculating retention metrics...')
+  
+  const retentionMetrics = {
+    newMembersLast7Days: 0,
+    newMembersLast30Days: 0,
+    avgDaysToFirstMessage: 0,
+    avgDaysToTenthMessage: 0,
+    retentionRate30Days: 0,
+    churnRate: 0,
+  }
+  
+  let totalDaysToFirst = 0
+  let usersWithFirstMessage = 0
+  let totalDaysToTenth = 0
+  let usersWithTenthMessage = 0
+  let joined30DaysAgo = 0
+  let stillActive30Days = 0
+  
+  realMembers.forEach(member => {
+    const userId = member.user.id
+    const joinedAt = member.joinedAt
+    const daysSinceJoin = joinedAt ? Math.floor((now - joinedAt) / (1000 * 60 * 60 * 24)) : 999
+    
+    // Count new members
+    if (daysSinceJoin <= 7) retentionMetrics.newMembersLast7Days++
+    if (daysSinceJoin <= 30) retentionMetrics.newMembersLast30Days++
+    
+    // Calculate days to first message
+    const firstMessageDate = userFirstMessageDate[userId]
+    if (firstMessageDate && joinedAt) {
+      const daysToFirst = Math.floor((firstMessageDate - joinedAt) / (1000 * 60 * 60 * 24))
+      if (daysToFirst >= 0 && daysToFirst < 365) { // Sanity check
+        totalDaysToFirst += daysToFirst
+        usersWithFirstMessage++
+      }
+    }
+    
+    // Calculate retention rate (members who joined 30+ days ago and are still active)
+    if (daysSinceJoin >= 30 && daysSinceJoin <= 60) {
+      joined30DaysAgo++
+      const lastMessage = userLastMessageDate[userId]
+      if (lastMessage && (now - lastMessage) / (1000 * 60 * 60 * 24) < 30) {
+        stillActive30Days++
+      }
+    }
+  })
+  
+  retentionMetrics.avgDaysToFirstMessage = usersWithFirstMessage > 0 ? 
+    (totalDaysToFirst / usersWithFirstMessage).toFixed(1) : 0
+  retentionMetrics.retentionRate30Days = joined30DaysAgo > 0 ?
+    ((stillActive30Days / joined30DaysAgo) * 100).toFixed(1) : 0
+  retentionMetrics.churnRate = ((inactiveUsers.length / realMembers.size) * 100).toFixed(1)
+  
+  console.log(`✅ [SERVERBOT] Retention metrics calculated:`)
+  console.log(`   → New members (7d): ${retentionMetrics.newMembersLast7Days}`)
+  console.log(`   → New members (30d): ${retentionMetrics.newMembersLast30Days}`)
+  console.log(`   → Avg days to first message: ${retentionMetrics.avgDaysToFirstMessage}`)
+  console.log(`   → 30-day retention rate: ${retentionMetrics.retentionRate30Days}%`)
+  
+  // ============================================
+  // NEW: MESSAGE QUALITY AGGREGATIONS
+  // ============================================
+  
+  console.log('💬 [SERVERBOT] Calculating message quality metrics...')
+  
+  const totalMessageLength = Object.values(userMessageLengths).flat().reduce((sum, len) => sum + len, 0)
+  const totalMessages = Object.values(userMessageLengths).flat().length
+  const totalReplies = Object.values(userReplyCount).reduce((sum, count) => sum + count, 0)
+  const totalQuestions = Object.values(userQuestionCount).reduce((sum, count) => sum + count, 0)
+  const totalLinks = Object.values(userLinkCount).reduce((sum, count) => sum + count, 0)
+  const totalAttachments = Object.values(userAttachmentCount).reduce((sum, count) => sum + count, 0)
+  
+  const messageQuality = {
+    avgMessageLength: totalMessages > 0 ? Math.round(totalMessageLength / totalMessages) : 0,
+    replyRate: totalMessages > 0 ? ((totalReplies / totalMessages) * 100).toFixed(1) : 0,
+    questionRate: totalMessages > 0 ? ((totalQuestions / totalMessages) * 100).toFixed(1) : 0,
+    linksShared: totalLinks,
+    attachmentsShared: totalAttachments,
+  }
+  
+  console.log(`✅ [SERVERBOT] Message quality metrics:`)
+  console.log(`   → Avg message length: ${messageQuality.avgMessageLength} chars`)
+  console.log(`   → Reply rate: ${messageQuality.replyRate}%`)
+  console.log(`   → Question rate: ${messageQuality.questionRate}%`)
+  
+  // ============================================
+  // NEW: COMPARATIVE ANALYTICS
+  // ============================================
+  
+  console.log('📊 [SERVERBOT] Calculating comparative analytics...')
+  
+  const todayVsYesterday = messagesYesterday > 0 ?
+    (((messagesToday - messagesYesterday) / messagesYesterday) * 100).toFixed(1) : 0
+  
+  const comparativeAnalytics = {
+    todayVsYesterday: {
+      today: messagesToday,
+      yesterday: messagesYesterday,
+      change: parseFloat(todayVsYesterday),
+      trend: todayVsYesterday > 0 ? 'up' : todayVsYesterday < 0 ? 'down' : 'stable',
+    },
+    thisWeekVsLastWeek: {
+      thisWeek: messagesThisWeek,
+      change: 0, // Would need last week's data stored
+    },
+  }
+  
+  console.log(`✅ [SERVERBOT] Comparative analytics:`)
+  console.log(`   → Today vs yesterday: ${todayVsYesterday}%`)
+  
+  // ============================================
+  // NEW: LEADERBOARDS
+  // ============================================
+  
+  console.log('🏆 [SERVERBOT] Generating leaderboards...')
+  
+  // Most active this week
+  const weeklyLeaderboard = Object.entries(userMessageCount)
+    .map(([userId, count]) => ({
+      userId,
+      username: usernames[userId] || 'Unknown',
+      messageCount: count,
+      isNew: newUsers.some(u => u.userId === userId),
+    }))
+    .sort((a, b) => b.messageCount - a.messageCount)
+    .slice(0, 10)
+  
+  console.log(`✅ [SERVERBOT] Leaderboards generated`)
 
   // ============================================
   // SAVE TO FIREBASE
@@ -335,6 +622,56 @@ const collectAnalytics = async () => {
       mostActiveChannel: channelStats[0]?.channelName || 'N/A',
       mostActiveChannelMessages: channelStats[0]?.messageCount || 0,
     },
+    // NEW: User Segmentation
+    userSegmentation: {
+      powerUsers: powerUsers.slice(0, 20),
+      casualUsers: casualUsers.slice(0, 20),
+      lurkers: lurkers.slice(0, 20),
+      newUsers: newUsers.slice(0, 20),
+      inactiveUsers: inactiveUsers.slice(0, 20),
+      ghostMembers: ghostMembers.slice(0, 20),
+      counts: {
+        powerUsers: powerUsers.length,
+        casualUsers: casualUsers.length,
+        lurkers: lurkers.length,
+        newUsers: newUsers.length,
+        inactiveUsers: inactiveUsers.length,
+        ghostMembers: ghostMembers.length,
+      },
+    },
+    // NEW: Retention Metrics
+    retention: retentionMetrics,
+    // NEW: Message Quality
+    messageQuality,
+    // NEW: Comparative Analytics
+    comparative: comparativeAnalytics,
+    // NEW: Leaderboards
+    leaderboards: {
+      weeklyTopUsers: weeklyLeaderboard,
+      topReactions: Object.entries(userReactionCount)
+        .map(([userId, count]) => ({
+          userId,
+          username: usernames[userId] || 'Unknown',
+          reactionCount: count,
+        }))
+        .sort((a, b) => b.reactionCount - a.reactionCount)
+        .slice(0, 10),
+    },
+    // NEW: Recent Activity Summary
+    recentActivity: {
+      today: {
+        messages: messagesToday,
+        change: comparativeAnalytics.todayVsYesterday.change,
+        trend: comparativeAnalytics.todayVsYesterday.trend,
+      },
+      thisWeek: {
+        messages: messagesThisWeek,
+        newMembers: retentionMetrics.newMembersLast7Days,
+      },
+      yesterday: {
+        messages: messagesYesterday,
+      },
+    },
   }
 
   // Save to Firebase
@@ -342,15 +679,36 @@ const collectAnalytics = async () => {
   await db.collection('serverAnalytics').doc('discord').set(analyticsData)
 
   console.log('✅ [SERVERBOT] Analytics saved successfully to Firebase!')
-  console.log('📊 [SERVERBOT] Summary:')
-  console.log(`   → ${realMembers.size} members analyzed`)
-  console.log(`   → ${messages.length} messages processed`)
-  console.log(`   → ${channelStats.length} channels tracked`)
-  console.log(`   → ${Object.keys(userMessageCount).length} active users`)
-  console.log(`   → ${Object.keys(roleDistribution).length} roles`)
-  console.log(`   → ${monthlyActivity.length} months of data`)
+  console.log('📊 [SERVERBOT] Complete Summary:')
   console.log('')
-  console.log('🎉 [SERVERBOT] Collection complete! Data is now available in the admin dashboard.')
+  console.log('   📈 Core Metrics:')
+  console.log(`      → ${realMembers.size} members analyzed`)
+  console.log(`      → ${messages.length} messages processed (30 days)`)
+  console.log(`      → ${channelStats.length} channels tracked`)
+  console.log(`      → ${Object.keys(userMessageCount).length} active users`)
+  console.log(`      → ${Object.keys(roleDistribution).length} roles`)
+  console.log('')
+  console.log('   👥 User Segmentation:')
+  console.log(`      → ${powerUsers.length} power users`)
+  console.log(`      → ${casualUsers.length} casual users`)
+  console.log(`      → ${lurkers.length} lurkers`)
+  console.log(`      → ${ghostMembers.length} ghost members`)
+  console.log('')
+  console.log('   🔄 Retention & Growth:')
+  console.log(`      → ${retentionMetrics.newMembersLast7Days} new members (7d)`)
+  console.log(`      → ${retentionMetrics.avgDaysToFirstMessage} avg days to first message`)
+  console.log(`      → ${retentionMetrics.retentionRate30Days}% retention rate`)
+  console.log('')
+  console.log('   💬 Message Quality:')
+  console.log(`      → ${messageQuality.avgMessageLength} avg chars/message`)
+  console.log(`      → ${messageQuality.replyRate}% reply rate`)
+  console.log(`      → ${messageQuality.questionRate}% question rate`)
+  console.log('')
+  console.log('   📊 Today\'s Activity:')
+  console.log(`      → ${messagesToday} messages today`)
+  console.log(`      → ${comparativeAnalytics.todayVsYesterday.change > 0 ? '+' : ''}${comparativeAnalytics.todayVsYesterday.change}% vs yesterday`)
+  console.log('')
+  console.log('🎉 [SERVERBOT] Collection complete! All data is now available in the admin dashboard.')
 
   return analyticsData
 }
