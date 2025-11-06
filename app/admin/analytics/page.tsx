@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
 import {
   TrendingUp, MessageSquare, Users, Smile, Activity, Calendar,
-  Loader2, RefreshCcw, Award, Clock, Hash, TrendingDown, AlertCircle,
-  UserPlus, UserCheck, UserMinus, UserX, Zap, MessageCircle, Link2,
-  FileText, Target, BarChart3
+  Loader2, RefreshCcw, Award, Clock, Hash, AlertCircle
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout } from '@/lib/auth'
 
@@ -66,7 +64,10 @@ export default function AdminAnalyticsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-hp-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-hp-yellow animate-spin" />
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-400 text-sm">Loading analytics...</p>
+        </div>
       </div>
     )
   }
@@ -74,41 +75,45 @@ export default function AdminAnalyticsPage() {
   if (!analytics) {
     return (
       <div className="min-h-screen bg-hp-black flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">No Analytics Data Available</h2>
-          <p className="text-gray-400 mb-6">The serverbot hasn't collected data yet.</p>
-          <button
-            onClick={() => router.push('/admin/dashboard')}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium"
-          >
-            Back to Dashboard
-          </button>
+        <div className="text-center max-w-md">
+          <div className="bg-hp-gray900 border border-yellow-500/20 rounded-2xl p-8">
+            <AlertCircle className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-3">No Analytics Data</h2>
+            <p className="text-gray-400 mb-6">The serverbot hasn't collected data yet. It runs every 6 hours automatically.</p>
+            <button
+              onClick={() => router.push('/admin/dashboard')}
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg text-white font-medium transition-all"
+            >
+              Back to Dashboard
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
-  const { summary, members, messages, engagement, userSegmentation, retention, messageQuality, comparative, leaderboards, recentActivity } = analytics
+  const { summary, members, messages, engagement } = analytics
 
   return (
     <div className="min-h-screen bg-hp-black text-hp-white">
-      {/* Header */}
-      <header className="border-b border-white/10 sticky top-0 bg-hp-black/95 backdrop-blur-sm z-10">
-        <div className="container mx-auto px-6 py-4">
+      {/* Professional Header */}
+      <header className="border-b border-white/5 sticky top-0 bg-hp-black/80 backdrop-blur-xl z-50">
+        <div className="max-w-[1600px] mx-auto px-8 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button onClick={() => router.push('/admin/dashboard')} className="text-gray-400 hover:text-white">
+            <div className="flex items-center gap-6">
+              <button 
+                onClick={() => router.push('/admin/dashboard')} 
+                className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-medium"
+              >
                 ← Back
               </button>
+              <div className="h-8 w-px bg-white/10" />
               <div>
-                <h1 className="text-2xl font-bold flex items-center gap-2">
-                  <BarChart3 className="w-6 h-6 text-purple-400" />
-                  Advanced Discord Analytics
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                  Discord Analytics
                 </h1>
-                <p className="text-sm text-gray-400">
-                  Last collected: {analytics.collectedAt ? new Date(analytics.collectedAt).toLocaleString() : 'N/A'} • 
-                  Period: {summary?.period || '30 days'}
+                <p className="text-sm text-gray-500 mt-1">
+                  Last updated {analytics.collectedAt ? new Date(analytics.collectedAt).toLocaleString() : 'N/A'} • {summary?.period || '30 days'}
                 </p>
               </div>
             </div>
@@ -116,12 +121,15 @@ export default function AdminAnalyticsPage() {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50 text-sm font-medium"
               >
                 <RefreshCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
-              <button onClick={() => { logout(); router.push('/admin/login'); }} className="px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/20 transition-all text-sm">
+              <button 
+                onClick={() => { logout(); router.push('/admin/login'); }} 
+                className="px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-red-400 transition-all text-sm font-medium"
+              >
                 Logout
               </button>
             </div>
@@ -129,566 +137,424 @@ export default function AdminAnalyticsPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-6 py-8">
-        {/* NEW: Recent Activity Summary */}
-        {recentActivity && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-yellow-400" />
-              Recent Activity
-            </h2>
-            <div className="grid md:grid-cols-4 gap-4">
-              <div className="bg-hp-gray900 border border-yellow-500/30 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageSquare className="w-5 h-5 text-yellow-400" />
-                  <p className="text-xs text-gray-400">Today</p>
+      <div className="max-w-[1600px] mx-auto px-8 py-8">
+        {/* Key Metrics Overview */}
+        <div className="mb-12">
+          <h2 className="text-lg font-semibold text-gray-400 mb-6 uppercase tracking-wider">Overview</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-2xl p-6 hover:border-purple-500/40 transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-purple-400" />
                 </div>
-                <p className="text-3xl font-bold">{recentActivity.today?.messages || 0}</p>
-                {recentActivity.today?.change !== undefined && (
-                  <div className={`flex items-center gap-1 mt-2 text-sm ${recentActivity.today.trend === 'up' ? 'text-green-400' : recentActivity.today.trend === 'down' ? 'text-red-400' : 'text-gray-400'}`}>
-                    {recentActivity.today.trend === 'up' ? <TrendingUp className="w-4 h-4" /> : recentActivity.today.trend === 'down' ? <TrendingDown className="w-4 h-4" /> : null}
-                    {recentActivity.today.change > 0 ? '+' : ''}{recentActivity.today.change}% vs yesterday
-                  </div>
-                )}
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Members</p>
               </div>
-              <div className="bg-hp-gray900 border border-blue-500/30 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="w-5 h-5 text-blue-400" />
-                  <p className="text-xs text-gray-400">This Week</p>
-                </div>
-                <p className="text-3xl font-bold">{recentActivity.thisWeek?.messages || 0}</p>
-                <p className="text-xs text-gray-400 mt-2">messages</p>
-              </div>
-              <div className="bg-hp-gray900 border border-green-500/30 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <UserPlus className="w-5 h-5 text-green-400" />
-                  <p className="text-xs text-gray-400">New Members</p>
-                </div>
-                <p className="text-3xl font-bold">{recentActivity.thisWeek?.newMembers || 0}</p>
-                <p className="text-xs text-gray-400 mt-2">last 7 days</p>
-              </div>
-              <div className="bg-hp-gray900 border border-purple-500/30 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="w-5 h-5 text-purple-400" />
-                  <p className="text-xs text-gray-400">Active Users</p>
-                </div>
-                <p className="text-3xl font-bold">{summary?.activeUsers || 0}</p>
-                <p className="text-xs text-gray-400 mt-2">last 30 days</p>
-              </div>
+              <p className="text-3xl font-bold text-white">{summary?.totalMembers?.toLocaleString() || 0}</p>
             </div>
-          </div>
-        )}
 
-        {/* Core Overview Stats */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Core Metrics</h2>
-          <div className="grid md:grid-cols-5 gap-4">
-            <div className="bg-hp-gray900 border border-purple-500/30 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="w-5 h-5 text-purple-400" />
-                <p className="text-xs text-gray-400">Total Members</p>
+            <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-6 hover:border-blue-500/40 transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-blue-400" />
+                </div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Messages</p>
               </div>
-              <p className="text-3xl font-bold">{summary?.totalMembers?.toLocaleString() || 0}</p>
+              <p className="text-3xl font-bold text-white">{summary?.totalMessages?.toLocaleString() || 0}</p>
             </div>
-            <div className="bg-hp-gray900 border border-blue-500/30 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="w-5 h-5 text-blue-400" />
-                <p className="text-xs text-gray-400">Total Messages</p>
+
+            <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-green-400" />
+                </div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Active</p>
               </div>
-              <p className="text-3xl font-bold">{summary?.totalMessages?.toLocaleString() || 0}</p>
+              <p className="text-3xl font-bold text-white">{summary?.activeUsers?.toLocaleString() || 0}</p>
             </div>
-            <div className="bg-hp-gray900 border border-green-500/30 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Activity className="w-5 h-5 text-green-400" />
-                <p className="text-xs text-gray-400">Active Users</p>
+
+            <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-2xl p-6 hover:border-yellow-500/40 transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                  <Hash className="w-5 h-5 text-yellow-400" />
+                </div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Channels</p>
               </div>
-              <p className="text-3xl font-bold">{summary?.activeUsers?.toLocaleString() || 0}</p>
+              <p className="text-3xl font-bold text-white">{summary?.totalChannels || 0}</p>
             </div>
-            <div className="bg-hp-gray900 border border-yellow-500/30 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Hash className="w-5 h-5 text-yellow-400" />
-                <p className="text-xs text-gray-400">Channels</p>
+
+            <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20 rounded-2xl p-6 hover:border-orange-500/40 transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                  <Award className="w-5 h-5 text-orange-400" />
+                </div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Roles</p>
               </div>
-              <p className="text-3xl font-bold">{summary?.totalChannels || 0}</p>
-            </div>
-            <div className="bg-hp-gray900 border border-orange-500/30 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="w-5 h-5 text-orange-400" />
-                <p className="text-xs text-gray-400">Roles</p>
-              </div>
-              <p className="text-3xl font-bold">{summary?.totalRoles || 0}</p>
+              <p className="text-3xl font-bold text-white">{summary?.totalRoles || 0}</p>
             </div>
           </div>
         </div>
 
-        {/* NEW: User Segmentation */}
-        {userSegmentation && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5 text-purple-400" />
-              User Segmentation
-            </h2>
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-5 h-5 text-yellow-400" />
-                  <p className="text-xs text-gray-400">Power Users</p>
+        {/* Engagement Stats */}
+        <div className="mb-12">
+          <h2 className="text-lg font-semibold text-gray-400 mb-6 uppercase tracking-wider">Engagement</h2>
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-6">
+              <p className="text-sm text-gray-500 mb-2 font-medium">Avg Messages/User</p>
+              <p className="text-2xl font-bold text-purple-400">{engagement?.avgMessagesPerUser || '0'}</p>
+            </div>
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-6">
+              <p className="text-sm text-gray-500 mb-2 font-medium">Avg Messages/Day</p>
+              <p className="text-2xl font-bold text-blue-400">{engagement?.avgMessagesPerDay || '0'}</p>
+            </div>
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-6">
+              <p className="text-sm text-gray-500 mb-2 font-medium">Most Active Channel</p>
+              <p className="text-lg font-bold text-green-400 truncate">#{engagement?.mostActiveChannel || 'N/A'}</p>
+              <p className="text-xs text-gray-600 mt-1">{engagement?.mostActiveChannelMessages || 0} messages</p>
+            </div>
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-6">
+              <p className="text-sm text-gray-500 mb-2 font-medium">Peak Activity</p>
+              <p className="text-lg font-bold text-yellow-400">{messages?.peakActivity?.dayName || 'N/A'}</p>
+              <p className="text-xs text-gray-600 mt-1">{messages?.peakActivity?.hourLabel || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Section */}
+        <div className="space-y-8">
+          {/* Top Contributors */}
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <Award className="w-5 h-5 text-purple-400" />
                 </div>
-                <p className="text-3xl font-bold text-yellow-400">{userSegmentation.counts?.powerUsers || 0}</p>
-                <p className="text-xs text-gray-500 mt-2">50+ messages or top 10%</p>
+                <h3 className="text-lg font-semibold">Top Commenters</h3>
               </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <UserCheck className="w-5 h-5 text-blue-400" />
-                  <p className="text-xs text-gray-400">Casual Users</p>
+              {messages?.topCommenters && messages.topCommenters.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={messages.topCommenters.slice(0, 10)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                    <XAxis 
+                      dataKey="username" 
+                      stroke="#6B7280" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={100} 
+                      tick={{ fontSize: 11, fill: '#9CA3AF' }} 
+                    />
+                    <YAxis stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1F2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                      }} 
+                    />
+                    <Bar dataKey="messageCount" fill="#9C27B0" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-80 flex items-center justify-center text-gray-600">
+                  No data available
                 </div>
-                <p className="text-3xl font-bold text-blue-400">{userSegmentation.counts?.casualUsers || 0}</p>
-                <p className="text-xs text-gray-500 mt-2">5-49 messages</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <UserMinus className="w-5 h-5 text-purple-400" />
-                  <p className="text-xs text-gray-400">Lurkers</p>
-                </div>
-                <p className="text-3xl font-bold text-purple-400">{userSegmentation.counts?.lurkers || 0}</p>
-                <p className="text-xs text-gray-500 mt-2">1-4 messages</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <UserPlus className="w-5 h-5 text-green-400" />
-                  <p className="text-xs text-gray-400">New Users</p>
-                </div>
-                <p className="text-3xl font-bold text-green-400">{userSegmentation.counts?.newUsers || 0}</p>
-                <p className="text-xs text-gray-500 mt-2">Joined last 30 days</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <UserX className="w-5 h-5 text-orange-400" />
-                  <p className="text-xs text-gray-400">Inactive</p>
-                </div>
-                <p className="text-3xl font-bold text-orange-400">{userSegmentation.counts?.inactiveUsers || 0}</p>
-                <p className="text-xs text-gray-500 mt-2">No message 30+ days</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <UserX className="w-5 h-5 text-gray-400" />
-                  <p className="text-xs text-gray-400">Ghost Members</p>
-                </div>
-                <p className="text-3xl font-bold text-gray-400">{userSegmentation.counts?.ghostMembers || 0}</p>
-                <p className="text-xs text-gray-500 mt-2">Never messaged</p>
-              </div>
+              )}
             </div>
 
-            {/* User Segmentation Pie Chart */}
-            {userSegmentation.counts && (
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-bold mb-4">User Distribution</h3>
-                <ResponsiveContainer width="100%" height={300}>
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                  <Smile className="w-5 h-5 text-yellow-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Top Emoji Users</h3>
+              </div>
+              {messages?.topEmojiUsers && messages.topEmojiUsers.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={messages.topEmojiUsers.slice(0, 10)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                    <XAxis 
+                      dataKey="username" 
+                      stroke="#6B7280" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={100} 
+                      tick={{ fontSize: 11, fill: '#9CA3AF' }} 
+                    />
+                    <YAxis stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1F2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                      }} 
+                    />
+                    <Bar dataKey="emojiCount" fill="#FFC107" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-80 flex items-center justify-center text-gray-600">
+                  No data available
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Activity Patterns */}
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-blue-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Activity by Hour</h3>
+              </div>
+              {messages?.hourlyActivity && messages.hourlyActivity.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={messages.hourlyActivity}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                    <XAxis dataKey="label" stroke="#6B7280" tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                    <YAxis stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1F2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                      }} 
+                    />
+                    <Line type="monotone" dataKey="count" stroke="#2196F3" strokeWidth={3} dot={{ fill: '#2196F3', r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-80 flex items-center justify-center text-gray-600">
+                  No data available
+                </div>
+              )}
+            </div>
+
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-green-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Activity by Day</h3>
+              </div>
+              {messages?.dailyActivity && messages.dailyActivity.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={messages.dailyActivity}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                    <XAxis dataKey="dayName" stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+                    <YAxis stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1F2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                      }} 
+                    />
+                    <Bar dataKey="count" fill="#4CAF50" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-80 flex items-center justify-center text-gray-600">
+                  No data available
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Channel & Monthly */}
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                  <Hash className="w-5 h-5 text-yellow-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Channel Distribution</h3>
+              </div>
+              {messages?.channelStats && messages.channelStats.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320}>
                   <PieChart>
                     <Pie
-                      data={[
-                        { name: 'Power Users', value: userSegmentation.counts.powerUsers, color: '#FFC107' },
-                        { name: 'Casual Users', value: userSegmentation.counts.casualUsers, color: '#2196F3' },
-                        { name: 'Lurkers', value: userSegmentation.counts.lurkers, color: '#9C27B0' },
-                        { name: 'Ghost Members', value: userSegmentation.counts.ghostMembers, color: '#9CA3AF' },
-                      ].filter(item => item.value > 0)}
-                      dataKey="value"
-                      nameKey="name"
+                      data={messages.channelStats.slice(0, 8)}
+                      dataKey="messageCount"
+                      nameKey="channelName"
                       cx="50%"
                       cy="50%"
                       outerRadius={100}
-                      label={(entry) => `${entry.name}: ${entry.value}`}
+                      label={(entry) => entry.channelName}
                     >
-                      {[
-                        { name: 'Power Users', value: userSegmentation.counts.powerUsers, color: '#FFC107' },
-                        { name: 'Casual Users', value: userSegmentation.counts.casualUsers, color: '#2196F3' },
-                        { name: 'Lurkers', value: userSegmentation.counts.lurkers, color: '#9C27B0' },
-                        { name: 'Ghost Members', value: userSegmentation.counts.ghostMembers, color: '#9CA3AF' },
-                      ].filter(item => item.value > 0).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      {messages.channelStats.slice(0, 8).map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1F2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                      }} 
+                    />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* NEW: Retention & Engagement */}
-        {retention && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Target className="w-5 h-5 text-green-400" />
-              Retention & Engagement
-            </h2>
-            <div className="grid md:grid-cols-4 gap-4">
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <p className="text-sm text-gray-400 mb-1">New Members (7d)</p>
-                <p className="text-2xl font-bold text-green-400">{retention.newMembersLast7Days || 0}</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <p className="text-sm text-gray-400 mb-1">New Members (30d)</p>
-                <p className="text-2xl font-bold text-blue-400">{retention.newMembersLast30Days || 0}</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <p className="text-sm text-gray-400 mb-1">Avg Days to 1st Message</p>
-                <p className="text-2xl font-bold text-purple-400">{retention.avgDaysToFirstMessage || '0'}</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <p className="text-sm text-gray-400 mb-1">30-Day Retention Rate</p>
-                <p className="text-2xl font-bold text-yellow-400">{retention.retentionRate30Days || '0'}%</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* NEW: Message Quality */}
-        {messageQuality && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <MessageCircle className="w-5 h-5 text-blue-400" />
-              Message Quality
-            </h2>
-            <div className="grid md:grid-cols-5 gap-4">
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <p className="text-sm text-gray-400 mb-1">Avg Length</p>
-                <p className="text-2xl font-bold text-blue-400">{messageQuality.avgMessageLength || 0}</p>
-                <p className="text-xs text-gray-500">characters</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <p className="text-sm text-gray-400 mb-1">Reply Rate</p>
-                <p className="text-2xl font-bold text-purple-400">{messageQuality.replyRate || '0'}%</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <p className="text-sm text-gray-400 mb-1">Question Rate</p>
-                <p className="text-2xl font-bold text-green-400">{messageQuality.questionRate || '0'}%</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <p className="text-sm text-gray-400 mb-1">Links Shared</p>
-                <p className="text-2xl font-bold text-yellow-400">{messageQuality.linksShared || 0}</p>
-              </div>
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <p className="text-sm text-gray-400 mb-1">Attachments</p>
-                <p className="text-2xl font-bold text-orange-400">{messageQuality.attachmentsShared || 0}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Engagement Metrics */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <p className="text-sm text-gray-400 mb-1">Avg Messages/User</p>
-            <p className="text-2xl font-bold text-purple-400">{engagement?.avgMessagesPerUser || '0'}</p>
-          </div>
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <p className="text-sm text-gray-400 mb-1">Avg Messages/Day</p>
-            <p className="text-2xl font-bold text-blue-400">{engagement?.avgMessagesPerDay || '0'}</p>
-          </div>
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <p className="text-sm text-gray-400 mb-1">Most Active Channel</p>
-            <p className="text-lg font-bold text-green-400 truncate">{engagement?.mostActiveChannel || 'N/A'}</p>
-            <p className="text-xs text-gray-500">{engagement?.mostActiveChannelMessages || 0} messages</p>
-          </div>
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <p className="text-sm text-gray-400 mb-1">Peak Activity</p>
-            <p className="text-lg font-bold text-yellow-400">{messages?.peakActivity?.dayName || 'N/A'}</p>
-            <p className="text-xs text-gray-500">{messages?.peakActivity?.hourLabel || 'N/A'}</p>
-          </div>
-        </div>
-
-        {/* NEW: Leaderboards */}
-        {leaderboards && (
-          <div className="grid lg:grid-cols-2 gap-6 mb-6">
-            {/* Weekly Top Users */}
-            {leaderboards.weeklyTopUsers && leaderboards.weeklyTopUsers.length > 0 && (
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Award className="w-5 h-5 text-yellow-400" />
-                  <h2 className="text-xl font-bold">🏆 Weekly Top Users</h2>
+              ) : (
+                <div className="h-80 flex items-center justify-center text-gray-600">
+                  No data available
                 </div>
-                <div className="space-y-3">
-                  {leaderboards.weeklyTopUsers.slice(0, 10).map((user: any, index: number) => (
-                    <div key={user.userId} className="flex items-center justify-between bg-hp-black rounded-lg p-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl font-bold text-gray-500">#{index + 1}</span>
-                        <div>
-                          <p className="font-medium flex items-center gap-2">
-                            {user.username}
-                            {user.isNew && <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded">NEW</span>}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-purple-400">{user.messageCount}</p>
-                        <p className="text-xs text-gray-500">messages</p>
-                      </div>
-                    </div>
-                  ))}
+              )}
+            </div>
+
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-purple-400" />
                 </div>
+                <h3 className="text-lg font-semibold">Monthly Trends</h3>
               </div>
-            )}
+              {messages?.monthlyActivity && messages.monthlyActivity.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={messages.monthlyActivity}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                    <XAxis dataKey="month" stroke="#6B7280" tick={{ fontSize: 11, fill: '#9CA3AF' }} />
+                    <YAxis stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1F2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                      }} 
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="messageCount" stroke="#9C27B0" name="Messages" strokeWidth={3} />
+                    <Line type="monotone" dataKey="activeUsers" stroke="#2196F3" name="Active Users" strokeWidth={3} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-80 flex items-center justify-center text-gray-600">
+                  No data available
+                </div>
+              )}
+            </div>
+          </div>
 
-            {/* Top Reactions */}
-            {leaderboards.topReactions && leaderboards.topReactions.length > 0 && (
-              <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Smile className="w-5 h-5 text-pink-400" />
-                  <h2 className="text-xl font-bold">❤️ Most Reactions Received</h2>
-                </div>
-                <div className="space-y-3">
-                  {leaderboards.topReactions.slice(0, 10).map((user: any, index: number) => (
-                    <div key={user.userId} className="flex items-center justify-between bg-hp-black rounded-lg p-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl font-bold text-gray-500">#{index + 1}</span>
-                        <p className="font-medium">{user.username}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-pink-400">{user.reactionCount}</p>
-                        <p className="text-xs text-gray-500">reactions</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          {/* Member Growth */}
+          <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-green-400" />
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Charts Row 1 - Top Commenters & Emoji Users */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-6">
-          {/* Top Commenters */}
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Award className="w-5 h-5 text-purple-400" />
-              <h2 className="text-xl font-bold">Top 10 Commenters</h2>
+              <h3 className="text-lg font-semibold">Member Growth Over Time</h3>
             </div>
-            {messages?.topCommenters && messages.topCommenters.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={messages.topCommenters.slice(0, 10)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis dataKey="username" stroke="#888" angle={-45} textAnchor="end" height={100} tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#888" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
-                  <Bar dataKey="messageCount" fill="#9C27B0" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-gray-400 py-8">No data available</p>
-            )}
-          </div>
-
-          {/* Top Emoji Users */}
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Smile className="w-5 h-5 text-yellow-400" />
-              <h2 className="text-xl font-bold">Top 10 Emoji Users</h2>
-            </div>
-            {messages?.topEmojiUsers && messages.topEmojiUsers.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={messages.topEmojiUsers.slice(0, 10)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis dataKey="username" stroke="#888" angle={-45} textAnchor="end" height={100} tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#888" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
-                  <Bar dataKey="emojiCount" fill="#FFC107" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-gray-400 py-8">No data available</p>
-            )}
-          </div>
-        </div>
-
-        {/* Charts Row 2 - Hourly & Daily Activity */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-6">
-          {/* Hourly Activity */}
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-5 h-5 text-blue-400" />
-              <h2 className="text-xl font-bold">Activity by Hour</h2>
-            </div>
-            {messages?.hourlyActivity && messages.hourlyActivity.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={messages.hourlyActivity}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis dataKey="label" stroke="#888" tick={{ fontSize: 10 }} />
-                  <YAxis stroke="#888" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
-                  <Line type="monotone" dataKey="count" stroke="#2196F3" strokeWidth={2} dot={{ fill: '#2196F3', r: 3 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-gray-400 py-8">No data available</p>
-            )}
-          </div>
-
-          {/* Daily Activity */}
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-green-400" />
-              <h2 className="text-xl font-bold">Activity by Day of Week</h2>
-            </div>
-            {messages?.dailyActivity && messages.dailyActivity.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={messages.dailyActivity}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis dataKey="dayName" stroke="#888" />
-                  <YAxis stroke="#888" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
-                  <Bar dataKey="count" fill="#4CAF50" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-gray-400 py-8">No data available</p>
-            )}
-          </div>
-        </div>
-
-        {/* Charts Row 3 - Channel Distribution & Monthly Trends */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-6">
-          {/* Channel Activity */}
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Hash className="w-5 h-5 text-yellow-400" />
-              <h2 className="text-xl font-bold">Channel Distribution</h2>
-            </div>
-            {messages?.channelStats && messages.channelStats.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={messages.channelStats.slice(0, 8)}
-                    dataKey="messageCount"
-                    nameKey="channelName"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={(entry) => entry.channelName}
-                  >
-                    {messages.channelStats.slice(0, 8).map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-gray-400 py-8">No data available</p>
-            )}
-          </div>
-
-          {/* Monthly Activity */}
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-purple-400" />
-              <h2 className="text-xl font-bold">Monthly Message Trends</h2>
-            </div>
-            {messages?.monthlyActivity && messages.monthlyActivity.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={messages.monthlyActivity}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis dataKey="month" stroke="#888" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#888" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
+            {analytics.memberGrowth && analytics.memberGrowth.length > 0 ? (
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={analytics.memberGrowth}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                  <XAxis dataKey="month" stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+                  <YAxis stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                    }} 
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="messageCount" stroke="#9C27B0" name="Messages" strokeWidth={2} />
-                  <Line type="monotone" dataKey="activeUsers" stroke="#2196F3" name="Active Users" strokeWidth={2} />
+                  <Line type="monotone" dataKey="joins" stroke="#FFC107" name="New Members" strokeWidth={3} />
+                  <Line type="monotone" dataKey="total" stroke="#4CAF50" name="Total Members" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-center text-gray-400 py-8">No data available</p>
+              <div className="h-96 flex items-center justify-center text-gray-600">
+                No data available
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Member Growth Chart */}
-        <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="w-5 h-5 text-green-400" />
-            <h2 className="text-xl font-bold">Member Growth Over Time</h2>
-          </div>
-          {analytics.memberGrowth && analytics.memberGrowth.length > 0 ? (
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={analytics.memberGrowth}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="month" stroke="#888" />
-                <YAxis stroke="#888" />
-                <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
-                <Legend />
-                <Line type="monotone" dataKey="joins" stroke="#FFC107" name="New Members" strokeWidth={2} />
-                <Line type="monotone" dataKey="total" stroke="#4CAF50" name="Total Members" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <p className="text-center text-gray-400 py-8">No data available</p>
-          )}
-        </div>
-
-        {/* Top Roles */}
-        {members?.topRoles && members.topRoles.length > 0 && (
-          <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Award className="w-5 h-5 text-orange-400" />
-              <h2 className="text-xl font-bold">Top Roles by Member Count</h2>
+          {/* Top Roles */}
+          {members?.topRoles && members.topRoles.length > 0 && (
+            <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                  <Award className="w-5 h-5 text-orange-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Top Roles</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={members.topRoles}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                  <XAxis 
+                    dataKey="role" 
+                    stroke="#6B7280" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={100} 
+                    tick={{ fontSize: 11, fill: '#9CA3AF' }} 
+                  />
+                  <YAxis stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                    }} 
+                  />
+                  <Bar dataKey="count" fill="#FF9800" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={members.topRoles}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="role" stroke="#888" angle={-45} textAnchor="end" height={100} tick={{ fontSize: 11 }} />
-                <YAxis stroke="#888" />
-                <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
-                <Bar dataKey="count" fill="#FF9800" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+          )}
 
-        {/* Channel Stats Table */}
-        <div className="bg-hp-gray900 border border-white/10 rounded-xl overflow-hidden">
-          <div className="p-6 border-b border-white/10">
-            <h2 className="text-xl font-bold">Channel Statistics</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-hp-black border-b border-white/10">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Channel
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Total Messages
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    % of Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {messages?.channelStats && messages.channelStats.length > 0 ? (
-                  messages.channelStats.map((channel: any, index: number) => (
-                    <tr key={channel.channelId} className="hover:bg-white/5 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium"># {channel.channelName}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {channel.messageCount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {((channel.messageCount / summary.totalMessages) * 100).toFixed(1)}%
+          {/* Channel Stats Table */}
+          <div className="bg-hp-gray900/50 border border-white/5 rounded-2xl overflow-hidden">
+            <div className="p-8 border-b border-white/5">
+              <h3 className="text-lg font-semibold">Channel Statistics</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-hp-black/50">
+                  <tr>
+                    <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Channel
+                    </th>
+                    <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Messages
+                    </th>
+                    <th className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      % Share
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {messages?.channelStats && messages.channelStats.length > 0 ? (
+                    messages.channelStats.map((channel: any) => (
+                      <tr key={channel.channelId} className="hover:bg-white/5 transition-colors">
+                        <td className="px-8 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-gray-300"># {channel.channelName}</span>
+                        </td>
+                        <td className="px-8 py-4 whitespace-nowrap text-sm text-gray-400">
+                          {channel.messageCount.toLocaleString()}
+                        </td>
+                        <td className="px-8 py-4 whitespace-nowrap text-sm text-gray-400">
+                          {((channel.messageCount / summary.totalMessages) * 100).toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="px-8 py-12 text-center text-gray-600">
+                        No channel data available
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-gray-400">
-                      No channel data available
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
