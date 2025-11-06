@@ -1,0 +1,23 @@
+{
+  "name": "helwa-ai-serverbot",
+  "version": "1.0.0",
+  "description": "Background analytics collector for Helwa AI Discord server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": ["discord", "analytics", "bot", "scheduler"],
+  "author": "Helwa AI",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "firebase-admin": "^12.0.0",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
+

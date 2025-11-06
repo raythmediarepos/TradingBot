@@ -42,3 +42,4 @@ next-env.d.ts
 .sharp
 
 tradingbot-cb932-firebase-adminsdk-fbsvc-*.json
+serverbot/config/serviceAccountKey.json

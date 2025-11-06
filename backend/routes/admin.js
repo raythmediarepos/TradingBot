@@ -992,21 +992,35 @@ router.post('/discord/members/:userId/toggle-admin', authenticate, requireAdmin,
 
 /**
  * @route   GET /api/admin/discord/analytics
- * @desc    Get Discord analytics data
+ * @desc    Get Discord analytics data from Firebase (collected by serverbot)
  * @access  Admin only
  */
 router.get('/discord/analytics', authenticate, requireAdmin, async (req, res) => {
   try {
-    const discordBotService = require('../services/discordBotService')
-    const { timeRange = '30d' } = req.query
+    const admin = require('firebase-admin')
+    const db = admin.firestore()
 
-    const result = await discordBotService.getAnalytics(timeRange)
-    
-    if (!result.success) {
-      return res.status(500).json(result)
+    // Get analytics data from Firebase (populated by serverbot)
+    const analyticsDoc = await db.collection('serverAnalytics').doc('discord').get()
+
+    if (!analyticsDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: 'No analytics data available yet. Serverbot may not have run.',
+      })
     }
 
-    res.json(result)
+    const data = analyticsDoc.data()
+
+    // Convert Firestore timestamp to ISO string
+    if (data.collectedAt) {
+      data.collectedAt = data.collectedAt.toDate ? data.collectedAt.toDate().toISOString() : data.collectedAt
+    }
+
+    res.json({
+      success: true,
+      data,
+    })
   } catch (error) {
     console.error('❌ [ADMIN] Error getting Discord analytics:', error)
     res.status(500).json({
@@ -1019,20 +1033,32 @@ router.get('/discord/analytics', authenticate, requireAdmin, async (req, res) =>
 
 /**
  * @route   GET /api/admin/discord/member-growth
- * @desc    Get Discord member growth data
+ * @desc    Get Discord member growth data from Firebase (collected by serverbot)
  * @access  Admin only
  */
 router.get('/discord/member-growth', authenticate, requireAdmin, async (req, res) => {
   try {
-    const discordBotService = require('../services/discordBotService')
+    const admin = require('firebase-admin')
+    const db = admin.firestore()
 
-    const result = await discordBotService.getMemberGrowth()
-    
-    if (!result.success) {
-      return res.status(500).json(result)
+    // Get analytics data from Firebase
+    const analyticsDoc = await db.collection('serverAnalytics').doc('discord').get()
+
+    if (!analyticsDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: 'No analytics data available yet. Serverbot may not have run.',
+      })
     }
 
-    res.json(result)
+    const data = analyticsDoc.data()
+
+    // Return member growth data
+    res.json({
+      success: true,
+      data: data.members?.growth || [],
+      currentTotal: data.summary?.totalMembers || 0,
+    })
   } catch (error) {
     console.error('❌ [ADMIN] Error getting member growth:', error)
     res.status(500).json({
