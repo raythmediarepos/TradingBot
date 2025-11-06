@@ -259,7 +259,7 @@ export default function AdminDashboardPage() {
                   </span>
                 </div>
                 <h3 className={`text-3xl font-bold mb-1 ${profitMetrics.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  ${Math.abs(profitMetrics.totalProfit).toFixed(2)}
+                  {profitMetrics.totalProfit >= 0 ? '+' : ''}${profitMetrics.totalProfit.toFixed(2)}
                 </h3>
                 <p className="text-sm text-gray-400">Total Profit (All Time)</p>
                 <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
@@ -282,7 +282,7 @@ export default function AdminDashboardPage() {
                   <span className="text-xs text-gray-400">Last 30 days</span>
                 </div>
                 <h3 className={`text-3xl font-bold mb-1 ${profitMetrics.monthlyProfit >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-                  ${Math.abs(profitMetrics.monthlyProfit).toFixed(2)}
+                  {profitMetrics.monthlyProfit >= 0 ? '+' : ''}${profitMetrics.monthlyProfit.toFixed(2)}
                 </h3>
                 <p className="text-sm text-gray-400">Monthly Profit</p>
                 <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
@@ -305,7 +305,7 @@ export default function AdminDashboardPage() {
                   <span className="text-xs text-gray-400">Last 12 months</span>
                 </div>
                 <h3 className={`text-3xl font-bold mb-1 ${profitMetrics.yearlyProfit >= 0 ? 'text-purple-400' : 'text-red-400'}`}>
-                  ${Math.abs(profitMetrics.yearlyProfit).toFixed(2)}
+                  {profitMetrics.yearlyProfit >= 0 ? '+' : ''}${profitMetrics.yearlyProfit.toFixed(2)}
                 </h3>
                 <p className="text-sm text-gray-400">Yearly Profit</p>
                 <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
