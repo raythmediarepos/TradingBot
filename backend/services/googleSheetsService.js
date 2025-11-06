@@ -103,6 +103,9 @@ const getSheetData = async (sheetName) => {
     const headers = rows[0]
     const dataRows = rows.slice(1)
 
+    console.log(`📋 [SHEETS] ${sheetName} - Headers found:`, headers)
+    console.log(`📋 [SHEETS] ${sheetName} - Processing ${dataRows.length} data rows`)
+
     // Find column indices
     const costIdx = headers.findIndex(h => h && h.toLowerCase().includes('cost'))
     const dateIdx = headers.findIndex(h => h && h.toLowerCase().includes('date'))
@@ -112,22 +115,35 @@ const getSheetData = async (sheetName) => {
     const refundedIdx = headers.findIndex(h => h && h.toLowerCase().includes('refund'))
     const paymentFormIdx = headers.findIndex(h => h && h.toLowerCase().includes('payment') && h.toLowerCase().includes('form'))
 
+    console.log(`📋 [SHEETS] ${sheetName} - Column indices: cost=${costIdx}, date=${dateIdx}, reason=${reasonIdx}, whoPaid=${whoPaidIdx}`)
+
     const expenses = []
     let monthTotal = 0
 
     for (const row of dataRows) {
-      // Skip empty rows
-      if (!row || row.length === 0 || !row[0]) continue
+      // Skip completely empty rows (check if all cells are empty)
+      if (!row || row.length === 0) continue
+      const hasAnyData = row.some(cell => cell && String(cell).trim().length > 0)
+      if (!hasAnyData) continue
 
-      // Check if this is the "Month's Total" row
-      if (row[0] && String(row[0]).toLowerCase().includes('month') && String(row[0]).toLowerCase().includes('total')) {
-        // Extract total from this row or the next column
-        const totalValue = row[1] || row[0]
-        monthTotal = parseCost(totalValue)
+      // Check if this is the "Month's Total" row (check first few columns)
+      const firstCells = row.slice(0, 3).join(' ').toLowerCase()
+      if (firstCells.includes('month') && firstCells.includes('total')) {
+        // Try to extract total from the row - could be in any column
+        for (const cell of row) {
+          const value = parseCost(cell)
+          if (value > 0) {
+            monthTotal = value
+            break
+          }
+        }
+        console.log(`💰 [SHEETS] ${sheetName} - Found Month's Total row: $${monthTotal}`)
         break // Stop processing after finding the total row
       }
 
       const cost = costIdx >= 0 ? parseCost(row[costIdx]) : 0
+      
+      console.log(`🔍 [SHEETS] ${sheetName} - Row data: [${row.slice(0, 3).join(', ')}], Cost column ${costIdx}: $${cost}`)
       
       // Skip if no cost
       if (cost === 0) continue
