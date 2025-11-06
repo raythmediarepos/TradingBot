@@ -1323,5 +1323,47 @@ router.get('/payments/:paymentId', authenticate, requireAdmin, async (req, res) 
   }
 })
 
+// ============================================
+// GOOGLE SHEETS / EXPENSE DATA ENDPOINTS
+// ============================================
+
+/**
+ * @route   GET /api/admin/expenses/data
+ * @desc    Get expense data from Google Sheets with calculated metrics
+ * @access  Admin only
+ */
+router.get('/expenses/data', authenticate, requireAdmin, async (req, res) => {
+  try {
+    console.log('💰 [ADMIN] Fetching expense data from Google Sheets...')
+    
+    const { getExpenseDataWithMetrics } = require('../services/googleSheetsService')
+    
+    const result = await getExpenseDataWithMetrics()
+    
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        message: result.error || 'Failed to fetch expense data',
+        details: result.details,
+      })
+    }
+
+    res.json({
+      success: true,
+      expenses: result.expenses,
+      monthlyTotals: result.monthlyTotals,
+      sheetCount: result.sheetCount,
+      metrics: result.metrics,
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching expense data:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch expense data',
+      error: error.message,
+    })
+  }
+})
+
 module.exports = router
 

@@ -8,7 +8,7 @@ import {
 } from 'recharts'
 import {
   Users, DollarSign, MessageSquare, Activity, TrendingUp, Clock,
-  CheckCircle2, User, CreditCard, Loader2, RefreshCcw, AlertCircle
+  CheckCircle2, User, CreditCard, Loader2, RefreshCcw, AlertCircle, Receipt
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout, getUserData } from '@/lib/auth'
 
@@ -429,6 +429,13 @@ export default function AdminDashboardPage() {
               >
                 <span>View Analytics</span>
                 <Activity className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => router.push('/admin/expenses')}
+                className="w-full px-4 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-pink-500/30 transition-all text-sm flex items-center justify-between"
+              >
+                <span>Company Expenses</span>
+                <Receipt className="w-4 h-4" />
               </button>
             </div>
 
