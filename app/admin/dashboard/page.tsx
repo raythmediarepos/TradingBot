@@ -8,7 +8,7 @@ import {
 } from 'recharts'
 import {
   Users, DollarSign, MessageSquare, Activity, TrendingUp, Clock,
-  CheckCircle2, User, CreditCard, Loader2, RefreshCcw, AlertCircle, Receipt
+  CheckCircle2, User, CreditCard, Loader2, RefreshCcw, AlertCircle, Receipt, Calendar
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout, getUserData } from '@/lib/auth'
 
