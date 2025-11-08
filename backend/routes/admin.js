@@ -1365,5 +1365,81 @@ router.get('/expenses/data', authenticate, requireAdmin, async (req, res) => {
   }
 })
 
+/**
+ * @route   GET /api/admin/stock-anomalies
+ * @desc    Get top 3 stock anomalies for today
+ * @access  Admin only
+ */
+router.get('/stock-anomalies', authenticate, requireAdmin, async (req, res) => {
+  try {
+    console.log('📊 [ADMIN] Fetching stock anomalies...')
+    
+    const { admin } = require('../config/firebase-admin')
+    const db = admin.firestore()
+    
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0]
+    
+    // Query for today's active anomalies, ordered by rank
+    const anomaliesSnapshot = await db.collection('stockAnomalies')
+      .where('date', '==', today)
+      .where('isActive', '==', true)
+      .orderBy('rank', 'asc')
+      .limit(3)
+      .get()
+    
+    if (anomaliesSnapshot.empty) {
+      console.log('⚠️  [ADMIN] No stock anomalies found for today')
+      return res.json({
+        success: true,
+        anomalies: [],
+        message: 'No anomalies available for today',
+      })
+    }
+    
+    const anomalies = []
+    anomaliesSnapshot.forEach(doc => {
+      const data = doc.data()
+      anomalies.push({
+        id: doc.id,
+        ticker: data.ticker,
+        companyName: data.companyName,
+        percentChange: data.percentChange,
+        cumulativeDollarVolume: data.cumulativeDollarVolume,
+        date: data.date,
+        timestamp: data.timestamp?.toDate?.() || null,
+        lastUpdated: data.lastUpdated?.toDate?.() || null,
+        aiSummary: data.aiSummary,
+        signal: data.signal,
+        confidence: data.confidence,
+        logoUrl: data.logoUrl,
+        rank: data.rank,
+        anomalyScore: data.anomalyScore,
+        priceAtCapture: data.priceAtCapture,
+        volumeChange: data.volumeChange,
+        sector: data.sector,
+      })
+    })
+    
+    console.log(`✅ [ADMIN] Found ${anomalies.length} stock anomalies`)
+    anomalies.forEach(a => {
+      console.log(`   → ${a.rank}. ${a.ticker}: ${a.percentChange > 0 ? '+' : ''}${a.percentChange}%`)
+    })
+    
+    res.json({
+      success: true,
+      anomalies,
+      count: anomalies.length,
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching stock anomalies:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch stock anomalies',
+      error: error.message,
+    })
+  }
+})
+
 module.exports = router
 

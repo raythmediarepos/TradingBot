@@ -69,6 +69,8 @@ export default function AdminDashboardPage() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [expenseData, setExpenseData] = useState<any>(null)
   const [profitMetrics, setProfitMetrics] = useState<any>(null)
+  const [stockAnomalies, setStockAnomalies] = useState<any[]>([])
+  const [anomaliesLoading, setAnomaliesLoading] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated() || !isAdmin()) {
@@ -85,14 +87,16 @@ export default function AdminDashboardPage() {
     try {
       setLoading(true)
       
-      // Fetch dashboard stats and expenses in parallel
-      const [dashboardRes, expensesRes] = await Promise.all([
+      // Fetch dashboard stats, expenses, and stock anomalies in parallel
+      const [dashboardRes, expensesRes, anomaliesRes] = await Promise.all([
         fetchWithAuth('/api/admin/dashboard'),
-        fetchWithAuth('/api/admin/expenses/data')
+        fetchWithAuth('/api/admin/expenses/data'),
+        fetchWithAuth('/api/admin/stock-anomalies')
       ])
       
       const dashboardResult = await dashboardRes.json()
       const expensesResult = await expensesRes.json()
+      const anomaliesResult = await anomaliesRes.json()
       
       if (dashboardResult.success) {
         setStats(dashboardResult.stats)
@@ -128,6 +132,10 @@ export default function AdminDashboardPage() {
           last30DaysExpenses,
           yearlyExpenses
         })
+      }
+      
+      if (anomaliesResult.success) {
+        setStockAnomalies(anomaliesResult.anomalies || [])
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
@@ -339,6 +347,96 @@ export default function AdminDashboardPage() {
                   {expenseData?.metrics?.totalCount || 0} transactions
                 </div>
               </motion.div>
+            </div>
+          </div>
+        )}
+
+        {/* Top 3 Stock Anomalies */}
+        {stockAnomalies.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-400 mb-4 uppercase tracking-wider">Top Anomalies Today</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {stockAnomalies.map((anomaly, index) => (
+                <motion.div
+                  key={anomaly.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-hp-gray900 border border-yellow-500/30 rounded-xl p-6 hover:border-yellow-500/60 transition-all"
+                >
+                  {/* Header with Logo and Ticker */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      {anomaly.logoUrl && (
+                        <img 
+                          src={anomaly.logoUrl} 
+                          alt={`${anomaly.ticker} logo`}
+                          className="w-12 h-12 rounded-lg bg-white/5 p-2"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                          }}
+                        />
+                      )}
+                      <div>
+                        <h3 className="text-xl font-bold text-white">{anomaly.ticker}</h3>
+                        <p className="text-xs text-gray-400">{anomaly.companyName}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-2xl font-bold ${anomaly.percentChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {anomaly.percentChange >= 0 ? '+' : ''}{anomaly.percentChange.toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Metrics */}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-400">Volume</span>
+                      <span className="text-sm font-semibold text-white">
+                        ${(anomaly.cumulativeDollarVolume / 1000000).toFixed(1)}M
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-400">Price</span>
+                      <span className="text-sm font-semibold text-white">
+                        ${anomaly.priceAtCapture?.toFixed(2) || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-400">Sector</span>
+                      <span className="text-sm font-semibold text-white">{anomaly.sector}</span>
+                    </div>
+                  </div>
+
+                  {/* AI Summary */}
+                  <div className="border-t border-white/10 pt-4 mb-4">
+                    <p className="text-xs text-gray-300 leading-relaxed">{anomaly.aiSummary}</p>
+                  </div>
+
+                  {/* Signal Badge */}
+                  <div className="flex items-center justify-between">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      anomaly.signal === 'BUY' 
+                        ? 'bg-green-500/20 text-green-400' 
+                        : anomaly.signal === 'SELL'
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      {anomaly.signal}
+                    </span>
+                    <span className="text-xs text-gray-400">{anomaly.confidence}% confidence</span>
+                  </div>
+
+                  {/* Last Updated */}
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <p className="text-xs text-gray-500">
+                      Updated: {anomaly.lastUpdated ? new Date(anomaly.lastUpdated).toLocaleTimeString() : 'N/A'}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         )}
