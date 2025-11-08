@@ -221,10 +221,12 @@ const createBetaUser = async (userData) => {
     // Determine position and payment requirement
     const position = stats.filled + 1
     const isFree = position <= FREE_SLOTS
+    const isFoundingMember = position <= FREE_SLOTS // First 20 users are founding members
     const paymentStatus = isFree ? PAYMENT_STATUS.FREE : PAYMENT_STATUS.PENDING
 
     console.log(`   → Position: #${position}`)
     console.log(`   → Type: ${isFree ? 'FREE' : 'PAID ($29.99/month)'}`)
+    console.log(`   → Founding Member: ${isFoundingMember ? 'YES 🌟' : 'NO'}`)
 
     // Generate email verification token
     const emailVerificationToken = generateEmailVerificationToken()
@@ -240,6 +242,7 @@ const createBetaUser = async (userData) => {
       status: USER_STATUS.PENDING_EMAIL,
       paymentStatus,
       isFree,
+      isFoundingMember, // Mark first 20 users as founding members
       emailVerified: false,
       emailVerificationToken,
       discordJoined: false,

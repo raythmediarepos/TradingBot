@@ -419,6 +419,7 @@ router.get('/beta-users', authenticate, requireAdmin, async (req, res) => {
     const totalUsers = users.length
     const freeUsers = users.filter(u => u.isFree).length
     const paidUsers = users.filter(u => !u.isFree).length
+    const foundingMembers = users.filter(u => u.isFoundingMember === true).length
     const verifiedEmails = users.filter(u => u.emailVerified).length
     const joinedDiscord = users.filter(u => u.discordJoined).length
     const activeUsers = users.filter(u => u.status === 'active').length
@@ -437,6 +438,7 @@ router.get('/beta-users', authenticate, requireAdmin, async (req, res) => {
           total: totalUsers,
           free: freeUsers,
           paid: paidUsers,
+          foundingMembers: foundingMembers,
           emailVerified: verifiedEmails,
           discordJoined: joinedDiscord,
           active: activeUsers,

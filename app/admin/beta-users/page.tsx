@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Shield, Users, DollarSign, Mail, Search, Filter, Download,
   ChevronDown, ChevronUp, Eye, MoreVertical, RefreshCcw, XCircle,
-  CheckCircle2, Clock, Loader2, X, MessageSquare, Ban
+  CheckCircle2, Clock, Loader2, X, MessageSquare, Ban, Crown
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout } from '@/lib/auth'
 
@@ -19,6 +19,7 @@ interface BetaUser {
   status: string
   paymentStatus: string
   isFree: boolean
+  isFoundingMember?: boolean
   emailVerified: boolean
   discordJoined: boolean
   createdAt: string
@@ -31,6 +32,7 @@ interface Stats {
   total: number
   free: number
   paid: number
+  foundingMembers: number
   emailVerified: number
   discordJoined: number
   active: number
@@ -260,7 +262,7 @@ export default function AdminBetaUsersPage() {
       <div className="container mx-auto px-6 py-8">
         {/* Stats Overview */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
             <div className="bg-hp-gray900 border border-purple-500/30 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Users className="w-4 h-4 text-purple-400" />
@@ -281,6 +283,13 @@ export default function AdminBetaUsersPage() {
                 <p className="text-xs text-gray-400">Paid</p>
               </div>
               <p className="text-2xl font-bold">{stats.paid}/80</p>
+            </div>
+            <div className="bg-hp-gray900 border border-hp-yellow/30 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown className="w-4 h-4 text-hp-yellow" />
+                <p className="text-xs text-gray-400">Founding</p>
+              </div>
+              <p className="text-2xl font-bold">{stats.foundingMembers}/20</p>
             </div>
             <div className="bg-hp-gray900 border border-yellow-500/30 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
@@ -423,8 +432,11 @@ export default function AdminBetaUsersPage() {
                         #{user.position}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
+                        <div className="flex items-center gap-2">
                           <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
+                          {user.isFoundingMember && (
+                            <Crown className="w-4 h-4 text-hp-yellow" title="Founding Member" />
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
