@@ -8,8 +8,7 @@ import {
 } from 'recharts'
 import {
   Users, DollarSign, MessageSquare, Activity, TrendingUp, Clock,
-  CheckCircle2, User, CreditCard, Loader2, RefreshCcw, AlertCircle, Receipt, Calendar,
-  Settings, Eye, EyeOff, X
+  CheckCircle2, User, CreditCard, Loader2, RefreshCcw, AlertCircle, Receipt, Calendar, Menu
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout, getUserData } from '@/lib/auth'
 
@@ -72,35 +71,6 @@ export default function AdminDashboardPage() {
   const [profitMetrics, setProfitMetrics] = useState<any>(null)
   const [stockAnomalies, setStockAnomalies] = useState<any[]>([])
   const [anomaliesLoading, setAnomaliesLoading] = useState(false)
-  
-  // Dashboard section visibility settings
-  const [showSettingsModal, setShowSettingsModal] = useState(false)
-  const [sectionVisibility, setSectionVisibility] = useState({
-    profitMetrics: true,
-    stockAnomalies: true,
-    quickStats: true,
-    charts: true,
-    recentActivity: true,
-    quickActions: true,
-    systemStatus: true,
-  })
-
-  // Load visibility settings from localStorage on mount
-  useEffect(() => {
-    const savedSettings = localStorage.getItem('adminDashboardVisibility')
-    if (savedSettings) {
-      try {
-        setSectionVisibility(JSON.parse(savedSettings))
-      } catch (error) {
-        console.error('Error loading dashboard visibility settings:', error)
-      }
-    }
-  }, [])
-
-  // Save visibility settings to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem('adminDashboardVisibility', JSON.stringify(sectionVisibility))
-  }, [sectionVisibility])
 
   useEffect(() => {
     if (!isAuthenticated() || !isAdmin()) {
@@ -266,14 +236,6 @@ export default function AdminDashboardPage() {
                 Refresh
               </button>
               <button
-                onClick={() => setShowSettingsModal(true)}
-                className="px-4 py-2 bg-gray-500/10 border border-gray-500/30 rounded-lg text-gray-400 hover:bg-gray-500/20 transition-all flex items-center gap-2"
-                title="Dashboard Settings"
-              >
-                <Settings className="w-4 h-4" />
-                Layout
-              </button>
-              <button
                 onClick={handleLogout}
                 className="px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/20 transition-all text-sm"
               >
@@ -284,191 +246,9 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      {/* Settings Modal */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-hp-gray900 border border-white/10 rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto"
-          >
-            <div className="sticky top-0 bg-hp-gray900 border-b border-white/10 p-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold">Dashboard Layout Settings</h2>
-                <p className="text-sm text-gray-400 mt-1">Show or hide sections on your dashboard</p>
-              </div>
-              <button
-                onClick={() => setShowSettingsModal(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              {/* Financial Performance */}
-              <div className="flex items-center justify-between p-4 bg-hp-black rounded-lg border border-white/5">
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="w-5 h-5 text-green-400" />
-                  <div>
-                    <p className="font-semibold">Financial Performance</p>
-                    <p className="text-xs text-gray-400">Profit metrics and expenses</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSectionVisibility(prev => ({ ...prev, profitMetrics: !prev.profitMetrics }))}
-                  className="flex items-center gap-2"
-                >
-                  {sectionVisibility.profitMetrics ? (
-                    <Eye className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-500" />
-                  )}
-                </button>
-              </div>
-
-              {/* Stock Anomalies */}
-              <div className="flex items-center justify-between p-4 bg-hp-black rounded-lg border border-white/5">
-                <div className="flex items-center gap-3">
-                  <Activity className="w-5 h-5 text-yellow-400" />
-                  <div>
-                    <p className="font-semibold">Top Stock Anomalies</p>
-                    <p className="text-xs text-gray-400">Daily top 3 market anomalies</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSectionVisibility(prev => ({ ...prev, stockAnomalies: !prev.stockAnomalies }))}
-                  className="flex items-center gap-2"
-                >
-                  {sectionVisibility.stockAnomalies ? (
-                    <Eye className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-500" />
-                  )}
-                </button>
-              </div>
-
-              {/* Quick Stats */}
-              <div className="flex items-center justify-between p-4 bg-hp-black rounded-lg border border-white/5">
-                <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-blue-400" />
-                  <div>
-                    <p className="font-semibold">Quick Stats</p>
-                    <p className="text-xs text-gray-400">Users, revenue, Discord overview</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSectionVisibility(prev => ({ ...prev, quickStats: !prev.quickStats }))}
-                  className="flex items-center gap-2"
-                >
-                  {sectionVisibility.quickStats ? (
-                    <Eye className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-500" />
-                  )}
-                </button>
-              </div>
-
-              {/* Charts */}
-              <div className="flex items-center justify-between p-4 bg-hp-black rounded-lg border border-white/5">
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="w-5 h-5 text-purple-400" />
-                  <div>
-                    <p className="font-semibold">Analytics Charts</p>
-                    <p className="text-xs text-gray-400">Revenue and signup trends</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSectionVisibility(prev => ({ ...prev, charts: !prev.charts }))}
-                  className="flex items-center gap-2"
-                >
-                  {sectionVisibility.charts ? (
-                    <Eye className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-500" />
-                  )}
-                </button>
-              </div>
-
-              {/* Recent Activity */}
-              <div className="flex items-center justify-between p-4 bg-hp-black rounded-lg border border-white/5">
-                <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-indigo-400" />
-                  <div>
-                    <p className="font-semibold">Recent Activity</p>
-                    <p className="text-xs text-gray-400">Latest signups and payments</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSectionVisibility(prev => ({ ...prev, recentActivity: !prev.recentActivity }))}
-                  className="flex items-center gap-2"
-                >
-                  {sectionVisibility.recentActivity ? (
-                    <Eye className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-500" />
-                  )}
-                </button>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="flex items-center justify-between p-4 bg-hp-black rounded-lg border border-white/5">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-400" />
-                  <div>
-                    <p className="font-semibold">Quick Actions</p>
-                    <p className="text-xs text-gray-400">Navigation shortcuts</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSectionVisibility(prev => ({ ...prev, quickActions: !prev.quickActions }))}
-                  className="flex items-center gap-2"
-                >
-                  {sectionVisibility.quickActions ? (
-                    <Eye className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-500" />
-                  )}
-                </button>
-              </div>
-
-              {/* System Status */}
-              <div className="flex items-center justify-between p-4 bg-hp-black rounded-lg border border-white/5">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-400" />
-                  <div>
-                    <p className="font-semibold">System Status</p>
-                    <p className="text-xs text-gray-400">Discord bot and server health</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSectionVisibility(prev => ({ ...prev, systemStatus: !prev.systemStatus }))}
-                  className="flex items-center gap-2"
-                >
-                  {sectionVisibility.systemStatus ? (
-                    <Eye className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-500" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="sticky bottom-0 bg-hp-gray900 border-t border-white/10 p-6">
-              <button
-                onClick={() => setShowSettingsModal(false)}
-                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors"
-              >
-                Done
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
       <div className="container mx-auto px-6 py-8">
         {/* Profit Metrics */}
-        {sectionVisibility.profitMetrics && profitMetrics && (
+        {profitMetrics && (
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-400 mb-4 uppercase tracking-wider">Financial Performance</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -572,7 +352,7 @@ export default function AdminDashboardPage() {
         )}
 
         {/* Top 3 Stock Anomalies */}
-        {sectionVisibility.stockAnomalies && stockAnomalies.length > 0 && (
+        {stockAnomalies.length > 0 && (
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-400 mb-4 uppercase tracking-wider">Top Anomalies Today</h2>
             <div className="grid md:grid-cols-3 gap-6">
@@ -662,7 +442,6 @@ export default function AdminDashboardPage() {
         )}
 
         {/* Quick Stats Grid */}
-        {sectionVisibility.quickStats && (
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Users */}
           <motion.div
@@ -748,10 +527,8 @@ export default function AdminDashboardPage() {
             </div>
           </motion.div>
         </div>
-        )}
 
         {/* Charts Row */}
-        {sectionVisibility.charts && (
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           {/* Revenue Chart */}
           <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
@@ -825,12 +602,10 @@ export default function AdminDashboardPage() {
             )}
           </div>
         </div>
-        )}
 
         {/* Recent Activity & Quick Actions */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Recent Activity Feed */}
-          {sectionVisibility.recentActivity && (
           <div className="lg:col-span-2 bg-hp-gray900 border border-white/10 rounded-xl overflow-hidden">
             <div className="p-6 border-b border-white/10">
               <h3 className="text-lg font-bold flex items-center gap-2">
@@ -864,10 +639,8 @@ export default function AdminDashboardPage() {
               )}
             </div>
           </div>
-          )}
 
           {/* Quick Actions */}
-          {sectionVisibility.quickActions && (
           <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
             <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
             <div className="space-y-3">
@@ -906,10 +679,16 @@ export default function AdminDashboardPage() {
                 <span>Company Expenses</span>
                 <Receipt className="w-4 h-4" />
               </button>
+              <button
+                onClick={() => router.push('/admin/navigation')}
+                className="w-full px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/30 transition-all text-sm flex items-center justify-between"
+              >
+                <span>Navigation Settings</span>
+                <Menu className="w-4 h-4" />
+              </button>
             </div>
 
             {/* System Status */}
-            {sectionVisibility.systemStatus && (
             <div className="mt-6 pt-6 border-t border-white/10">
               <h4 className="text-sm font-semibold mb-3">System Status</h4>
               <div className="space-y-2">
@@ -938,9 +717,7 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             </div>
-            )}
           </div>
-          )}
         </div>
       </div>
     </div>

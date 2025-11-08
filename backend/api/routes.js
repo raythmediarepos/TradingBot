@@ -205,6 +205,13 @@ const adminRoutes = require('../routes/admin')
 router.use('/admin', adminRoutes)
 
 // ============================================
+// SITE SETTINGS ROUTES
+// ============================================
+
+const siteSettingsRoutes = require('../routes/siteSettings')
+router.use('/site-settings', siteSettingsRoutes)
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 

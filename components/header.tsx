@@ -11,12 +11,40 @@ type NavigationItem = {
   name: string
   href: string
   badge?: string
+  key?: string
 }
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = React.useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [hoveredItem, setHoveredItem] = React.useState<string | null>(null)
+  const [navSettings, setNavSettings] = React.useState({
+    betaProgram: true,
+    features: true,
+    faq: true,
+    affiliates: true,
+    investors: true,
+    changelog: true,
+    learnMore: true,
+    login: true,
+    joinBeta: true,
+  })
+
+  // Fetch navigation settings
+  React.useEffect(() => {
+    const fetchNavSettings = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/site-settings/navigation`)
+        const data = await response.json()
+        if (data.success) {
+          setNavSettings(data.settings)
+        }
+      } catch (error) {
+        console.error('Error fetching nav settings:', error)
+      }
+    }
+    fetchNavSettings()
+  }, [])
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -26,14 +54,17 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const navigation: NavigationItem[] = [
-    { name: 'Beta Program', href: '/beta/signup', badge: 'LIVE' },
-    { name: 'Features', href: '#features' },
-    { name: 'FAQ', href: '#faq' },
-    { name: 'Affiliates', href: '/affiliates' },
-    { name: 'Investors', href: '/investors' },
-    { name: 'Changelog', href: '/changelog' },
+  const allNavigation: NavigationItem[] = [
+    { name: 'Beta Program', href: '/beta/signup', badge: 'LIVE', key: 'betaProgram' },
+    { name: 'Features', href: '#features', key: 'features' },
+    { name: 'FAQ', href: '#faq', key: 'faq' },
+    { name: 'Affiliates', href: '/affiliates', key: 'affiliates' },
+    { name: 'Investors', href: '/investors', key: 'investors' },
+    { name: 'Changelog', href: '/changelog', key: 'changelog' },
   ]
+
+  // Filter navigation based on settings
+  const navigation = allNavigation.filter(item => navSettings[item.key as keyof typeof navSettings])
 
   const handleMobileMenuToggle = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -128,36 +159,42 @@ const Header = () => {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center space-x-3">
-              <Button 
-                size="sm" 
-                variant="ghost"
-                asChild
-                className="text-gray-300 hover:text-hp-yellow"
-              >
-                <Link href="#faq">
-                  Learn More
-                </Link>
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                asChild
-                className="text-gray-300 hover:text-hp-yellow border-hp-yellow/20 hover:border-hp-yellow/40"
-              >
-                <Link href="/login">
-                  Login
-                </Link>
-              </Button>
-              <Button 
-                size="sm"
-                asChild
-                className="shadow-lg shadow-hp-yellow/20 hover:shadow-hp-yellow/30 transition-all"
-              >
-                <Link href="/beta/signup" className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Join Beta
-                </Link>
-              </Button>
+              {navSettings.learnMore && (
+                <Button 
+                  size="sm" 
+                  variant="ghost"
+                  asChild
+                  className="text-gray-300 hover:text-hp-yellow"
+                >
+                  <Link href="#faq">
+                    Learn More
+                  </Link>
+                </Button>
+              )}
+              {navSettings.login && (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  asChild
+                  className="text-gray-300 hover:text-hp-yellow border-hp-yellow/20 hover:border-hp-yellow/40"
+                >
+                  <Link href="/login">
+                    Login
+                  </Link>
+                </Button>
+              )}
+              {navSettings.joinBeta && (
+                <Button 
+                  size="sm"
+                  asChild
+                  className="shadow-lg shadow-hp-yellow/20 hover:shadow-hp-yellow/30 transition-all"
+                >
+                  <Link href="/beta/signup" className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Join Beta
+                  </Link>
+                </Button>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -269,22 +306,28 @@ const Header = () => {
                   transition={{ delay: 0.4 }}
                   className="space-y-3"
                 >
-                  <Button size="lg" className="w-full" asChild>
-                    <Link href="/beta/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Join Beta Program
-                    </Link>
-                  </Button>
-                  <Button size="lg" variant="outline" className="w-full" asChild>
-                    <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                      Login
-                    </Link>
-                  </Button>
-                  <Button size="lg" variant="ghost" className="w-full" asChild>
-                    <Link href="#faq" onClick={() => setIsMobileMenuOpen(false)}>
-                      Learn More
-                    </Link>
-                  </Button>
+                  {navSettings.joinBeta && (
+                    <Button size="lg" className="w-full" asChild>
+                      <Link href="/beta/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Join Beta Program
+                      </Link>
+                    </Button>
+                  )}
+                  {navSettings.login && (
+                    <Button size="lg" variant="outline" className="w-full" asChild>
+                      <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                        Login
+                      </Link>
+                    </Button>
+                  )}
+                  {navSettings.learnMore && (
+                    <Button size="lg" variant="ghost" className="w-full" asChild>
+                      <Link href="#faq" onClick={() => setIsMobileMenuOpen(false)}>
+                        Learn More
+                      </Link>
+                    </Button>
+                  )}
                 </motion.div>
 
                 {/* Footer Info */}
