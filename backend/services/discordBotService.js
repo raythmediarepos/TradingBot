@@ -273,25 +273,52 @@ const handleTokenVerification = async (message, token) => {
     console.log('✅ [DISCORD BOT] User verified and role assigned')
     console.log(`   → Beta User ID: ${invite.userId}`)
     console.log(`   → Discord User: ${message.author.tag}`)
+    console.log(`   → Founding Member: ${user.isFoundingMember ? 'YES 👑' : 'NO'}`)
 
-    // Send success message
-    await message.reply({
-      content: `✅ **Verification successful!**\n\n` +
-        `Welcome to the Helwa AI Beta Program! 🐝\n\n` +
-        `You now have access to all beta channels. Let's get started!\n\n` +
-        `• Check out <#your-announcements-channel-id> for updates\n` +
-        `• Head to <#your-general-channel-id> to chat with other beta testers\n` +
-        `• Report bugs in <#your-bugs-channel-id>\n\n` +
-        `Enjoy!`,
-    })
+    // Send success message based on founding member status
+    if (user.isFoundingMember) {
+      // Special message for first 20 users (founding members)
+      await message.reply({
+        content: `✅ **Verification Successful!**\n\n` +
+          `# 👑 FOUNDING MEMBER - LIFETIME FREE ACCESS 👑\n\n` +
+          `Welcome to the Helwa AI Beta Program! 🐝\n\n` +
+          `**You are one of our first 20 users!** As a founding member, you have been granted **PERMANENT FREE ACCESS FOR LIFE** to Helwa AI as a thank you for being an early supporter.\n\n` +
+          `🎉 **Your Benefits:**\n` +
+          `• **Lifetime free access** - No expiration, no charges, ever\n` +
+          `• **Founding Member badge** - Special recognition in our community\n` +
+          `• **Priority support** - Your feedback shapes the future of Helwa AI\n` +
+          `• **Exclusive perks** - Early access to new features and VIP treatment\n\n` +
+          `You now have full access to all beta channels. Let's get started!\n\n` +
+          `• Check out <#your-announcements-channel-id> for updates\n` +
+          `• Head to <#your-general-channel-id> to chat with other beta testers\n` +
+          `• Report bugs in <#your-bugs-channel-id>\n\n` +
+          `Thank you for believing in us from the start! 🚀`,
+      })
+    } else {
+      // Regular message for positions 21-100
+      await message.reply({
+        content: `✅ **Verification successful!**\n\n` +
+          `Welcome to the Helwa AI Beta Program! 🐝\n\n` +
+          `You now have access to all beta channels. Let's get started!\n\n` +
+          `• Check out <#your-announcements-channel-id> for updates\n` +
+          `• Head to <#your-general-channel-id> to chat with other beta testers\n` +
+          `• Report bugs in <#your-bugs-channel-id>\n\n` +
+          `Your access is valid until **December 31, 2025**.\n\n` +
+          `Enjoy!`,
+      })
+    }
 
     // Send welcome message in welcome channel
     if (DISCORD_CONFIG.WELCOME_CHANNEL_ID) {
       try {
         const welcomeChannel = await guild.channels.fetch(DISCORD_CONFIG.WELCOME_CHANNEL_ID)
         if (welcomeChannel) {
+          const welcomeMessage = user.isFoundingMember
+            ? `🎉 Welcome to the beta, ${member}! 👑 **FOUNDING MEMBER** - Lifetime free access granted!`
+            : `🎉 Welcome to the beta, ${member}! We're excited to have you here!`
+          
           await welcomeChannel.send({
-            content: `🎉 Welcome to the beta, ${member}! We're excited to have you here!`,
+            content: welcomeMessage,
           })
         }
       } catch (error) {
