@@ -4,7 +4,6 @@ import Hero from '@/components/hero'
 import HowItWorks from '@/components/how-it-works'
 import ValueCards from '@/components/value-cards'
 import SignalsTable from '@/components/signals-table'
-import WaitlistForm from '@/components/waitlist-form'
 import FAQ from '@/components/faq'
 import Footer from '@/components/footer'
 import CookieConsent from '@/components/cookie-consent'
@@ -19,7 +18,6 @@ export default function HomePage() {
       <HowItWorks />
       <ValueCards />
       <SignalsTable />
-      <WaitlistForm />
       <FAQ />
       <Footer />
       <CookieConsent />

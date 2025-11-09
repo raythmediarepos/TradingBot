@@ -178,9 +178,11 @@ const Hero = () => {
                   <Sparkles className="w-5 h-5" />
                   Join Beta Program
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  <span className="absolute top-0 right-0 px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-bl-lg">
-                    {betaStats && `${betaStats.remaining} LEFT`}
-                  </span>
+                  {betaStats && betaStats.remaining !== undefined && (
+                    <span className="absolute top-0 right-0 px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-bl-lg">
+                      {betaStats.remaining} LEFT
+                    </span>
+                  )}
                 </Link>
               </Button>
             ) : !loading && isBetaFull ? (
