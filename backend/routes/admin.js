@@ -1443,5 +1443,12 @@ router.get('/stock-anomalies', authenticate, requireAdmin, async (req, res) => {
   }
 })
 
+// ============================================
+// TESTING ROUTES
+// ============================================
+
+const testingRoutes = require('./testing')
+router.use('/testing', testingRoutes)
+
 module.exports = router
 

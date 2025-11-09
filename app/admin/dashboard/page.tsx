@@ -8,7 +8,8 @@ import {
 } from 'recharts'
 import {
   Users, DollarSign, MessageSquare, Activity, TrendingUp, Clock,
-  CheckCircle2, User, CreditCard, Loader2, RefreshCcw, AlertCircle, Receipt, Calendar, Menu
+  CheckCircle2, User, CreditCard, Loader2, RefreshCcw, AlertCircle, Receipt, Calendar, Menu,
+  UserPlus, Trash2, TestTube
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout, getUserData } from '@/lib/auth'
 
@@ -71,6 +72,7 @@ export default function AdminDashboardPage() {
   const [profitMetrics, setProfitMetrics] = useState<any>(null)
   const [stockAnomalies, setStockAnomalies] = useState<any[]>([])
   const [anomaliesLoading, setAnomaliesLoading] = useState(false)
+  const [testingAction, setTestingAction] = useState<'adding' | 'removing' | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated() || !isAdmin()) {
@@ -153,6 +155,62 @@ export default function AdminDashboardPage() {
   const handleLogout = () => {
     logout()
     router.push('/admin/login')
+  }
+
+  const handleAddFakeUsers = async () => {
+    const confirmed = window.confirm(
+      '⚠️ Add 100 fake beta testers?\n\nThis will fill up the beta program to test the waitlist functionality.\n\nYou can remove them later with the "Remove Fake Users" button.'
+    )
+    
+    if (!confirmed) return
+
+    setTestingAction('adding')
+    try {
+      const response = await fetchWithAuth('/api/admin/testing/add-fake-users', {
+        method: 'POST'
+      })
+      const data = await response.json()
+      
+      if (data.success) {
+        alert(`✅ Success!\n\nAdded ${data.count} fake users.\n\nRefreshing dashboard...`)
+        await fetchData() // Refresh dashboard
+      } else {
+        alert(`❌ Error: ${data.message || 'Failed to add fake users'}`)
+      }
+    } catch (error) {
+      console.error('Error adding fake users:', error)
+      alert('❌ Error: Failed to add fake users. Check console for details.')
+    } finally {
+      setTestingAction(null)
+    }
+  }
+
+  const handleRemoveFakeUsers = async () => {
+    const confirmed = window.confirm(
+      '⚠️ Remove ALL fake beta testers?\n\nThis will permanently delete all fake users from the database.\n\nThis action cannot be undone.'
+    )
+    
+    if (!confirmed) return
+
+    setTestingAction('removing')
+    try {
+      const response = await fetchWithAuth('/api/admin/testing/remove-fake-users', {
+        method: 'DELETE'
+      })
+      const data = await response.json()
+      
+      if (data.success) {
+        alert(`✅ Success!\n\nRemoved ${data.count} fake users.\n\nRefreshing dashboard...`)
+        await fetchData() // Refresh dashboard
+      } else {
+        alert(`❌ Error: ${data.message || 'Failed to remove fake users'}`)
+      }
+    } catch (error) {
+      console.error('Error removing fake users:', error)
+      alert('❌ Error: Failed to remove fake users. Check console for details.')
+    } finally {
+      setTestingAction(null)
+    }
   }
 
   const getActivityIcon = (type: string) => {
@@ -686,6 +744,44 @@ export default function AdminDashboardPage() {
                 <span>Navigation Settings</span>
                 <Menu className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Testing Tools */}
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="flex items-center gap-2 mb-3">
+                <TestTube className="w-4 h-4 text-yellow-400" />
+                <h4 className="text-sm font-semibold">Testing Tools</h4>
+              </div>
+              <div className="space-y-2">
+                <button
+                  onClick={handleAddFakeUsers}
+                  disabled={testingAction !== null}
+                  className="w-full px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-400 hover:bg-yellow-500/20 transition-all text-xs flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="flex items-center gap-2">
+                    {testingAction === 'adding' ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <UserPlus className="w-3 h-3" />
+                    )}
+                    Add 100 Fake Users
+                  </span>
+                </button>
+                <button
+                  onClick={handleRemoveFakeUsers}
+                  disabled={testingAction !== null}
+                  className="w-full px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/20 transition-all text-xs flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="flex items-center gap-2">
+                    {testingAction === 'removing' ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3 h-3" />
+                    )}
+                    Remove All Fake Users
+                  </span>
+                </button>
+              </div>
             </div>
 
             {/* System Status */}
