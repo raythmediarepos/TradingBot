@@ -1,8 +1,9 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingUp, TrendingDown, Minus, Info, Activity, Clock, Target, Zap } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Info, Activity, Clock, Target, Zap, Sparkles, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import WhyModal from './why-modal'
@@ -28,8 +29,32 @@ const SignalsTable = () => {
   const [selectedSignal, setSelectedSignal] = React.useState<Signal | null>(null)
   const [isModalOpen, setIsModalOpen] = React.useState(false)
   const [liveSignalIndex, setLiveSignalIndex] = React.useState(0)
+  const [betaStats, setBetaStats] = React.useState<{ filled: number; total: number; remaining: number } | null>(null)
+  const [loading, setLoading] = React.useState(true)
 
   const signals = signalsData as Signal[]
+
+  // Fetch beta program availability
+  React.useEffect(() => {
+    const fetchBetaAvailability = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/beta/stats`)
+        const data = await response.json()
+        if (data.success) {
+          setBetaStats({
+            filled: data.filled,
+            total: data.total,
+            remaining: data.remaining,
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching beta stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchBetaAvailability()
+  }, [])
 
   // Simulate live signal updates
   React.useEffect(() => {
@@ -38,6 +63,8 @@ const SignalsTable = () => {
     }, 5000)
     return () => clearInterval(interval)
   }, [signals.length])
+
+  const isBetaFull = betaStats && betaStats.remaining === 0
 
   const handleShowWhy = (signal: Signal) => {
     setSelectedSignal(signal)
@@ -328,23 +355,54 @@ const SignalsTable = () => {
           </div>
         </motion.div>
 
-        {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6 }}
-          className="text-center mt-12"
-        >
-          <p className="text-gray-400 mb-6">
-            Want early access to these signals?
-          </p>
-          <Button size="lg" asChild className="shadow-xl shadow-hp-yellow/20">
-            <a href="#waitlist">
-              Join Trading Bot Waitlist
-            </a>
-          </Button>
-        </motion.div>
+        {/* Bottom CTA - Dynamic based on beta availability */}
+        {!loading && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.6 }}
+            className="text-center mt-12"
+          >
+            {!isBetaFull ? (
+              // Show Join Beta when spots available
+              <>
+                <p className="text-gray-400 mb-6">
+                  Ready to start trading ethically?
+                </p>
+                <Button size="lg" asChild className="shadow-xl shadow-hp-yellow/20 hover:shadow-hp-yellow/30 transition-all group">
+                  <Link href="/beta/signup" className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    Join Beta Program
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+                {betaStats && (
+                  <p className="text-sm text-gray-500 mt-4">
+                    {betaStats.remaining} spots remaining • First 20 FREE
+                  </p>
+                )}
+              </>
+            ) : (
+              // Show Join Waitlist when beta is full
+              <>
+                <p className="text-gray-400 mb-6">
+                  Beta program is full. Join the waitlist!
+                </p>
+                <Button size="lg" asChild className="shadow-xl shadow-hp-yellow/20 hover:shadow-hp-yellow/30 transition-all group">
+                  <Link href="/waitlist" className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    Join Waitlist
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+                <p className="text-sm text-gray-500 mt-4">
+                  Be notified when new spots open up
+                </p>
+              </>
+            )}
+          </motion.div>
+        )}
       </div>
 
       {/* Modal */}
