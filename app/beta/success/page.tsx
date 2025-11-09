@@ -225,7 +225,7 @@ export default function BetaSuccessPage() {
                 </div>
               )}
               {!userData.isFree && (
-                <p className="text-white/60">$29.99/month subscription required</p>
+                <p className="text-white/60">$49.99 one-time payment required (access until Dec 31, 2025)</p>
               )}
             </div>
           </motion.div>
@@ -295,7 +295,7 @@ export default function BetaSuccessPage() {
                   <p className="text-white/60">
                     {userData.isFree
                       ? 'Generate your Discord invite link from your dashboard and join our community'
-                      : 'Complete your $29.99/month subscription and get your Discord invite instantly'}
+                      : 'Complete your $49.99 one-time payment and get your Discord invite instantly'}
                   </p>
                 </div>
               </div>
@@ -329,7 +329,7 @@ export default function BetaSuccessPage() {
               {!userData.isFree && (
                 <li className="flex items-start gap-2">
                   <span className="text-hp-yellow mt-0.5">•</span>
-                  <span>Cancel your subscription anytime through the customer portal</span>
+                  <span>Your access is valid until December 31, 2025 - no recurring charges!</span>
                 </li>
               )}
             </ul>

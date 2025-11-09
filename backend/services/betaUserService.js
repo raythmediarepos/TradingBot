@@ -225,7 +225,7 @@ const createBetaUser = async (userData) => {
     const paymentStatus = isFree ? PAYMENT_STATUS.FREE : PAYMENT_STATUS.PENDING
 
     console.log(`   → Position: #${position}`)
-    console.log(`   → Type: ${isFree ? 'FREE' : 'PAID ($29.99/month)'}`)
+    console.log(`   → Type: ${isFree ? 'FREE' : 'PAID ($49.99 one-time)'}`)
     console.log(`   → Founding Member: ${isFoundingMember ? 'YES 🌟' : 'NO'}`)
 
     // Generate email verification token

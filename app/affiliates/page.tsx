@@ -48,10 +48,10 @@ const AffiliatesPage = () => {
   ]
 
   const earnings = [
-    { referrals: 10, tier: 'Starter', monthly: '$290', yearly: '$3,480' },
-    { referrals: 50, tier: 'Pro', monthly: '$1,450', yearly: '$17,400' },
-    { referrals: 100, tier: 'Elite', monthly: '$2,900', yearly: '$34,800' },
-    { referrals: 500, tier: 'Champion', monthly: '$14,500', yearly: '$174,000' },
+    { referrals: 10, tier: 'Starter', monthly: '$500', yearly: '$6,000' },
+    { referrals: 50, tier: 'Pro', monthly: '$2,500', yearly: '$30,000' },
+    { referrals: 100, tier: 'Elite', monthly: '$5,000', yearly: '$60,000' },
+    { referrals: 500, tier: 'Champion', monthly: '$25,000', yearly: '$300,000' },
   ]
 
   const howItWorks = [
@@ -278,7 +278,7 @@ const AffiliatesPage = () => {
               Your Earning Potential
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Based on our $29/month Starter plan. Scale up to higher tiers for even more earnings.
+              Based on our $49.99 one-time beta pricing. Future recurring plans will scale your earnings even higher.
             </p>
           </motion.div>
 
@@ -319,8 +319,8 @@ const AffiliatesPage = () => {
             viewport={{ once: true }}
           >
             <p className="text-gray-400 text-sm">
-              💡 <strong className="text-hp-yellow">Pro Tip:</strong> These are conservative estimates based on the $29/month Starter plan. 
-              Many referrals upgrade to Pro ($99/mo) or Elite ($199/mo) plans, increasing your commissions significantly!
+              💡 <strong className="text-hp-yellow">Pro Tip:</strong> These are conservative estimates based on current beta pricing ($49.99 one-time). 
+              Once subscription plans launch (Pro $99/mo, Elite $199/mo), your recurring commissions will scale significantly!
             </p>
           </motion.div>
         </div>

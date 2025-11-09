@@ -1019,8 +1019,8 @@ const sendBetaWelcomeEmail = async (email, firstName, position, isFree, verifica
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
                 <tr>
                   <td style="padding: 20px; background: rgba(245, 197, 24, 0.1); border: 2px solid #F5C518; border-radius: 12px; text-align: center;">
-                    <p style="margin: 0 0 8px 0; color: #F5C518; font-size: 16px; font-weight: 700;">Beta Access: $29.99/month</p>
-                    <p style="margin: 0; color: #A3A3A3; font-size: 14px;">After verification, you'll be directed to payment</p>
+                    <p style="margin: 0 0 8px 0; color: #F5C518; font-size: 16px; font-weight: 700;">Beta Access: $49.99 one-time</p>
+                    <p style="margin: 0; color: #A3A3A3; font-size: 14px;">After verification, you'll be directed to payment (valid until Dec 31, 2025)</p>
                   </td>
                 </tr>
               </table>
@@ -1273,16 +1273,16 @@ const sendPaymentConfirmationEmail = async (email, firstName) => {
                 Welcome <strong style="color: #F5C518;">${firstName}</strong>!
               </p>
               <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
-                Your payment of $29.99/month has been confirmed and your beta access is now active! Check your inbox for your Discord invite.
+                Your payment of $49.99 (one-time) has been confirmed and your beta access is now active! Check your inbox for your Discord invite.
               </p>
 
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
                 <tr>
                   <td style="padding: 24px; background: linear-gradient(135deg, rgba(245, 197, 24, 0.15) 0%, rgba(212, 169, 14, 0.08) 100%); border: 1px solid rgba(245, 197, 24, 0.3); border-radius: 10px;">
-                    <p style="margin: 0 0 16px 0; color: #F5C518; font-size: 16px; font-weight: 700;">✓ Subscription Active</p>
-                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">Amount: $29.99/month</p>
-                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">Next billing: ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
-                    <p style="margin: 0; color: #A3A3A3; font-size: 13px;">You can manage your subscription anytime</p>
+                    <p style="margin: 0 0 16px 0; color: #F5C518; font-size: 16px; font-weight: 700;">✓ Payment Complete</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">Amount: $49.99 (one-time payment)</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">Access valid until: December 31, 2025</p>
+                    <p style="margin: 0; color: #A3A3A3; font-size: 13px;">No recurring charges - you're all set!</p>
                   </td>
                 </tr>
               </table>

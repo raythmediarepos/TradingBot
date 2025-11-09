@@ -43,7 +43,7 @@ const InvestorsPage = () => {
     {
       icon: DollarSign,
       title: 'Revenue Model',
-      description: 'Subscription-based SaaS with tiered pricing ($29-$199/month) targeting high-value traders and institutions.'
+      description: 'Beta: $49.99 one-time. Future SaaS model with tiered pricing ($49-$199/month) targeting high-value traders and institutions.'
     },
     {
       icon: Lock,
