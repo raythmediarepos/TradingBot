@@ -25,6 +25,28 @@ router.get('/waitlist/remaining', async (req, res) => {
 })
 
 /**
+ * GET /api/waitlist/stats
+ * Get waitlist statistics
+ */
+router.get('/waitlist/stats', async (req, res) => {
+  try {
+    const result = await waitlistService.getRemainingWaitlistSpots()
+    res.json({
+      success: true,
+      filled: result.filled,
+      remaining: result.remaining,
+      total: result.total,
+    })
+  } catch (error) {
+    console.error('Error in /waitlist/stats:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    })
+  }
+})
+
+/**
  * POST /api/waitlist/join
  * Add a user to the waitlist
  * Body: { email, firstName, lastName }

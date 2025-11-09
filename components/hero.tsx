@@ -10,6 +10,33 @@ const Hero = () => {
   const { scrollY } = useScroll()
   const opacity = useTransform(scrollY, [0, 600], [1, 0])
   const scale = useTransform(scrollY, [0, 600], [1, 0.95])
+  
+  const [betaStats, setBetaStats] = React.useState<{ filled: number; total: number; remaining: number } | null>(null)
+  const [loading, setLoading] = React.useState(true)
+
+  // Fetch beta program availability
+  React.useEffect(() => {
+    const fetchBetaAvailability = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/beta/stats`)
+        const data = await response.json()
+        if (data.success) {
+          setBetaStats({
+            filled: data.filled,
+            total: data.total,
+            remaining: data.remaining,
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching beta stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchBetaAvailability()
+  }, [])
+
+  const isBetaFull = betaStats && betaStats.remaining === 0
 
   const trustMetrics = [
     { icon: Shield, label: 'Ethically Screened', value: '100%', description: 'Transparent criteria' },
@@ -140,30 +167,49 @@ const Hero = () => {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8"
           >
-            <Button 
-              size="lg" 
-              asChild 
-              className="w-full sm:w-auto text-base px-8 h-14 shadow-lg shadow-hp-yellow/20 hover:shadow-xl hover:shadow-hp-yellow/30 transition-all group relative overflow-hidden"
-            >
-              <Link href="/beta/signup" className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5" />
-                Join Beta Program
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                <span className="absolute top-0 right-0 px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-bl-lg">
-                  LIVE
-                </span>
-              </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              asChild
-              className="w-full sm:w-auto text-base px-8 h-14 border-2 hover:bg-hp-yellow/5 group"
-            >
-              <Link href="#waitlist" className="flex items-center gap-2">
-                Or Join Waitlist
-              </Link>
-            </Button>
+            {!loading && !isBetaFull ? (
+              // Show Join Beta when spots available
+              <Button 
+                size="lg" 
+                asChild 
+                className="w-full sm:w-auto text-base px-8 h-14 shadow-lg shadow-hp-yellow/20 hover:shadow-xl hover:shadow-hp-yellow/30 transition-all group relative overflow-hidden"
+              >
+                <Link href="/beta/signup" className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Join Beta Program
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <span className="absolute top-0 right-0 px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-bl-lg">
+                    {betaStats && `${betaStats.remaining} LEFT`}
+                  </span>
+                </Link>
+              </Button>
+            ) : !loading && isBetaFull ? (
+              // Show Join Waitlist when beta is full
+              <Button 
+                size="lg" 
+                asChild 
+                className="w-full sm:w-auto text-base px-8 h-14 shadow-lg shadow-hp-yellow/20 hover:shadow-xl hover:shadow-hp-yellow/30 transition-all group relative overflow-hidden"
+              >
+                <Link href="/waitlist" className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Join Waitlist
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <span className="absolute top-0 right-0 px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-bl-lg">
+                    BETA FULL
+                  </span>
+                </Link>
+              </Button>
+            ) : (
+              // Loading state
+              <Button 
+                size="lg" 
+                disabled
+                className="w-full sm:w-auto text-base px-8 h-14 shadow-lg"
+              >
+                <Sparkles className="w-5 h-5 animate-pulse" />
+                Loading...
+              </Button>
+            )}
           </motion.div>
           
           <motion.p
@@ -172,8 +218,17 @@ const Hero = () => {
             transition={{ delay: 0.8 }}
             className="text-sm text-gray-500 mb-12 flex items-center justify-center gap-2"
           >
-            <CheckCircle className="w-4 h-4 text-green-500" />
-            First 20 users get <strong className="text-hp-yellow mx-1">FREE</strong> access • $49.99 one-time after • Valid until Dec 31, 2025
+            {!loading && isBetaFull ? (
+              <>
+                <Clock className="w-4 h-4 text-orange-500" />
+                Beta program is full • Join the waitlist to be notified when we open more spots
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                First 20 users get <strong className="text-hp-yellow mx-1">FREE</strong> access • $49.99 one-time after • Valid until Dec 31, 2025
+              </>
+            )}
           </motion.p>
 
           {/* Stats Bar */}
