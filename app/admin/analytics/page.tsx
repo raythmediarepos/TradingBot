@@ -384,7 +384,7 @@ export default function AdminAnalyticsPage() {
                       cx="50%"
                       cy="50%"
                       outerRadius={100}
-                      label={(entry) => entry.channelName}
+                      label={(entry: any) => entry.channelName as string}
                     >
                       {messages.channelStats.slice(0, 8).map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
