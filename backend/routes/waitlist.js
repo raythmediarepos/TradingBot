@@ -2,13 +2,14 @@ const express = require('express')
 const router = express.Router()
 const { addToWaitlist, getRemainingWaitlistSpots, getAllWaitlistMembers, MAX_WAITLIST_MEMBERS } = require('../services/waitlistService')
 const { authenticate, requireAdmin } = require('../middleware/auth')
+const { signupLimiter } = require('../middleware/rateLimiter')
 
 /**
  * @route   POST /api/waitlist/join
  * @desc    Add user to waitlist
  * @access  Public
  */
-router.post('/join', async (req, res) => {
+router.post('/join', signupLimiter, async (req, res) => {
   try {
     const { email, firstName, lastName } = req.body
 

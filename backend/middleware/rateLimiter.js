@@ -66,6 +66,22 @@ const paymentLimiter = rateLimit({
 })
 
 /**
+ * Login rate limiter
+ * Prevent brute force attacks
+ */
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 login attempts per 15 minutes
+  message: {
+    error: 'Too many login attempts',
+    message: 'Too many login attempts. Please try again in 15 minutes.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // Don't count successful logins
+})
+
+/**
  * Admin route rate limiter
  * More lenient for admin operations
  */
@@ -117,6 +133,7 @@ const createCustomLimiter = (options) => {
 module.exports = {
   generalLimiter,
   signupLimiter,
+  loginLimiter,
   verificationLimiter,
   paymentLimiter,
   adminLimiter,

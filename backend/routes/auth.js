@@ -4,12 +4,13 @@ const admin = require('firebase-admin')
 const { hashPassword, comparePassword, validatePassword } = require('../utils/password')
 const { generateToken, authenticate } = require('../middleware/auth')
 const { serializeUser } = require('../utils/firestore')
+const { signupLimiter, loginLimiter, adminLimiter } = require('../middleware/rateLimiter')
 
 /**
  * POST /api/auth/signup
  * Create new user account (used during beta signup)
  */
-router.post('/signup', async (req, res) => {
+router.post('/signup', signupLimiter, async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body
 
@@ -78,7 +79,7 @@ router.post('/signup', async (req, res) => {
  * POST /api/auth/login
  * Login with email and password
  */
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body
 
@@ -157,7 +158,7 @@ router.post('/login', async (req, res) => {
  * POST /api/auth/admin-login
  * Login for admin users
  */
-router.post('/admin-login', async (req, res) => {
+router.post('/admin-login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body
 
