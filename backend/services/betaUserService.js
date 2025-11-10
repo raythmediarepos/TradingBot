@@ -498,7 +498,7 @@ const createEmailVerification = async (userId, email, token) => {
       verified: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       expiresAt: admin.firestore.Timestamp.fromDate(
-        new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+        new Date(Date.now() + 48 * 60 * 60 * 1000) // 48 hours
       ),
     }
 
@@ -519,32 +519,50 @@ const createEmailVerification = async (userId, email, token) => {
  */
 const verifyEmailToken = async (token) => {
   try {
-    const snapshot = await db
+    // First, check if token exists at all (including already verified)
+    const allTokensSnapshot = await db
       .collection(COLLECTIONS.EMAIL_VERIFICATIONS)
       .where('token', '==', token)
-      .where('verified', '==', false)
       .get()
 
-    if (snapshot.empty) {
+    if (allTokensSnapshot.empty) {
       return {
         success: false,
-        message: 'Invalid or expired verification token',
+        errorType: 'invalid',
+        message: 'Invalid verification token',
       }
     }
 
-    const doc = snapshot.docs[0]
-    const data = doc.data()
+    // Check if already verified
+    const allTokenDoc = allTokensSnapshot.docs[0]
+    const allTokenData = allTokenDoc.data()
+
+    if (allTokenData.verified) {
+      return {
+        success: false,
+        errorType: 'already_verified',
+        message: 'This email has already been verified',
+        userId: allTokenData.userId,
+      }
+    }
 
     // Check if token expired
     const now = new Date()
-    const expiresAt = data.expiresAt.toDate()
+    const expiresAt = allTokenData.expiresAt.toDate()
     
     if (now > expiresAt) {
       return {
         success: false,
+        errorType: 'expired',
         message: 'Verification token has expired',
+        userId: allTokenData.userId,
+        email: allTokenData.email,
       }
     }
+
+    // Token is valid and not expired - proceed with verification
+    const data = allTokenData
+    const doc = allTokenDoc
 
     // Mark as verified
     await db.collection(COLLECTIONS.EMAIL_VERIFICATIONS).doc(doc.id).update({

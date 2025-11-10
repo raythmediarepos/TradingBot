@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, Loader2, CreditCard, Sparkles } from 'lucide-react'
+import { CheckCircle2, XCircle, Loader2, CreditCard, Sparkles, AlertCircle, RefreshCw, Clock } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
 
 export default function BetaVerifyPage() {
@@ -13,11 +13,13 @@ export default function BetaVerifyPage() {
 
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying')
   const [message, setMessage] = useState('')
+  const [errorType, setErrorType] = useState<'invalid' | 'expired' | 'already_verified' | 'unknown'>('unknown')
   const [userData, setUserData] = useState<{
-    userId: string
-    isFree: boolean
-    requiresPayment: boolean
-    status: string
+    userId?: string
+    isFree?: boolean
+    requiresPayment?: boolean
+    status?: string
+    email?: string
   } | null>(null)
 
   useEffect(() => {
@@ -63,7 +65,18 @@ export default function BetaVerifyPage() {
         } else {
           setStatus('error')
           setMessage(data.message || 'Verification failed')
-          analytics.betaEmailVerificationFailed(data.message || 'Unknown error')
+          setErrorType(data.errorType || 'unknown')
+          
+          // Store user data if available (for expired tokens)
+          if (data.userId || data.email) {
+            setUserData({
+              userId: data.userId,
+              email: data.email,
+            })
+          }
+          
+          // Track failed verification with error type
+          analytics.betaEmailVerificationFailed(`${data.errorType || 'unknown'}: ${data.message || 'Unknown error'}`)
         }
       } catch (err) {
         console.error('Verification error:', err)
@@ -248,46 +261,144 @@ export default function BetaVerifyPage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'spring', stiffness: 200 }}
             >
+              {/* Header Section - Different icons/colors for different error types */}
               <div className="text-center mb-12">
-                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-500/10 border-2 border-red-500 mb-6">
-                  <XCircle className="w-12 h-12 text-red-500" />
-                </div>
+                {errorType === 'expired' ? (
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-orange-500/10 border-2 border-orange-500 mb-6">
+                    <Clock className="w-12 h-12 text-orange-500" />
+                  </div>
+                ) : errorType === 'already_verified' ? (
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-500/10 border-2 border-blue-500 mb-6">
+                    <CheckCircle2 className="w-12 h-12 text-blue-500" />
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-500/10 border-2 border-red-500 mb-6">
+                    <XCircle className="w-12 h-12 text-red-500" />
+                  </div>
+                )}
 
-                <h1 className="text-4xl font-bold mb-4">Verification Failed</h1>
+                <h1 className="text-4xl font-bold mb-4">
+                  {errorType === 'expired' && 'Link Expired'}
+                  {errorType === 'already_verified' && 'Already Verified'}
+                  {errorType === 'invalid' && 'Invalid Link'}
+                  {errorType === 'unknown' && 'Verification Failed'}
+                </h1>
                 <p className="text-xl text-white/60 mb-8">{message}</p>
               </div>
 
-              <div className="bg-hp-gray900 border border-white/10 rounded-2xl p-8 mb-8">
-                <h3 className="font-bold text-lg mb-4">Common Issues:</h3>
-                <ul className="space-y-3 text-white/70">
-                  <li className="flex items-start gap-2">
-                    <span className="text-hp-yellow mt-1">•</span>
-                    <span>The verification link may have expired (links are valid for 24 hours)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-hp-yellow mt-1">•</span>
-                    <span>The link may have already been used</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-hp-yellow mt-1">•</span>
-                    <span>You may have clicked an old verification link</span>
-                  </li>
-                </ul>
-              </div>
+              {/* Error-Specific Information */}
+              {errorType === 'expired' && (
+                <div className="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-8 mb-8">
+                  <div className="flex items-start gap-3 mb-4">
+                    <Clock className="w-6 h-6 text-orange-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-bold text-lg text-orange-400 mb-2">This Link Has Expired</h3>
+                      <p className="text-white/70 mb-4">
+                        Verification links are valid for <strong className="text-white">48 hours</strong> for security purposes.
+                      </p>
+                      <p className="text-white/70">
+                        Don't worry - your account is safe! Simply request a new verification link below.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <a
-                  href="/beta/resend-verification"
-                  className="flex-1 py-4 bg-gradient-to-r from-hp-yellow to-hp-yellow600 text-hp-black rounded-xl font-bold text-center hover:shadow-lg hover:shadow-hp-yellow/20 transition-all"
-                >
-                  Resend Verification Email
-                </a>
-                <a
-                  href="mailto:support@helwa.ai"
-                  className="flex-1 py-4 bg-hp-gray900 text-white border border-white/10 rounded-xl font-bold text-center hover:bg-white/5 transition-all"
-                >
-                  Contact Support
-                </a>
+              {errorType === 'already_verified' && (
+                <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-8 mb-8">
+                  <div className="flex items-start gap-3 mb-4">
+                    <CheckCircle2 className="w-6 h-6 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-bold text-lg text-blue-400 mb-2">Email Already Verified</h3>
+                      <p className="text-white/70 mb-4">
+                        Good news! Your email has already been verified successfully.
+                      </p>
+                      <p className="text-white/70">
+                        You can proceed to log in to your dashboard.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {errorType === 'invalid' && (
+                <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-8 mb-8">
+                  <div className="flex items-start gap-3 mb-4">
+                    <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-bold text-lg text-red-400 mb-2">Invalid Verification Link</h3>
+                      <p className="text-white/70 mb-4">
+                        This verification link is not recognized or may have been malformed.
+                      </p>
+                      <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
+                        <p className="text-sm text-white/70 mb-2"><strong>Common causes:</strong></p>
+                        <ul className="space-y-1 text-sm text-white/60">
+                          <li>• The link was copied incorrectly</li>
+                          <li>• You clicked an old verification link</li>
+                          <li>• The email was forwarded and the link broke</li>
+                        </ul>
+                      </div>
+                      <p className="text-white/70">
+                        Request a fresh verification link to resolve this issue.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {errorType === 'unknown' && (
+                <div className="bg-hp-gray900 border border-white/10 rounded-2xl p-8 mb-8">
+                  <h3 className="font-bold text-lg mb-4">Common Issues:</h3>
+                  <ul className="space-y-3 text-white/70">
+                    <li className="flex items-start gap-2">
+                      <span className="text-hp-yellow mt-1">•</span>
+                      <span>The verification link may have expired (links are valid for 48 hours)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-hp-yellow mt-1">•</span>
+                      <span>The link may have already been used</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-hp-yellow mt-1">•</span>
+                      <span>You may have clicked an old verification link</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-4">
+                {errorType === 'already_verified' ? (
+                  <a
+                    href="/login"
+                    className="w-full py-4 bg-gradient-to-r from-hp-yellow to-hp-yellow/80 text-hp-black rounded-xl font-bold text-center hover:shadow-lg hover:shadow-hp-yellow/20 transition-all"
+                  >
+                    Continue to Login →
+                  </a>
+                ) : (
+                  <a
+                    href="/beta/resend-verification"
+                    className="w-full py-4 bg-gradient-to-r from-hp-yellow to-hp-yellow/80 text-hp-black rounded-xl font-bold text-center hover:shadow-lg hover:shadow-hp-yellow/20 transition-all flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw className="w-5 h-5" />
+                    Request New Verification Link
+                  </a>
+                )}
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <a
+                    href="/"
+                    className="flex-1 py-4 bg-hp-gray900 text-white border border-white/10 rounded-xl font-bold text-center hover:bg-white/5 transition-all"
+                  >
+                    Return to Homepage
+                  </a>
+                  <a
+                    href="mailto:support@helwa.ai"
+                    className="flex-1 py-4 bg-hp-gray900 text-white border border-white/10 rounded-xl font-bold text-center hover:bg-white/5 transition-all"
+                  >
+                    Contact Support
+                  </a>
+                </div>
               </div>
             </motion.div>
           )}

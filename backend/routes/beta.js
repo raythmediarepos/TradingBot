@@ -247,6 +247,9 @@ router.post('/verify-email', verificationLimiter, async (req, res) => {
       return res.status(400).json({
         error: 'Verification failed',
         message: result.message,
+        errorType: result.errorType, // Pass error type to frontend
+        userId: result.userId, // Pass user ID if available
+        email: result.email, // Pass email if available (for expired tokens)
       })
     }
 

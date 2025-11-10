@@ -430,7 +430,7 @@ export default function BetaSuccessPage() {
             <ul className="space-y-2 text-sm text-white/70">
               <li className="flex items-start gap-2">
                 <span className="text-hp-yellow mt-0.5">•</span>
-                <span>Your verification link expires in <strong className="text-white">24 hours</strong></span>
+                <span>Your verification link expires in <strong className="text-white">48 hours</strong></span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-hp-yellow mt-0.5">•</span>
