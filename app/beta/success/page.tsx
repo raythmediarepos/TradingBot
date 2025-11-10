@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, CheckCircle2, ArrowRight, Sparkles, AlertCircle } from 'lucide-react'
+import { Mail, CheckCircle2, ArrowRight, Sparkles, AlertCircle, RefreshCw, Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { analytics } from '@/lib/analytics'
 
@@ -16,9 +16,12 @@ export default function BetaSuccessPage() {
     firstName: string
     position: number
     isFree: boolean
+    emailSent?: boolean
   } | null>(null)
   const [redirecting, setRedirecting] = useState(false)
   const [countdown, setCountdown] = useState(5)
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [resendMessage, setResendMessage] = useState('')
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -87,6 +90,42 @@ export default function BetaSuccessPage() {
 
     loadUserData()
   }, [router, sessionId])
+
+  const handleResendEmail = async () => {
+    if (!userData?.email) return
+    
+    setResendStatus('sending')
+    setResendMessage('')
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/beta/resend-verification`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: userData.email }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (data.success) {
+        setResendStatus('success')
+        setResendMessage(data.message || 'Verification email sent! Check your inbox.')
+        // Update userData to reflect email was sent
+        setUserData(prev => prev ? { ...prev, emailSent: true } : null)
+      } else {
+        setResendStatus('error')
+        setResendMessage(data.message || 'Failed to send email. Please try again.')
+      }
+    } catch (error) {
+      setResendStatus('error')
+      setResendMessage('Network error. Please check your connection and try again.')
+      console.error('Error resending email:', error)
+    }
+  }
 
   // Show loading/redirecting screen for logged-in users with no userData
   if (!userData && sessionId) {
@@ -230,6 +269,68 @@ export default function BetaSuccessPage() {
             </div>
           </motion.div>
 
+          {/* Email Status Warning */}
+          {userData.emailSent === false && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55 }}
+              className="mb-6"
+            >
+              <div className="p-6 bg-red-500/10 border-2 border-red-500/30 rounded-xl">
+                <div className="flex items-start gap-3 mb-4">
+                  <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-red-400 mb-1">
+                      Verification Email Failed to Send
+                    </h3>
+                    <p className="text-sm text-red-300/80 mb-3">
+                      We encountered an issue sending your verification email. Don&apos;t worry - your account is created!
+                    </p>
+                    <button
+                      onClick={handleResendEmail}
+                      disabled={resendStatus === 'sending'}
+                      className="w-full sm:w-auto px-6 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {resendStatus === 'sending' ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-5 h-5" />
+                          Resend Verification Email
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Resend Success/Error Messages */}
+          {resendMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
+            >
+              <div className={`p-4 rounded-xl border-2 ${
+                resendStatus === 'success'
+                  ? 'bg-green-500/10 border-green-500/30'
+                  : 'bg-red-500/10 border-red-500/30'
+              }`}>
+                <p className={`text-sm ${
+                  resendStatus === 'success' ? 'text-green-300' : 'text-red-300'
+                }`}>
+                  {resendMessage}
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {/* Next Steps Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -237,10 +338,23 @@ export default function BetaSuccessPage() {
             transition={{ delay: 0.6 }}
             className="bg-white/5 border border-white/10 rounded-2xl p-8 mb-8"
           >
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-              <Mail className="w-6 h-6 text-hp-yellow" />
-              Check Your Email
-            </h2>
+            <div className="flex items-start justify-between mb-6">
+              <h2 className="text-2xl font-bold flex items-center gap-3">
+                <Mail className="w-6 h-6 text-hp-yellow" />
+                Check Your Email
+              </h2>
+              {userData.emailSent !== false && (
+                <button
+                  onClick={handleResendEmail}
+                  disabled={resendStatus === 'sending' || resendStatus === 'success'}
+                  className="text-sm text-hp-yellow hover:text-hp-yellow/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  title="Resend verification email"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Resend
+                </button>
+              )}
+            </div>
 
             <div className="space-y-6">
               {/* Step 1 */}
@@ -356,12 +470,23 @@ export default function BetaSuccessPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="mt-12 text-center"
+            className="mt-12 text-center space-y-3"
           >
+            <div className="p-4 bg-hp-yellow/5 border border-hp-yellow/20 rounded-lg inline-block">
+              <p className="text-sm text-white/70 mb-2">
+                <strong className="text-hp-yellow">Didn&apos;t receive email?</strong>
+              </p>
+              <ul className="text-sm text-white/60 space-y-1 text-left">
+                <li>• Check your spam/junk folder</li>
+                <li>• Click the "Resend" button above</li>
+                <li>• Wait a few minutes and check again</li>
+                <li>• Contact us if issues persist</li>
+              </ul>
+            </div>
             <p className="text-sm text-white/40">
               Need help? Email us at{' '}
-              <a href="mailto:support@helwaai.com" className="text-hp-yellow hover:underline">
-                support@helwaai.com
+              <a href="mailto:support@helwa.ai" className="text-hp-yellow hover:underline font-semibold">
+                support@helwa.ai
               </a>
             </p>
           </motion.div>

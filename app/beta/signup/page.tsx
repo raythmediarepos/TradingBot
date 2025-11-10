@@ -189,12 +189,13 @@ export default function BetaSignupPage() {
           email: formData.email,
         })
 
-        // Store user data for success page
+        // Store user data for success page (including email send status)
         sessionStorage.setItem('betaSignup', JSON.stringify({
           email: formData.email,
           firstName: formData.firstName,
           position: data.data.position,
           isFree: data.data.isFree,
+          emailSent: data.data.emailSent !== false, // Default to true if not provided
         }))
         
         // Redirect to success page
