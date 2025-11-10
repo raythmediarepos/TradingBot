@@ -47,9 +47,9 @@ interface DashboardStats {
 interface RecentActivity {
   type: 'signup' | 'payment' | 'discord_join'
   user: {
-    id: string
+  id: string
     email: string
-    name: string
+  name: string
     isFree?: boolean
     discordUsername?: string
   }
@@ -169,17 +169,29 @@ export default function AdminDashboardPage() {
       const response = await fetchWithAuth('/api/admin/testing/add-fake-users', {
         method: 'POST'
       })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Response not OK:', response.status, errorText)
+        if (response.status === 401) {
+          alert('❌ Session expired. Please log in again.')
+          router.push('/admin/login')
+          return
+        }
+        throw new Error(`Server error: ${response.status}`)
+      }
+      
       const data = await response.json()
       
       if (data.success) {
         alert(`✅ Success!\n\nAdded ${data.count} fake users.\n\nRefreshing dashboard...`)
         await fetchData() // Refresh dashboard
-      } else {
+    } else {
         alert(`❌ Error: ${data.message || 'Failed to add fake users'}`)
       }
     } catch (error) {
       console.error('Error adding fake users:', error)
-      alert('❌ Error: Failed to add fake users. Check console for details.')
+      alert(`❌ Error: Failed to add fake users.\n\n${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setTestingAction(null)
     }
@@ -197,6 +209,18 @@ export default function AdminDashboardPage() {
       const response = await fetchWithAuth('/api/admin/testing/remove-fake-users', {
         method: 'DELETE'
       })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Response not OK:', response.status, errorText)
+        if (response.status === 401) {
+          alert('❌ Session expired. Please log in again.')
+          router.push('/admin/login')
+          return
+        }
+        throw new Error(`Server error: ${response.status}`)
+      }
+      
       const data = await response.json()
       
       if (data.success) {
@@ -207,7 +231,7 @@ export default function AdminDashboardPage() {
       }
     } catch (error) {
       console.error('Error removing fake users:', error)
-      alert('❌ Error: Failed to remove fake users. Check console for details.')
+      alert(`❌ Error: Failed to remove fake users.\n\n${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setTestingAction(null)
     }
@@ -331,13 +355,13 @@ export default function AdminDashboardPage() {
                 <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
                   <span className="text-green-400">${profitMetrics.totalRevenue.toFixed(2)}</span> revenue -{' '}
                   <span className="text-red-400">${profitMetrics.totalExpenses.toFixed(2)}</span> expenses
-                </div>
+      </div>
               </motion.div>
 
               {/* Monthly Profit */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className={`bg-hp-gray900 border ${profitMetrics.monthlyProfit >= 0 ? 'border-blue-500/30' : 'border-red-500/30'} rounded-xl p-6`}
               >
@@ -376,7 +400,7 @@ export default function AdminDashboardPage() {
                 <p className="text-sm text-gray-400">Yearly Profit</p>
                 <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
                   Expenses: <span className="text-red-400">${profitMetrics.yearlyExpenses.toFixed(2)}</span>
-                </div>
+              </div>
               </motion.div>
 
               {/* Total Expenses */}
@@ -436,7 +460,7 @@ export default function AdminDashboardPage() {
                           }}
                         />
                       )}
-                      <div>
+                  <div>
                         <h3 className="text-xl font-bold text-white">{anomaly.ticker}</h3>
                         <p className="text-xs text-gray-400">{anomaly.companyName}</p>
                       </div>
@@ -465,8 +489,8 @@ export default function AdminDashboardPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-400">Sector</span>
                       <span className="text-sm font-semibold text-white">{anomaly.sector}</span>
-                    </div>
-                  </div>
+                </div>
+              </div>
 
                   {/* AI Summary */}
                   <div className="border-t border-white/10 pt-4 mb-4">
@@ -474,7 +498,7 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Signal Badge */}
-                  <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       anomaly.signal === 'BUY' 
                         ? 'bg-green-500/20 text-green-400' 
@@ -562,7 +586,7 @@ export default function AdminDashboardPage() {
             <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
               <span className="text-green-400">{stats?.discord.verifiedMembers || 0}</span> verified •{' '}
               <span className="text-yellow-400">{stats?.discord.unverifiedMembers || 0}</span> pending
-            </div>
+                </div>
           </motion.div>
 
           {/* Activity */}
@@ -584,14 +608,14 @@ export default function AdminDashboardPage() {
               <span className="text-orange-400">{stats?.analytics.activeUsers || 0}</span> active users
             </div>
           </motion.div>
-        </div>
+              </div>
 
         {/* Charts Row */}
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           {/* Revenue Chart */}
           <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <div>
+                  <div>
                 <h3 className="text-lg font-bold flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-green-400" />
                   Revenue (Last 7 Days)
@@ -620,9 +644,9 @@ export default function AdminDashboardPage() {
             ) : (
               <div className="h-[200px] flex items-center justify-center text-gray-400">
                 No revenue data yet
-              </div>
+                  </div>
             )}
-          </div>
+                </div>
 
           {/* Signups Chart */}
           <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
@@ -695,8 +719,8 @@ export default function AdminDashboardPage() {
                   <p>No recent activity</p>
                 </div>
               )}
+              </div>
             </div>
-          </div>
 
           {/* Quick Actions */}
           <div className="bg-hp-gray900 border border-white/10 rounded-xl p-6">
@@ -809,7 +833,7 @@ export default function AdminDashboardPage() {
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-green-400" />
                     <span className="text-green-400">Connected</span>
-                  </div>
+                            </div>
                 </div>
               </div>
             </div>
