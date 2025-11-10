@@ -258,6 +258,26 @@ class Analytics {
     })
   }
 
+  /**
+   * User joined waitlist
+   */
+  waitlistJoined(data: {
+    email: string
+    position: number
+  }) {
+    this.track('waitlist_joined', {
+      position: data.position,
+      email: this.hashEmail(data.email), // Hash email for privacy
+    })
+
+    // Identify user
+    this.identify(`waitlist_user_${data.position}`, {
+      position: data.position,
+      joined_date: new Date().toISOString(),
+      type: 'waitlist',
+    })
+  }
+
   // === Conversion Funnel Helpers ===
 
   /**
