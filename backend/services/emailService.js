@@ -1348,6 +1348,236 @@ const sendPaymentConfirmationEmail = async (email, firstName) => {
   }
 }
 
+/**
+ * Send password reset email
+ * @param {string} email - User's email
+ * @param {string} firstName - User's first name
+ * @param {string} resetToken - Password reset token
+ * @returns {Promise<boolean>}
+ */
+const sendPasswordResetEmail = async (email, firstName, resetToken) => {
+  console.log('📧 [EMAIL] Sending password reset email...')
+  console.log(`   → To: ${email}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    const resetUrl = `${frontendUrl}/auth/reset-password?token=${resetToken}`
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: `🔐 Reset Your Password - Helwa AI`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #F5C518 0%, #D4A90E 50%, #F5C518 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">🔐</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 32px; font-weight: 700;">Reset Your Password</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Secure access to your account</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Hi <strong style="color: #F5C518;">${firstName}</strong>,
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                We received a request to reset your password for your Helwa AI account. Click the button below to create a new password.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${resetUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #F5C518 0%, #D4A90E 100%); color: #0A0A0A; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
+                      Reset Password
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid #EF4444; border-radius: 8px;">
+                    <p style="margin: 0 0 8px 0; color: #EF4444; font-size: 14px; font-weight: 700;">⏱️  This link expires in 1 hour</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 13px;">For your security, this password reset link will expire in 60 minutes.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="background: rgba(245, 197, 24, 0.05); border: 1px solid rgba(245, 197, 24, 0.2); border-radius: 8px; padding: 16px; margin: 0 0 32px 0;">
+                <p style="margin: 0 0 8px 0; color: #F5C518; font-size: 13px; font-weight: 700;">Or copy and paste this link:</p>
+                <p style="margin: 0; color: #A3A3A3; font-size: 12px; word-break: break-all; font-family: monospace;">${resetUrl}</p>
+              </div>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 24px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(245, 197, 24, 0.08); border-left: 4px solid #F5C518; border-radius: 8px;">
+                    <p style="margin: 0 0 8px 0; color: #F5C518; font-size: 14px; font-weight: 700;">Didn't request this?</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 13px;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #A3A3A3; font-size: 13px; line-height: 1.6;">
+                Need help? Reply to this email or contact us at support@helwa.ai
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    })
+
+    console.log('✅ [EMAIL SUCCESS] Password reset email sent!')
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error('❌ [EMAIL ERROR] Failed to send password reset email')
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
+/**
+ * Send password changed confirmation email
+ * @param {string} email - User's email
+ * @param {string} firstName - User's first name
+ * @returns {Promise<boolean>}
+ */
+const sendPasswordChangedEmail = async (email, firstName) => {
+  console.log('📧 [EMAIL] Sending password changed confirmation...')
+  console.log(`   → To: ${email}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: `✅ Password Successfully Changed - Helwa AI`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Changed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(34, 197, 94, 0.3);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #22C55E 0%, #16A34A 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 32px; font-weight: 700;">Password Changed</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Your account is secure</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Hi <strong style="color: #22C55E;">${firstName}</strong>,
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                Your password for your Helwa AI account has been successfully changed.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 24px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px;">
+                    <p style="margin: 0 0 12px 0; color: #22C55E; font-size: 16px; font-weight: 700;">✓ Password Updated</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">Time: ${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC</p>
+                    <p style="margin: 0; color: #A3A3A3; font-size: 13px;">You can now log in with your new password.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 24px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid #EF4444; border-radius: 8px;">
+                    <p style="margin: 0 0 8px 0; color: #EF4444; font-size: 14px; font-weight: 700;">⚠️  Didn't make this change?</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 13px;">If you didn't change your password, please contact us immediately at <a href="mailto:support@helwa.ai" style="color: #F5C518; text-decoration: none;">support@helwa.ai</a></p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #D4D4D4; font-size: 15px;">
+                <strong style="color: #FFFFFF;">Stay secure!</strong><br>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(34, 197, 94, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    })
+
+    console.log('✅ [EMAIL SUCCESS] Password changed confirmation sent!')
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error('❌ [EMAIL ERROR] Failed to send password changed confirmation')
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
 module.exports = {
   sendWaitlistConfirmation,
   sendContactNotification,
@@ -1359,4 +1589,7 @@ module.exports = {
   sendBetaWelcomeEmail,
   sendDiscordInviteEmail,
   sendPaymentConfirmationEmail,
+  // Auth emails
+  sendPasswordResetEmail,
+  sendPasswordChangedEmail,
 }
