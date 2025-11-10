@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Waitlist Link</title>
+</head>
+<body>
+    <h1>Testing Waitlist Navigation</h1>
+    <p>Current URL: <span id="current"></span></p>
+    <p>
+        <a href="http://localhost:3000/waitlist" style="padding: 10px 20px; background: orange; color: white; text-decoration: none; border-radius: 5px;">Go to Waitlist Page</a>
+    </p>
+    <script>
+        document.getElementById('current').textContent = window.location.href;
+    </script>
+</body>
+</html>

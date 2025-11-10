@@ -332,7 +332,7 @@ export default function BetaSignupPage() {
                 All 100 beta spots have been filled. Join our waitlist to be notified when we open more spots.
               </p>
               <a
-                href="/"
+                href="/waitlist"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-hp-yellow text-hp-black rounded-xl font-bold hover:bg-hp-yellow600 transition-colors"
               >
                 Join Waitlist Instead
