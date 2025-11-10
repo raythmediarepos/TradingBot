@@ -435,7 +435,9 @@ export default function AdminBetaUsersPage() {
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
                           {user.isFoundingMember && (
-                            <Crown className="w-4 h-4 text-hp-yellow" title="Founding Member" />
+                            <span title="Founding Member">
+                              <Crown className="w-4 h-4 text-hp-yellow" />
+                            </span>
                           )}
                         </div>
                       </td>
