@@ -298,7 +298,7 @@ export default function AdminExpensesPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
-                    label={(entry) => `${entry.category}: $${entry.total.toFixed(0)}`}
+                    label={(entry: any) => `${entry.category}: $${(entry.total as number).toFixed(0)}`}
                   >
                     {metrics.expensesByCategory.slice(0, 8).map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
