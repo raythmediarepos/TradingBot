@@ -1158,15 +1158,32 @@ const sendDiscordInviteEmail = async (email, firstName, discordToken) => {
                     </table>
 
                     <p style="margin: 0 0 16px 0; color: #F5C518; font-size: 16px; font-weight: 700;">Step 2: Verify Your Access</p>
-                    <p style="margin: 0 0 12px 0; color: #D4D4D4; font-size: 14px;">After joining, you'll receive a DM from our bot. Send it this verification code:</p>
+                    <p style="margin: 0 0 20px 0; color: #D4D4D4; font-size: 14px;">Choose one of these two methods:</p>
                     
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 16px 0;">
-                      <tr>
-                        <td style="padding: 16px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); border-radius: 8px; text-align: center;">
-                          <p style="margin: 0; color: #0A0A0A; font-size: 18px; font-weight: 800; font-family: monospace; word-break: break-all;">${discordToken}</p>
-                        </td>
-                      </tr>
-                    </table>
+                    <div style="margin: 0 0 20px 0; padding: 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px;">
+                      <p style="margin: 0 0 12px 0; color: #22C55E; font-size: 14px; font-weight: 700;">Option A: One-Click Verification (Easiest)</p>
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td align="center">
+                            <a href="${frontendUrl}/api/beta/verify-discord?token=${discordToken}" style="display: inline-block; padding: 12px 24px; background: #22C55E; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">
+                              ✓ Verify with One Click
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <div style="margin: 0 0 20px 0; padding: 16px; background: rgba(245, 197, 24, 0.1); border: 1px solid rgba(245, 197, 24, 0.3); border-radius: 8px;">
+                      <p style="margin: 0 0 12px 0; color: #F5C518; font-size: 14px; font-weight: 700;">Option B: Manual Verification</p>
+                      <p style="margin: 0 0 12px 0; color: #D4D4D4; font-size: 13px;">Send this code to our bot in Discord DMs:</p>
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td style="padding: 12px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); border-radius: 6px; text-align: center;">
+                            <p style="margin: 0; color: #0A0A0A; font-size: 16px; font-weight: 800; font-family: monospace; word-break: break-all;">${discordToken}</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
 
                     <p style="margin: 0 0 16px 0; color: #F5C518; font-size: 16px; font-weight: 700;">Step 3: Get Access</p>
                     <p style="margin: 0; color: #D4D4D4; font-size: 14px;">Once verified, you'll automatically get the Beta Tester role and access to all channels!</p>

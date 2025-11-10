@@ -176,18 +176,46 @@ client.on('messageCreate', async (message) => {
   if (!message.guild) {
     if (message.author.bot) return
 
-    const content = message.content.trim()
+    const content = message.content.trim().toLowerCase()
+    const originalContent = message.content.trim()
+
+    // Check for resend token command
+    if (content === 'resend' || content === 'resend token' || content === '!resend') {
+      await handleResendToken(message)
+      return
+    }
+
+    // Check for help command
+    if (content === 'help' || content === '!help') {
+      await message.reply({
+        content: `**Helwa AI Beta Bot Commands** 🐝\n\n` +
+          `**Verification:**\n` +
+          `• Send your verification token (starts with \`discord_\`)\n` +
+          `• \`resend\` - Request a new verification token\n` +
+          `• \`help\` - Show this help message\n\n` +
+          `**VIP Access:**\n` +
+          `• \`I am given free access. open seaseme.\` - Admin/VIP instant access\n\n` +
+          `Need more help? Email support@helwa.ai`,
+      })
+      return
+    }
 
     // Check for special VIP/admin access command
-    if (content === 'I am given free access. open seaseme.') {
+    if (originalContent === 'I am given free access. open seaseme.') {
       await handleVIPAccess(message)
       return
     }
 
     // Check if message looks like a Discord invite token
-    if (content.startsWith('discord_')) {
-      await handleTokenVerification(message, content)
+    if (originalContent.startsWith('discord_')) {
+      await handleTokenVerification(message, originalContent)
+      return
     }
+
+    // Unknown command - show help
+    await message.reply({
+      content: `I didn't understand that command. Type \`help\` to see available commands.`,
+    })
     return
   }
 
@@ -202,6 +230,29 @@ client.on('messageCreate', async (message) => {
 })
 
 /**
+ * Retry role assignment with exponential backoff
+ */
+const assignRoleWithRetry = async (member, role, maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await member.roles.add(role)
+      console.log(`   → Assigned "${role.name}" role (attempt ${attempt})`)
+      return { success: true }
+    } catch (error) {
+      console.error(`   → Failed to assign role (attempt ${attempt}/${maxRetries}):`, error.message)
+      
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000 // Exponential backoff: 2s, 4s, 8s
+        console.log(`   → Retrying in ${delay/1000}s...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      } else {
+        return { success: false, error: error.message }
+      }
+    }
+  }
+}
+
+/**
  * Handle token verification from DM
  */
 const handleTokenVerification = async (message, token) => {
@@ -214,9 +265,35 @@ const handleTokenVerification = async (message, token) => {
     const result = await validateDiscordInvite(token)
 
     if (!result.success) {
-      await message.reply({
-        content: '❌ Invalid or expired invite token. Please check your email for the correct token or contact support.',
-      })
+      // Better error messages based on failure reason
+      let errorMessage = '❌ **Verification Failed**\n\n'
+      
+      if (result.message && result.message.includes('expired')) {
+        errorMessage += `Your verification token has **expired**.\n\n` +
+          `Tokens are valid for 7 days from generation.\n\n` +
+          `**To get a new token:**\n` +
+          `• Type \`resend\` to request a new token\n` +
+          `• Or log in to your dashboard at helwa.ai\n\n` +
+          `Need help? Email support@helwa.ai`
+      } else if (result.message && result.message.includes('already used')) {
+        errorMessage += `This token has **already been used**.\n\n` +
+          `You may have already verified your account.\n\n` +
+          `**Check your roles:** Do you see the Beta Tester role?\n\n` +
+          `If not, type \`resend\` to get a new token.`
+      } else {
+        errorMessage += `Your token appears to be **invalid**.\n\n` +
+          `**Common issues:**\n` +
+          `• Token was copied incorrectly (missing characters)\n` +
+          `• Token includes extra spaces or line breaks\n` +
+          `• Token is from an old email\n\n` +
+          `**To fix:**\n` +
+          `• Type \`resend\` to get a fresh token\n` +
+          `• Check your email for the latest token\n` +
+          `• Make sure to copy the entire token\n\n` +
+          `Need help? Email support@helwa.ai`
+      }
+      
+      await message.reply({ content: errorMessage })
       return
     }
 
@@ -226,7 +303,12 @@ const handleTokenVerification = async (message, token) => {
     const userResult = await getBetaUser(invite.userId)
     if (!userResult.success) {
       await message.reply({
-        content: '❌ Error: Could not find your beta registration. Please contact support.',
+        content: '❌ **Account Not Found**\n\n' +
+          `I couldn't find your beta registration in our system.\n\n` +
+          `This usually means:\n` +
+          `• The token belongs to a different account\n` +
+          `• Your registration wasn't completed\n\n` +
+          `Please contact support@helwa.ai with your email address.`,
       })
       return
     }
@@ -237,14 +319,28 @@ const handleTokenVerification = async (message, token) => {
     const member = await guild.members.fetch(message.author.id).catch(() => null)
 
     if (!member) {
+      const discordInvite = process.env.DISCORD_SERVER_INVITE_URL || 'your-invite-link'
       await message.reply({
-        content: '❌ You are not a member of the Helwa AI server. Please join first using the invite link from your email.',
+        content: '❌ **Not in Server**\n\n' +
+          `You need to be a member of the Helwa AI Discord server first.\n\n` +
+          `**Join here:** ${discordInvite}\n\n` +
+          `After joining, send me your verification token again.`,
       })
       return
     }
 
-    // Remove unverified role and assign beta role
-    if (unverifiedRole) {
+    // Check if user already has beta role
+    if (member.roles.cache.has(betaRole.id)) {
+      await message.reply({
+        content: '✅ **Already Verified!**\n\n' +
+          `You already have Beta Tester access.\n\n` +
+          `Head to the channels and start exploring! 🐝`,
+      })
+      return
+    }
+
+    // Remove unverified role if present
+    if (unverifiedRole && member.roles.cache.has(unverifiedRole.id)) {
       try {
         await member.roles.remove(unverifiedRole)
         console.log(`   → Removed "Unverified" role`)
@@ -253,8 +349,20 @@ const handleTokenVerification = async (message, token) => {
       }
     }
     
-    await member.roles.add(betaRole)
-    console.log(`   → Assigned "Beta Tester" role`)
+    // Assign beta role with auto-retry
+    const roleResult = await assignRoleWithRetry(member, betaRole)
+    
+    if (!roleResult.success) {
+      await message.reply({
+        content: '❌ **Role Assignment Failed**\n\n' +
+          `I verified your token, but couldn't assign the Beta Tester role.\n\n` +
+          `**Error:** ${roleResult.error}\n\n` +
+          `Please contact an admin or try again in a few minutes.\n\n` +
+          `Support: support@helwa.ai`,
+      })
+      console.error(`❌ [DISCORD BOT] Failed to assign role after retries`)
+      return
+    }
 
     // Mark invite as used
     await markDiscordInviteUsed(invite.id, {
@@ -1103,6 +1211,100 @@ const getMemberGrowth = async () => {
       success: false,
       error: error.message,
     }
+  }
+}
+
+/**
+ * Handle resend token command from DM
+ */
+const handleResendToken = async (message) => {
+  try {
+    console.log('🔄 [DISCORD BOT] Resend token request')
+    console.log(`   → User: ${message.author.tag}`)
+    console.log(`   → Discord ID: ${message.author.id}`)
+
+    // Find beta user by Discord ID
+    const admin = require('firebase-admin')
+    const db = admin.firestore()
+    
+    const usersSnapshot = await db
+      .collection('betaUsers')
+      .where('discordUserId', '==', message.author.id)
+      .limit(1)
+      .get()
+
+    if (usersSnapshot.empty) {
+      // User not found by Discord ID - they may not have verified yet
+      await message.reply({
+        content: '❌ **Account Not Found**\n\n' +
+          `I couldn't find a beta account linked to your Discord account.\n\n` +
+          `**This usually means:**\n` +
+          `• You haven't verified your first token yet\n` +
+          `• Your token is in the email we sent you\n\n` +
+          `**Check your email** for your original verification token.\n\n` +
+          `If you can't find it, log in to your dashboard at **helwa.ai** to generate a new invite.\n\n` +
+          `Need help? Email support@helwa.ai`,
+      })
+      return
+    }
+
+    const userDoc = usersSnapshot.docs[0]
+    const userData = userDoc.data()
+    const userId = userDoc.id
+
+    console.log(`   → Found user: ${userData.email}`)
+    console.log(`   → User ID: ${userId}`)
+
+    // Check if user already has beta access
+    const member = await guild.members.fetch(message.author.id).catch(() => null)
+    if (member && member.roles.cache.has(betaRole.id)) {
+      await message.reply({
+        content: '✅ **Already Verified!**\n\n' +
+          `You already have Beta Tester access.\n\n` +
+          `No need for a new token - you're all set! 🐝`,
+      })
+      return
+    }
+
+    // Create new Discord invite
+    const { createDiscordInvite } = require('./betaUserService')
+    const inviteResult = await createDiscordInvite(userId, userData.email)
+
+    if (!inviteResult.success) {
+      await message.reply({
+        content: '❌ **Failed to Generate Token**\n\n' +
+          `I couldn't create a new verification token.\n\n` +
+          `**Error:** ${inviteResult.error || 'Unknown error'}\n\n` +
+          `Please try again in a few minutes or email support@helwa.ai`,
+      })
+      return
+    }
+
+    // Send new token
+    await message.reply({
+      content: `✅ **New Token Generated!**\n\n` +
+        `Here's your fresh verification token:\n\n` +
+        `\`\`\`\n${inviteResult.token}\n\`\`\`\n\n` +
+        `**To verify:**\n` +
+        `• Copy the token above\n` +
+        `• Make sure you're in the Helwa AI Discord server\n` +
+        `• Send me the token in this DM\n\n` +
+        `This token expires in 7 days.\n\n` +
+        `_We've also sent this token to your email (${userData.email})_`,
+    })
+
+    // Also send via email
+    const { sendDiscordInviteEmail } = require('./emailService')
+    await sendDiscordInviteEmail(userData.email, userData.firstName, inviteResult.token)
+
+    console.log('✅ [DISCORD BOT] New token sent successfully')
+  } catch (error) {
+    console.error('❌ [DISCORD BOT] Error handling resend token:', error)
+    await message.reply({
+      content: '❌ **Error**\n\n' +
+        `Something went wrong while generating your new token.\n\n` +
+        `Please try again or email support@helwa.ai`,
+    }).catch(console.error)
   }
 }
 

@@ -348,6 +348,208 @@ router.post('/resend-verification', verificationLimiter, async (req, res) => {
 })
 
 /**
+ * GET /api/beta/verify-discord
+ * One-click Discord verification via email link
+ */
+router.get('/verify-discord', async (req, res) => {
+  try {
+    const { token } = req.query
+
+    if (!token) {
+      return res.status(400).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Verification Error</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0A0A0A; color: #FFFFFF; padding: 40px 20px; text-align: center; }
+            .container { max-width: 600px; margin: 0 auto; }
+            h1 { color: #F5C518; margin-bottom: 20px; }
+            p { color: #D4D4D4; line-height: 1.6; margin-bottom: 16px; }
+            a { color: #F5C518; text-decoration: none; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>❌ Missing Token</h1>
+            <p>No verification token provided.</p>
+            <p>Please use the link from your email or contact support@helwa.ai</p>
+          </div>
+        </body>
+        </html>
+      `)
+    }
+
+    console.log('🔗 [DISCORD VERIFY] Email link verification attempt')
+    console.log(`   → Token: ${token.substring(0, 15)}...`)
+
+    // Validate token
+    const result = await validateDiscordInvite(token)
+
+    if (!result.success) {
+      const errorType = result.message && result.message.includes('expired') ? 'expired' : 
+                       result.message && result.message.includes('used') ? 'used' : 'invalid'
+      
+      return res.status(400).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Verification Failed</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0A0A0A; color: #FFFFFF; padding: 40px 20px; text-align: center; }
+            .container { max-width: 600px; margin: 0 auto; }
+            h1 { color: #F59E0B; margin-bottom: 20px; }
+            p { color: #D4D4D4; line-height: 1.6; margin-bottom: 16px; }
+            .button { display: inline-block; padding: 12px 24px; background: #F5C518; color: #0A0A0A; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 10px; }
+            .button:hover { background: #D4A90E; }
+            ul { text-align: left; max-width: 400px; margin: 20px auto; }
+            a { color: #F5C518; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>❌ Verification ${errorType === 'expired' ? 'Link Expired' : errorType === 'used' ? 'Already Used' : 'Failed'}</h1>
+            ${errorType === 'expired' ? `
+              <p>This verification link has expired. Tokens are valid for 7 days.</p>
+              <p><strong>To get a new token:</strong></p>
+              <ul>
+                <li>Open Discord and DM our bot</li>
+                <li>Type: <code>resend</code></li>
+                <li>Or log in to your dashboard at helwa.ai</li>
+              </ul>
+            ` : errorType === 'used' ? `
+              <p>This token has already been used.</p>
+              <p>Check if you already have the Beta Tester role in Discord.</p>
+              <p>If you're having issues, type <code>resend</code> to our Discord bot.</p>
+            ` : `
+              <p>This verification link is invalid.</p>
+              <p>Please check your email for the latest verification link or contact support.</p>
+            `}
+            <a href="https://helwa.ai/dashboard" class="button">Go to Dashboard</a>
+            <a href="mailto:support@helwa.ai" class="button">Contact Support</a>
+          </div>
+        </body>
+        </html>
+      `)
+    }
+
+    const invite = result.invite
+
+    // Get beta user
+    const userResult = await getBetaUser(invite.userId)
+    if (!userResult.success) {
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Account Not Found</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0A0A0A; color: #FFFFFF; padding: 40px 20px; text-align: center; }
+            .container { max-width: 600px; margin: 0 auto; }
+            h1 { color: #EF4444; margin-bottom: 20px; }
+            p { color: #D4D4D4; line-height: 1.6; margin-bottom: 16px; }
+            a { display: inline-block; padding: 12px 24px; background: #F5C518; color: #0A0A0A; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>❌ Account Not Found</h1>
+            <p>We couldn't find your beta registration.</p>
+            <p>Please contact support with your email address.</p>
+            <a href="mailto:support@helwa.ai">Contact Support</a>
+          </div>
+        </body>
+        </html>
+      `)
+    }
+
+    const user = userResult.user
+
+    // Mark token as used
+    await markDiscordInviteUsed(invite.id, {
+      userId: null, // No Discord user yet
+      username: 'Email Verification Link',
+      verifiedViaEmail: true,
+    })
+
+    // Success page
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Verification Successful!</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0A0A0A; color: #FFFFFF; padding: 40px 20px; text-align: center; }
+          .container { max-width: 600px; margin: 0 auto; }
+          .success-icon { font-size: 80px; margin-bottom: 20px; }
+          h1 { color: #22C55E; margin-bottom: 20px; }
+          p { color: #D4D4D4; line-height: 1.6; margin-bottom: 16px; }
+          .box { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 24px; margin: 24px 0; }
+          .button { display: inline-block; padding: 14px 28px; background: #5865F2; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 10px; }
+          .button:hover { background: #4752C4; }
+          ul { text-align: left; max-width: 400px; margin: 20px auto; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="success-icon">✅</div>
+          <h1>Email Verified Successfully!</h1>
+          <p>Hi <strong>${user.firstName}</strong>! Your email has been verified.</p>
+          
+          <div class="box">
+            <h2 style="color: #22C55E; font-size: 20px; margin: 0 0 16px 0;">Next Steps to Get Beta Access:</h2>
+            <ul>
+              <li>Join our Discord server (if you haven't already)</li>
+              <li>Our bot will automatically verify you when you join</li>
+              <li>You'll get the Beta Tester role instantly!</li>
+            </ul>
+          </div>
+
+          <a href="${process.env.DISCORD_SERVER_INVITE_URL || 'https://discord.gg/your-server'}" class="button">Join Discord Server</a>
+          
+          <p style="margin-top: 40px; font-size: 14px; color: #A3A3A3;">
+            Questions? Email <a href="mailto:support@helwa.ai" style="color: #F5C518;">support@helwa.ai</a>
+          </p>
+        </div>
+      </body>
+      </html>
+    `)
+
+    console.log('✅ [DISCORD VERIFY] Email verification successful')
+    console.log(`   → User: ${user.email}`)
+  } catch (error) {
+    console.error('❌ [DISCORD VERIFY] Error:', error)
+    res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Error</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0A0A0A; color: #FFFFFF; padding: 40px 20px; text-align: center; }
+          .container { max-width: 600px; margin: 0 auto; }
+          h1 { color: #EF4444; margin-bottom: 20px; }
+          p { color: #D4D4D4; line-height: 1.6; margin-bottom: 16px; }
+          a { color: #F5C518; text-decoration: none; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>❌ Verification Error</h1>
+          <p>Something went wrong during verification.</p>
+          <p>Please try again or contact <a href="mailto:support@helwa.ai">support@helwa.ai</a></p>
+        </div>
+      </body>
+      </html>
+    `)
+  }
+})
+
+/**
  * GET /api/beta/discord-invite/:token
  * Validate Discord invite token and get invite URL
  */
