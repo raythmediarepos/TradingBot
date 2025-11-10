@@ -1,5 +1,6 @@
 const { admin, db } = require('../config/firebase-admin')
 const crypto = require('crypto')
+const { retryWithBackoff, retryTransaction } = require('../utils/retry')
 
 // ============================================
 // CONSTANTS
@@ -10,6 +11,7 @@ const COLLECTIONS = {
   SUBSCRIPTIONS: 'subscriptions',
   DISCORD_INVITES: 'discordInvites',
   EMAIL_VERIFICATIONS: 'emailVerifications',
+  COUNTERS: 'counters',
 }
 
 const MAX_BETA_USERS = 100
@@ -36,6 +38,46 @@ const PAYMENT_STATUS = {
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
+
+/**
+ * Get next beta position atomically using Firestore transaction
+ * This prevents race conditions where two users could get the same position
+ * @returns {Promise<number>} - Next available position
+ */
+const getNextPosition = async () => {
+  const counterRef = db.collection(COLLECTIONS.COUNTERS).doc('betaUserCounter')
+  
+  return await retryTransaction(async () => {
+    return await db.runTransaction(async (transaction) => {
+      const counterDoc = await transaction.get(counterRef)
+      
+      let currentPosition = 0
+      
+      if (!counterDoc.exists) {
+        // Initialize counter if it doesn't exist
+        console.log('🔢 [COUNTER] Initializing beta user counter...')
+        transaction.set(counterRef, {
+          lastPosition: 1,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+        currentPosition = 1
+      } else {
+        // Increment counter
+        const data = counterDoc.data()
+        currentPosition = (data.lastPosition || 0) + 1
+        
+        transaction.update(counterRef, {
+          lastPosition: currentPosition,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+      }
+      
+      console.log(`🔢 [COUNTER] Assigned position: #${currentPosition}`)
+      return currentPosition
+    })
+  })
+}
 
 /**
  * Generate a unique token
@@ -218,8 +260,11 @@ const createBetaUser = async (userData) => {
       }
     }
 
-    // Determine position and payment requirement
-    const position = stats.filled + 1
+    // Get next position atomically (prevents race conditions)
+    console.log(`   → Getting next position (atomic transaction)...`)
+    const position = await getNextPosition()
+
+    // Determine payment requirement
     const isFree = position <= FREE_SLOTS
     const isFoundingMember = position <= FREE_SLOTS // First 20 users are founding members
     const paymentStatus = isFree ? PAYMENT_STATUS.FREE : PAYMENT_STATUS.PENDING
@@ -256,13 +301,31 @@ const createBetaUser = async (userData) => {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }
 
-    console.log('   → Saving to Firebase...')
-    const docRef = await db.collection(COLLECTIONS.BETA_USERS).add(betaUserData)
+    // Save user to database with retry logic
+    console.log('   → Saving to Firebase (with retry)...')
+    const docRef = await retryWithBackoff(
+      async () => await db.collection(COLLECTIONS.BETA_USERS).add(betaUserData),
+      {
+        maxRetries: 3,
+        initialDelay: 1000,
+        onRetry: (attempt, maxRetries, delay) => {
+          console.log(`   → Retry ${attempt}/${maxRetries} for Firebase save...`)
+        },
+      }
+    )
     console.log(`✅ [BETA] User saved to Firebase!`)
     console.log(`   → Document ID: ${docRef.id}`)
 
-    // Create email verification record
-    await createEmailVerification(docRef.id, email, emailVerificationToken)
+    // Create email verification record with retry
+    await retryWithBackoff(
+      async () => await createEmailVerification(docRef.id, email, emailVerificationToken),
+      {
+        maxRetries: 3,
+        onRetry: (attempt) => {
+          console.log(`   → Retry ${attempt} for email verification record...`)
+        },
+      }
+    )
 
     return {
       success: true,
