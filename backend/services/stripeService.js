@@ -9,6 +9,7 @@ const {
   PAYMENT_STATUS,
   BETA_PRICE,
 } = require('./betaUserService')
+const { sendPaymentConfirmationEmail } = require('./emailService')
 
 // ============================================
 // STRIPE INITIALIZATION
@@ -218,6 +219,7 @@ const handleCheckoutSessionCompleted = async (session) => {
     const userId = session.metadata.betaUserId
     const subscriptionId = session.subscription
     const customerId = session.customer
+    const paymentIntentId = session.payment_intent
 
     if (!userId) {
       console.error('   → Missing betaUserId in metadata')
@@ -225,19 +227,45 @@ const handleCheckoutSessionCompleted = async (session) => {
     }
 
     console.log(`   → Beta User ID: ${userId}`)
-    console.log(`   → Subscription ID: ${subscriptionId}`)
+    console.log(`   → Payment Intent ID: ${paymentIntentId}`)
+    console.log(`   → Customer ID: ${customerId}`)
 
-    // Update beta user
+    // Get user data before updating (for email)
+    const userResult = await getBetaUser(userId)
+    if (!userResult.success) {
+      console.error(`   → User ${userId} not found, cannot send confirmation email`)
+      return
+    }
+
+    const user = userResult.user
+    console.log(`   → User Email: ${user.email}`)
+    console.log(`   → User Name: ${user.firstName}`)
+
+    // Update beta user with payment info
     await updateBetaUser(userId, {
       status: USER_STATUS.ACTIVE,
       paymentStatus: PAYMENT_STATUS.PAID,
       stripeCustomerId: customerId,
-      stripeSubscriptionId: subscriptionId,
+      stripePaymentIntentId: paymentIntentId,
+      accessExpiresAt: new Date('2025-12-31T23:59:59Z'), // Access until Dec 31, 2025
     })
 
-    console.log(`✅ [STRIPE WEBHOOK] User ${userId} activated with subscription`)
+    console.log(`✅ [STRIPE WEBHOOK] User ${userId} activated`)
+
+    // Send payment confirmation email
+    console.log('📧 [STRIPE WEBHOOK] Sending payment confirmation email...')
+    const emailSent = await sendPaymentConfirmationEmail(user.email, user.firstName)
+    
+    if (emailSent) {
+      console.log('✅ [STRIPE WEBHOOK] Payment confirmation email sent successfully')
+    } else {
+      console.error('⚠️  [STRIPE WEBHOOK] Payment confirmation email failed to send')
+      console.error('   → User payment is still active, but they did not receive confirmation email')
+    }
+
   } catch (error) {
     console.error('❌ [STRIPE WEBHOOK] Error handling checkout.session.completed:', error)
+    throw error // Re-throw to prevent marking webhook as processed
   }
 }
 
