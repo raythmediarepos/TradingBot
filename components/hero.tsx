@@ -4,7 +4,7 @@ import * as React from 'react'
 import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Zap, Shield, TrendingUp, ArrowRight, Sparkles, BarChart3, Clock } from 'lucide-react'
+import { CheckCircle, Zap, Shield, TrendingUp, ArrowRight, Sparkles, BarChart3, Clock, AlertCircle, RefreshCw } from 'lucide-react'
 
 const Hero = () => {
   const { scrollY } = useScroll()
@@ -13,26 +13,65 @@ const Hero = () => {
   
   const [betaStats, setBetaStats] = React.useState<{ filled: number; total: number; remaining: number } | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [retryCount, setRetryCount] = React.useState(0)
+  const [isRetrying, setIsRetrying] = React.useState(false)
 
-  // Fetch beta program availability
-  React.useEffect(() => {
-    const fetchBetaAvailability = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/beta/stats`)
-        const data = await response.json()
-        if (data.success) {
-          setBetaStats({
-            filled: data.filled,
-            total: data.total,
-            remaining: data.remaining,
-          })
-        }
-      } catch (error) {
-        console.error('Error fetching beta stats:', error)
-      } finally {
-        setLoading(false)
-      }
+  // Fetch beta program availability with retry logic
+  const fetchBetaAvailability = React.useCallback(async (isRetry: boolean = false) => {
+    if (isRetry) {
+      setIsRetrying(true)
+      setError(null)
+    } else {
+      setLoading(true)
     }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/beta/stats`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setBetaStats({
+          filled: data.filled,
+          total: data.total,
+          remaining: data.remaining,
+        })
+        setError(null)
+        setRetryCount(0) // Reset retry count on success
+      } else {
+        throw new Error(data.message || 'Failed to fetch beta stats')
+      }
+    } catch (error) {
+      console.error('Error fetching beta stats:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setError(`Unable to load beta status. ${errorMessage}`)
+      
+      // Auto-retry up to 2 times with exponential backoff
+      if (retryCount < 2 && !isRetry) {
+        const delay = Math.pow(2, retryCount) * 1000 // 1s, 2s
+        console.log(`Retrying in ${delay}ms... (attempt ${retryCount + 1}/2)`)
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1)
+          fetchBetaAvailability(false)
+        }, delay)
+      }
+    } finally {
+      setLoading(false)
+      setIsRetrying(false)
+    }
+  }, [retryCount])
+
+  React.useEffect(() => {
     fetchBetaAvailability()
   }, [])
 
@@ -165,9 +204,51 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.8 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8"
+            className="flex flex-col items-center justify-center gap-4 mb-8"
           >
-            {!loading && !isBetaFull ? (
+            {error && !loading ? (
+              // Show error state with retry button
+              <div className="flex flex-col items-center gap-4 w-full max-w-md">
+                <div className="w-full px-6 py-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+                  <div className="flex items-start gap-3 mb-3">
+                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-400 mb-1">Unable to Load Beta Status</p>
+                      <p className="text-xs text-red-300/80">Please check your connection and try again</p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => fetchBetaAvailability(true)}
+                    disabled={isRetrying}
+                    className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 disabled:opacity-50"
+                  >
+                    {isRetrying ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Retry
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {/* Fallback: Still show Join Beta as default option */}
+                <Button 
+                  size="lg" 
+                  asChild 
+                  className="w-full sm:w-auto text-base px-8 h-14 shadow-lg shadow-hp-yellow/20 hover:shadow-xl hover:shadow-hp-yellow/30 transition-all group"
+                >
+                  <Link href="/beta/signup" className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    Continue to Beta Signup
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+              </div>
+            ) : !loading && !error && !isBetaFull ? (
               // Show Join Beta when spots available
               <Button 
                 size="lg" 
@@ -185,7 +266,7 @@ const Hero = () => {
                   )}
                 </Link>
               </Button>
-            ) : !loading && isBetaFull ? (
+            ) : !loading && !error && isBetaFull ? (
               // Show Join Waitlist when beta is full
               <Button 
                 size="lg" 

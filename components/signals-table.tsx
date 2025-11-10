@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingUp, TrendingDown, Minus, Info, Activity, Clock, Target, Zap, Sparkles, ArrowRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Info, Activity, Clock, Target, Zap, Sparkles, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import WhyModal from './why-modal'
@@ -31,28 +31,66 @@ const SignalsTable = () => {
   const [liveSignalIndex, setLiveSignalIndex] = React.useState(0)
   const [betaStats, setBetaStats] = React.useState<{ filled: number; total: number; remaining: number } | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [retryCount, setRetryCount] = React.useState(0)
+  const [isRetrying, setIsRetrying] = React.useState(false)
 
   const signals = signalsData as Signal[]
 
-  // Fetch beta program availability
-  React.useEffect(() => {
-    const fetchBetaAvailability = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/beta/stats`)
-        const data = await response.json()
-        if (data.success) {
-          setBetaStats({
-            filled: data.filled,
-            total: data.total,
-            remaining: data.remaining,
-          })
-        }
-      } catch (error) {
-        console.error('Error fetching beta stats:', error)
-      } finally {
-        setLoading(false)
-      }
+  // Fetch beta program availability with retry logic
+  const fetchBetaAvailability = React.useCallback(async (isRetry: boolean = false) => {
+    if (isRetry) {
+      setIsRetrying(true)
+      setError(null)
+    } else {
+      setLoading(true)
     }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/beta/stats`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setBetaStats({
+          filled: data.filled,
+          total: data.total,
+          remaining: data.remaining,
+        })
+        setError(null)
+        setRetryCount(0)
+      } else {
+        throw new Error(data.message || 'Failed to fetch beta stats')
+      }
+    } catch (error) {
+      console.error('Error fetching beta stats:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setError(`Unable to load beta status. ${errorMessage}`)
+      
+      // Auto-retry up to 2 times with exponential backoff
+      if (retryCount < 2 && !isRetry) {
+        const delay = Math.pow(2, retryCount) * 1000 // 1s, 2s
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1)
+          fetchBetaAvailability(false)
+        }, delay)
+      }
+    } finally {
+      setLoading(false)
+      setIsRetrying(false)
+    }
+  }, [retryCount])
+
+  React.useEffect(() => {
     fetchBetaAvailability()
   }, [])
 
@@ -364,7 +402,45 @@ const SignalsTable = () => {
             transition={{ delay: 0.6 }}
             className="text-center mt-12"
           >
-            {!isBetaFull ? (
+            {error && !loading ? (
+              // Show error state with retry
+              <div className="flex flex-col items-center gap-4">
+                <div className="max-w-md w-full px-6 py-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+                  <div className="flex items-start gap-3 mb-3">
+                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-medium text-red-400 mb-1">Unable to Load Beta Status</p>
+                      <p className="text-xs text-red-300/80">Check your connection</p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => fetchBetaAvailability(true)}
+                    disabled={isRetrying}
+                    size="sm"
+                    className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40"
+                  >
+                    {isRetrying ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Retry
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <Button size="lg" asChild className="shadow-xl shadow-hp-yellow/20 hover:shadow-hp-yellow/30 transition-all group">
+                  <Link href="/beta/signup" className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    Continue to Beta Signup
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+              </div>
+            ) : !loading && !error && !isBetaFull ? (
               // Show Join Beta when spots available
               <>
                 <p className="text-gray-400 mb-6">
@@ -383,7 +459,7 @@ const SignalsTable = () => {
                   </p>
                 )}
               </>
-            ) : (
+            ) : !loading && !error && isBetaFull ? (
               // Show Join Waitlist when beta is full
               <>
                 <p className="text-gray-400 mb-6">
@@ -400,7 +476,7 @@ const SignalsTable = () => {
                   Be notified when new spots open up
                 </p>
               </>
-            )}
+            ) : null}
           </motion.div>
         )}
       </div>
