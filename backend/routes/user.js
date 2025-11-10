@@ -3,6 +3,7 @@ const router = express.Router()
 const admin = require('firebase-admin')
 const { authenticate } = require('../middleware/auth')
 const { createDiscordInvite } = require('../services/betaUserService')
+const { sendDiscordInviteEmail } = require('../services/emailService')
 const { serializeUser, serializeFirestoreData } = require('../utils/firestore')
 
 /**
@@ -374,6 +375,17 @@ router.post('/generate-discord-invite', authenticate, async (req, res) => {
                                  process.env.DISCORD_SERVER_INVITE_URL || 
                                  'https://discord.gg/your-server'
 
+    // Send Discord invite email as backup
+    console.log('📧 [DISCORD] Sending Discord invite email as backup...')
+    const emailSent = await sendDiscordInviteEmail(req.user.email, req.user.firstName, inviteResult.token)
+    
+    if (emailSent) {
+      console.log('✅ [DISCORD] Discord invite email sent successfully')
+    } else {
+      console.error('⚠️  [DISCORD] Discord invite email failed to send')
+      console.error('   → User can still access invite from dashboard')
+    }
+
     res.json({
       success: true,
       data: {
@@ -382,6 +394,7 @@ router.post('/generate-discord-invite', authenticate, async (req, res) => {
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         isUniqueInvite: !!inviteResult.discordInviteUrl,
         message: 'Discord invite created successfully',
+        emailSent, // Let frontend know if email was sent
       },
     })
   } catch (error) {

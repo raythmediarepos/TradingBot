@@ -374,24 +374,49 @@ function DashboardContent() {
                   /* Invite Generated */
                   <div className="space-y-4">
                     <div className="text-center py-2">
-                      <p className="text-green-500 font-medium flex items-center justify-center gap-2 mb-4">
+                      <p className="text-green-500 font-medium flex items-center justify-center gap-2 mb-2">
                         <CheckCircle2 className="w-5 h-5" />
                         Your Discord Invite is Ready!
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        📧 We've also sent this invite to your email as a backup
                       </p>
                     </div>
                     
                     {/* Step 1: Join Server */}
                     <div className="bg-hp-black/50 border border-indigo-500/30 rounded-lg p-4">
                       <p className="text-sm font-bold text-indigo-400 mb-3">Step 1: Join Discord Server</p>
-                      <a
-                        href={discordInvite.inviteLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all text-center flex items-center justify-center gap-2"
+                      <div className="flex gap-2 mb-3">
+                        <a
+                          href={discordInvite.inviteLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all text-center flex items-center justify-center gap-2"
+                        >
+                          Join Discord Server
+                          <ExternalLink className="w-5 h-5" />
+                        </a>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(discordInvite.inviteLink)
+                          setCopied(true)
+                          setTimeout(() => setCopied(false), 2000)
+                        }}
+                        className="w-full px-4 py-3 bg-hp-gray800 border border-indigo-500/30 text-indigo-300 font-semibold rounded-lg hover:bg-hp-gray700 transition-all text-center flex items-center justify-center gap-2"
                       >
-                        Join Discord Server
-                        <ExternalLink className="w-5 h-5" />
-                      </a>
+                        {copied ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <span className="text-green-400">Link Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4" />
+                            Copy Invite Link
+                          </>
+                        )}
+                      </button>
                     </div>
 
                     {/* Step 2: Verification Token */}
