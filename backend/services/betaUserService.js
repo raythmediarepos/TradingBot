@@ -12,6 +12,7 @@ const COLLECTIONS = {
   DISCORD_INVITES: 'discordInvites',
   EMAIL_VERIFICATIONS: 'emailVerifications',
   COUNTERS: 'counters',
+  WEBHOOK_EVENTS: 'webhookEvents', // For webhook idempotency
 }
 
 const MAX_BETA_USERS = 100
@@ -894,6 +895,57 @@ const updateSubscription = async (stripeSubscriptionId, updateData) => {
 }
 
 // ============================================
+// WEBHOOK IDEMPOTENCY
+// ============================================
+
+/**
+ * Check if webhook event has already been processed
+ * @param {string} eventId - Stripe event ID
+ * @returns {Promise<boolean>}
+ */
+const isWebhookProcessed = async (eventId) => {
+  try {
+    const doc = await db.collection(COLLECTIONS.WEBHOOK_EVENTS).doc(eventId).get()
+    
+    if (doc.exists) {
+      const data = doc.data()
+      console.log(`⚠️  [WEBHOOK] Event ${eventId} already processed at ${data.processedAt?.toDate()}`)
+      return true
+    }
+    
+    return false
+  } catch (error) {
+    console.error('Error checking webhook processed status:', error)
+    // In case of error, assume not processed to avoid skipping important events
+    return false
+  }
+}
+
+/**
+ * Mark webhook event as processed
+ * @param {string} eventId - Stripe event ID
+ * @param {string} eventType - Type of webhook event
+ * @param {Object} metadata - Additional metadata about the event
+ * @returns {Promise<Object>}
+ */
+const markWebhookProcessed = async (eventId, eventType, metadata = {}) => {
+  try {
+    await db.collection(COLLECTIONS.WEBHOOK_EVENTS).doc(eventId).set({
+      eventId,
+      eventType,
+      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      metadata,
+    })
+    
+    console.log(`✅ [WEBHOOK] Event ${eventId} marked as processed`)
+    return { success: true }
+  } catch (error) {
+    console.error('Error marking webhook as processed:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// ============================================
 // EXPORTS
 // ============================================
 
@@ -933,5 +985,9 @@ module.exports = {
   // Subscriptions
   createSubscription,
   updateSubscription,
+
+  // Webhook idempotency
+  isWebhookProcessed,
+  markWebhookProcessed,
 }
 

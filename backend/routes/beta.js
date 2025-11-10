@@ -13,6 +13,8 @@ const {
   markDiscordInviteUsed,
   USER_STATUS,
   PAYMENT_STATUS,
+  isWebhookProcessed,
+  markWebhookProcessed,
 } = require('../services/betaUserService')
 const {
   signupLimiter,
@@ -576,36 +578,68 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     // Construct event from webhook
     const event = constructWebhookEvent(req.body, signature)
 
-    console.log('🔔 [WEBHOOK] Received Stripe event:', event.type)
+    console.log(`🔔 [WEBHOOK] Received Stripe event: ${event.id} (${event.type})`)
+
+    // Check if we've already processed this event (idempotency)
+    const alreadyProcessed = await isWebhookProcessed(event.id)
+    
+    if (alreadyProcessed) {
+      console.log(`✅ [WEBHOOK] Event ${event.id} already processed, skipping`)
+      return res.json({ received: true, skipped: true, reason: 'already processed' })
+    }
 
     // Handle different event types
-    switch (event.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object)
-        break
+    let handled = false
+    let handlerError = null
+    
+    try {
+      switch (event.type) {
+        case 'checkout.session.completed':
+          await handleCheckoutSessionCompleted(event.data.object)
+          handled = true
+          break
 
-      case 'customer.subscription.created':
-        await handleSubscriptionCreated(event.data.object)
-        break
+        case 'customer.subscription.created':
+          await handleSubscriptionCreated(event.data.object)
+          handled = true
+          break
 
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object)
-        break
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpdated(event.data.object)
+          handled = true
+          break
 
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object)
-        break
+        case 'customer.subscription.deleted':
+          await handleSubscriptionDeleted(event.data.object)
+          handled = true
+          break
 
-      case 'invoice.payment_failed':
-        await handlePaymentFailed(event.data.object)
-        break
+        case 'invoice.payment_failed':
+          await handlePaymentFailed(event.data.object)
+          handled = true
+          break
 
-      default:
-        console.log(`   → Unhandled event type: ${event.type}`)
+        default:
+          console.log(`   → Unhandled event type: ${event.type}`)
+          handled = true // Mark as handled to prevent reprocessing
+      }
+    } catch (error) {
+      console.error(`❌ [WEBHOOK] Error handling ${event.type}:`, error)
+      handlerError = error
+      // Don't mark as processed if handler failed - allow retry
+      throw error
+    }
+
+    // Mark event as processed (only if handler succeeded)
+    if (handled && !handlerError) {
+      await markWebhookProcessed(event.id, event.type, {
+        customerId: event.data.object.customer || null,
+        amount: event.data.object.amount_total || event.data.object.amount || null,
+      })
     }
 
     // Return 200 to acknowledge receipt
-    res.json({ received: true })
+    res.json({ received: true, processed: true })
   } catch (error) {
     console.error('❌ [WEBHOOK] Error processing webhook:', error)
     res.status(400).json({

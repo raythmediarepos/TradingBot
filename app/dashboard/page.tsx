@@ -55,38 +55,78 @@ function DashboardContent() {
   const [generatingInvite, setGeneratingInvite] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [pollingPaymentStatus, setPollingPaymentStatus] = useState(false)
+
+  const fetchData = async () => {
+    try {
+      // First refresh the current user data from API
+      const { getCurrentUser } = await import('@/lib/auth')
+      await getCurrentUser()
+      
+      const [betaRes, subRes, discordRes] = await Promise.all([
+        fetchWithAuth('/api/user/beta-status'),
+        fetchWithAuth('/api/user/subscription'),
+        fetchWithAuth('/api/user/discord-status'),
+      ])
+
+      const betaData = await betaRes.json()
+      const subData = await subRes.json()
+      const discordData = await discordRes.json()
+
+      console.log('📊 Dashboard Data:', { betaData, subData, discordData })
+
+      if (betaData.success) setBetaStatus(betaData.data)
+      if (subData.success) setSubscription(subData.data)
+      if (discordData.success) setDiscordStatus(discordData.data)
+      
+      return betaData
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+      return null
+    }
+  }
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // First refresh the current user data from API
-        const { getCurrentUser } = await import('@/lib/auth')
-        await getCurrentUser()
-        
-        const [betaRes, subRes, discordRes] = await Promise.all([
-          fetchWithAuth('/api/user/beta-status'),
-          fetchWithAuth('/api/user/subscription'),
-          fetchWithAuth('/api/user/discord-status'),
-        ])
+    const loadData = async () => {
+      await fetchData()
+      setLoading(false)
+    }
+    loadData()
+  }, [])
 
-        const betaData = await betaRes.json()
-        const subData = await subRes.json()
-        const discordData = await discordRes.json()
-
-        console.log('📊 Dashboard Data:', { betaData, subData, discordData })
-
-        if (betaData.success) setBetaStatus(betaData.data)
-        if (subData.success) setSubscription(subData.data)
-        if (discordData.success) setDiscordStatus(discordData.data)
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error)
-      } finally {
-        setLoading(false)
-      }
+  // Payment status polling
+  useEffect(() => {
+    // Only poll if user is paid (not free) and payment is not completed
+    if (!betaStatus || betaStatus.isFree || betaStatus.paymentStatus === 'paid') {
+      setPollingPaymentStatus(false)
+      return
     }
 
-    fetchData()
-  }, [])
+    // Start polling for payment status
+    console.log('💳 [POLL] Starting payment status polling...')
+    setPollingPaymentStatus(true)
+
+    const pollInterval = setInterval(async () => {
+      console.log('💳 [POLL] Checking payment status...')
+      const result = await fetchData()
+      
+      if (result?.success && result.data.paymentStatus === 'paid') {
+        console.log('✅ [POLL] Payment confirmed! Stopping polling.')
+        setPollingPaymentStatus(false)
+        clearInterval(pollInterval)
+        
+        // Show success notification or update UI
+        // You could add a toast notification here
+      }
+    }, 5000) // Poll every 5 seconds
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      console.log('💳 [POLL] Stopping payment status polling')
+      clearInterval(pollInterval)
+      setPollingPaymentStatus(false)
+    }
+  }, [betaStatus?.paymentStatus, betaStatus?.isFree])
 
   const handleLogout = async () => {
     await logout()
@@ -281,12 +321,29 @@ function DashboardContent() {
                       <p className="text-sm text-gray-400 mb-4">
                         Complete your payment to access the Discord community
                       </p>
+                      
+                      {pollingPaymentStatus && (
+                        <div className="mb-4 px-4 py-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                          <div className="flex items-center justify-center gap-2 text-blue-400 mb-1">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span className="text-sm font-medium">Checking for payment...</span>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            If you completed payment in another tab, we'll detect it automatically
+                          </p>
+                        </div>
+                      )}
+                      
                       <Link
                         href={`/beta/payment?userId=${user?.id}`}
                         className="inline-block px-6 py-3 bg-gradient-to-r from-hp-yellow to-hp-yellow600 text-hp-black font-bold rounded-lg hover:shadow-lg hover:shadow-hp-yellow/30 transition-all"
                       >
-                        Complete Payment
+                        {pollingPaymentStatus ? 'Return to Payment' : 'Complete Payment'}
                       </Link>
+                      
+                      <p className="text-xs text-gray-400 mt-3">
+                        💳 $49.99 one-time • Valid until Dec 31, 2025
+                      </p>
                     </div>
                   )}
                 </motion.div>
