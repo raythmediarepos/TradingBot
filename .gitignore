@@ -44,3 +44,8 @@ next-env.d.ts
 tradingbot-cb932-firebase-adminsdk-fbsvc-*.json
 serverbot/config/serviceAccountKey.json
 backend/config/serviceAccountKey.json
+
+# environment variable files (contain secrets)
+RENDER_TEST_BACKEND_ENV.txt
+STAGING_ENV_VARIABLES.txt
+*_ENV*.txt
