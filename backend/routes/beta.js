@@ -156,7 +156,15 @@ router.post('/signup', signupLimiter, async (req, res) => {
     }
 
     // Send welcome email with verification link
-    await sendBetaWelcomeEmail(email, firstName, result.position, result.isFree, result.emailVerificationToken)
+    console.log('📧 [BETA SIGNUP] Sending verification email...')
+    const emailSent = await sendBetaWelcomeEmail(email, firstName, result.position, result.isFree, result.emailVerificationToken)
+    
+    if (!emailSent) {
+      console.error('❌ [BETA SIGNUP] Warning: Verification email failed to send')
+      console.error(`   → User registered but email not delivered: ${email}`)
+    } else {
+      console.log('✅ [BETA SIGNUP] Verification email sent successfully')
+    }
 
     res.status(201).json({
       success: true,
@@ -166,6 +174,7 @@ router.post('/signup', signupLimiter, async (req, res) => {
         position: result.position,
         isFree: result.isFree,
         requiresPayment: result.requiresPayment,
+        emailSent, // Let frontend know if email was sent
       },
     })
   } catch (error) {
