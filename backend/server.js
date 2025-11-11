@@ -7,6 +7,7 @@ require('dotenv').config()
 const apiRoutes = require('./api/routes')
 const { startBot, stopBot } = require('./services/discordBotService')
 const { initializeCleanupJobs } = require('./jobs/cleanupJobs')
+const { initializeReminderJobs } = require('./jobs/reminderJobs')
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -167,6 +168,13 @@ app.listen(PORT, async () => {
     initializeCleanupJobs()
   } catch (error) {
     console.error('⚠️  Failed to initialize cleanup jobs:', error.message)
+  }
+  
+  // Initialize reminder jobs
+  try {
+    initializeReminderJobs()
+  } catch (error) {
+    console.error('⚠️  Failed to initialize reminder jobs:', error.message)
   }
 })
 

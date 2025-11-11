@@ -1578,6 +1578,576 @@ const sendPasswordChangedEmail = async (email, firstName) => {
   }
 }
 
+/**
+ * Send email verification reminder
+ * @param {string} email - User's email
+ * @param {string} firstName - User's first name
+ * @param {string} reminderType - 'first' (10min), 'second' (1hr), 'final' (24hr)
+ * @param {string} verificationToken - Email verification token
+ * @returns {Promise<boolean>}
+ */
+const sendEmailVerificationReminder = async (email, firstName, reminderType, verificationToken) => {
+  console.log(`📧 [EMAIL] Sending ${reminderType} email verification reminder...`)
+  console.log(`   → To: ${email}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    const verificationUrl = `${frontendUrl}/api/beta/verify-email?token=${verificationToken}`
+
+    let subject, heading, urgencyMessage, expiryMessage
+
+    if (reminderType === 'first') {
+      subject = '👋 Almost there! Verify your email to continue'
+      heading = 'Quick Reminder'
+      urgencyMessage = 'We noticed you haven\'t verified your email yet. It only takes one click!'
+      expiryMessage = 'This link expires in 47 hours.'
+    } else if (reminderType === 'second') {
+      subject = '⏰ Don\'t lose your beta spot - verify now'
+      heading = 'Verify Your Email'
+      urgencyMessage = 'Your beta spot is reserved, but we need you to verify your email to activate your account.'
+      expiryMessage = 'Your spot expires in 47 hours if not verified.'
+    } else {
+      subject = '🚨 Last chance: Verify your email (expires in 24 hours)'
+      heading = 'Final Reminder'
+      urgencyMessage = 'This is your final reminder to verify your email. ⚠️ Your beta spot will be released in 24 hours if you don\'t verify.'
+      expiryMessage = 'Act now - only 24 hours left!'
+    }
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: subject,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${heading}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #F5C518 0%, #D4A90E 50%, #F5C518 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">${reminderType === 'final' ? '🚨' : '✉️'}</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700;">${heading}</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Complete your signup</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Hi <strong style="color: #F5C518;">${firstName}</strong>,
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                ${urgencyMessage}
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${verificationUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #F5C518 0%, #D4A90E 100%); color: #0A0A0A; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
+                      Verify Email Now
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              ${reminderType === 'second' || reminderType === 'final' ? `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(245, 197, 24, 0.08); border-left: 4px solid #F5C518; border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: #F5C518; font-size: 14px; font-weight: 700;">Common Issues & Solutions:</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">📧 Can't find the email? Check spam/promotions folder</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">🔗 Link not working? Try copying and pasting the full URL</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 13px;">❓ Still having trouble? Reply to this email for help</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
+              ${reminderType === 'final' ? `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 24px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px;">
+                    <p style="margin: 0 0 12px 0; color: #EF4444; font-size: 16px; font-weight: 700;">⚠️ What you're missing:</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">✓ Real-time trading signals in Discord</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">✓ Ethical stock recommendations</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 14px;">✓ Exclusive beta community</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 14px;">✓ Access until December 31, 2025</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
+              <p style="margin: 0 0 16px 0; color: #A3A3A3; font-size: 13px;">
+                ${expiryMessage}
+              </p>
+              
+              <p style="margin: 0; color: #D4D4D4; font-size: 15px;">
+                Best,<br>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    })
+
+    console.log(`✅ [EMAIL SUCCESS] ${reminderType} verification reminder sent!`)
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error(`❌ [EMAIL ERROR] Failed to send ${reminderType} verification reminder`)
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
+/**
+ * Send abandoned payment reminder
+ * @param {string} email - User's email
+ * @param {string} firstName - User's first name
+ * @param {string} reminderType - 'first' (1hr), 'second' (24hr), 'final' (3days)
+ * @param {number} spotsLeft - Number of beta spots remaining
+ * @returns {Promise<boolean>}
+ */
+const sendAbandonedPaymentReminder = async (email, firstName, reminderType, spotsLeft = null) => {
+  console.log(`📧 [EMAIL] Sending ${reminderType} payment reminder...`)
+  console.log(`   → To: ${email}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    const paymentUrl = `${frontendUrl}/beta/payment`
+
+    let subject, heading, message
+
+    if (reminderType === 'first') {
+      subject = '💳 Complete your payment to unlock Discord access'
+      heading = 'Complete Your Payment'
+      message = 'You\'re so close! Just one step left to get full beta access.'
+    } else if (reminderType === 'second') {
+      subject = '🎮 Your Discord invite is waiting'
+      heading = 'Unlock Your Discord Access'
+      message = 'Your exclusive Discord invite is ready - you just need to complete payment first.'
+    } else {
+      subject = `🚨 Only ${spotsLeft || 'a few'} spots left - complete payment now`
+      heading = 'Last Chance'
+      message = `We're down to our last few beta spots! Don't miss out on this opportunity.`
+    }
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: subject,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${heading}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #F5C518 0%, #D4A90E 50%, #F5C518 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">${reminderType === 'final' ? '🚨' : '💳'}</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700;">${heading}</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Unlock full beta access</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Hi <strong style="color: #F5C518;">${firstName}</strong>,
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                ${message}
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 24px; background: rgba(245, 197, 24, 0.1); border: 1px solid rgba(245, 197, 24, 0.3); border-radius: 10px;">
+                    <p style="margin: 0 0 12px 0; color: #F5C518; font-size: 16px; font-weight: 700;">Current Status:</p>
+                    <p style="margin: 0 0 8px 0; color: #22C55E; font-size: 14px;">✅ Account created</p>
+                    <p style="margin: 0 0 8px 0; color: #22C55E; font-size: 14px;">✅ Email verified</p>
+                    <p style="margin: 0; color: #EF4444; font-size: 14px;">❌ Payment pending</p>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${paymentUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #F5C518 0%, #D4A90E 100%); color: #0A0A0A; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
+                      Complete Payment ($49.99)
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              ${reminderType === 'final' && spotsLeft ? `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 24px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #EF4444; font-size: 24px; font-weight: 700;">⚠️ Only ${spotsLeft}/100 spots left!</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 14px;">Once we hit 100 members, the beta closes.</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 24px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(245, 197, 24, 0.08); border-left: 4px solid #F5C518; border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: #F5C518; font-size: 14px; font-weight: 700;">Once you complete payment:</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">✓ Instant payment confirmation</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">✓ Discord invite sent to your email</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">✓ Join our private server</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 13px;">✓ Start receiving trading signals</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 8px 0; color: #A3A3A3; font-size: 13px;">
+                One-time payment. No subscriptions. Access until December 31, 2025.
+              </p>
+              
+              <p style="margin: 16px 0 0 0; color: #D4D4D4; font-size: 15px;">
+                Questions? Reply to this email.<br>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(245, 197, 24, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    })
+
+    console.log(`✅ [EMAIL SUCCESS] ${reminderType} payment reminder sent!`)
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error(`❌ [EMAIL ERROR] Failed to send ${reminderType} payment reminder`)
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
+/**
+ * Send Discord invite reminder
+ * @param {string} email - User's email
+ * @param {string} firstName - User's first name
+ * @param {string} reminderType - 'first' (1hr), 'second' (24hr)
+ * @returns {Promise<boolean>}
+ */
+const sendDiscordInviteReminder = async (email, firstName, reminderType) => {
+  console.log(`📧 [EMAIL] Sending ${reminderType} Discord invite reminder...`)
+  console.log(`   → To: ${email}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    const dashboardUrl = `${frontendUrl}/dashboard`
+
+    let subject, message
+
+    if (reminderType === 'first') {
+      subject = '🎮 Your Discord access is ready!'
+      message = 'Thanks for your payment! Your Discord access is ready to activate.'
+    } else {
+      subject = '⏰ Don\'t forget your Discord access'
+      message = 'You\'ve completed payment but haven\'t generated your Discord invite yet. Don\'t miss out on the signals!'
+    }
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: subject,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Access Ready</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #5865F2 0%, #4752C4 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">🎮</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700;">Discord Access Ready</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">Generate your invite now</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Hi <strong style="color: #F5C518;">${firstName}</strong>,
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                ${message}
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; padding: 16px 40px; background: #5865F2; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
+                      Generate Discord Invite
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 24px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(88, 101, 242, 0.1); border-left: 4px solid #5865F2; border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: #5865F2; font-size: 14px; font-weight: 700;">Quick steps:</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">1. Click the button above</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">2. Copy your Discord invite link</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">3. Join our server</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">4. Verify with the bot</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 13px;">5. Start receiving signals!</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0; color: #D4D4D4; font-size: 15px;">
+                Need help? Reply to this email.<br>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(88, 101, 242, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    })
+
+    console.log(`✅ [EMAIL SUCCESS] ${reminderType} Discord invite reminder sent!`)
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error(`❌ [EMAIL ERROR] Failed to send ${reminderType} Discord invite reminder`)
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
+/**
+ * Send Discord verification reminder
+ * @param {string} email - User's email
+ * @param {string} firstName - User's first name
+ * @param {string} reminderType - 'first' (30min), 'second' (24hr)
+ * @param {string} verificationToken - Discord verification token
+ * @returns {Promise<boolean>}
+ */
+const sendDiscordVerificationReminder = async (email, firstName, reminderType, verificationToken) => {
+  console.log(`📧 [EMAIL] Sending ${reminderType} Discord verification reminder...`)
+  console.log(`   → To: ${email}`)
+
+  try {
+    const resendClient = getResendClient()
+    if (!resendClient) {
+      console.error('❌ [EMAIL] Cannot send - Resend client not initialized')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.EMAIL_FROM_NAME || 'Helwa AI'
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    const verificationUrl = `${frontendUrl}/api/beta/verify-discord?token=${verificationToken}`
+
+    let subject, message
+
+    if (reminderType === 'first') {
+      subject = '🔐 One last step: Verify in Discord'
+      message = 'Great! You joined the Discord server. Now complete verification to get access to all channels.'
+    } else {
+      subject = '⏰ Complete your Discord verification'
+      message = 'You\'re in the Discord server but haven\'t completed verification yet. This is the final step!'
+    }
+
+    const data = await resendClient.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: subject,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Discord Verification</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0A0A0A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0A0A0A; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #111213; border-radius: 12px; max-width: 600px; border: 1px solid rgba(245, 197, 24, 0.2);">
+          <tr>
+            <td style="background: linear-gradient(90deg, #5865F2 0%, #4752C4 100%); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">🔐</div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700;">Complete Verification</h1>
+              <p style="margin: 8px 0 0 0; color: #A3A3A3; font-size: 14px;">One last step!</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 48px; background-color: #111213;">
+              <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 18px; font-weight: 600;">
+                Hi <strong style="color: #F5C518;">${firstName}</strong>,
+              </p>
+              <p style="margin: 0 0 32px 0; color: #D4D4D4; font-size: 16px;">
+                ${message}
+              </p>
+
+              <div style="margin: 0 0 20px 0; padding: 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px;">
+                <p style="margin: 0 0 12px 0; color: #22C55E; font-size: 14px; font-weight: 700;">Option A: One-Click Verification (Easiest)</p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td align="center">
+                      <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background: #22C55E; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">
+                        ✓ Verify with One Click
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <div style="margin: 0 0 32px 0; padding: 16px; background: rgba(245, 197, 24, 0.1); border: 1px solid rgba(245, 197, 24, 0.3); border-radius: 8px;">
+                <p style="margin: 0 0 12px 0; color: #F5C518; font-size: 14px; font-weight: 700;">Option B: Manual Verification</p>
+                <p style="margin: 0 0 12px 0; color: #D4D4D4; font-size: 13px;">Send this code to our bot in Discord DMs:</p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding: 12px; background: linear-gradient(135deg, #F5C518 0%, #D4A90E 100%); border-radius: 6px; text-align: center;">
+                      <p style="margin: 0; color: #0A0A0A; font-size: 16px; font-weight: 800; font-family: monospace; word-break: break-all;">${verificationToken}</p>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 24px 0;">
+                <tr>
+                  <td style="padding: 20px; background: rgba(245, 197, 24, 0.08); border-left: 4px solid #F5C518; border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: #F5C518; font-size: 14px; font-weight: 700;">💡 Having trouble?</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">• Make sure Discord DMs are enabled</p>
+                    <p style="margin: 0 0 8px 0; color: #D4D4D4; font-size: 13px;">• Check your Direct Messages folder</p>
+                    <p style="margin: 0; color: #D4D4D4; font-size: 13px;">• Type "help" to the bot for assistance</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0; color: #D4D4D4; font-size: 15px;">
+                Best,<br>
+                <span style="color: #A3A3A3;">The Helwa AI Team</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 48px; background: linear-gradient(180deg, #111213 0%, #0A0A0A 100%); border-top: 1px solid rgba(88, 101, 242, 0.15); border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; color: #737373; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} Helwa AI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    })
+
+    console.log(`✅ [EMAIL SUCCESS] ${reminderType} Discord verification reminder sent!`)
+    console.log(`   → Email ID: ${data.id}`)
+    return true
+  } catch (error) {
+    console.error(`❌ [EMAIL ERROR] Failed to send ${reminderType} Discord verification reminder`)
+    console.error(`   → Error: ${error.message}`)
+    return false
+  }
+}
+
 module.exports = {
   sendWaitlistConfirmation,
   sendContactNotification,
@@ -1592,4 +2162,9 @@ module.exports = {
   // Auth emails
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
+  // Reminder emails
+  sendEmailVerificationReminder,
+  sendAbandonedPaymentReminder,
+  sendDiscordInviteReminder,
+  sendDiscordVerificationReminder,
 }
