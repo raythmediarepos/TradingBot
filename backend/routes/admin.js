@@ -532,6 +532,84 @@ router.get('/beta-users/:userId', authenticate, requireAdmin, async (req, res) =
 })
 
 /**
+ * @route   POST /api/admin/beta-users/:userId/resend-verification
+ * @desc    Resend email verification
+ * @access  Admin only
+ */
+router.post('/beta-users/:userId/resend-verification', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { getBetaUser } = require('../services/betaUserService')
+    const { sendBetaWelcomeEmail } = require('../services/emailService')
+    
+    const { userId } = req.params
+
+    const userResult = await getBetaUser(userId)
+    if (!userResult.success) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      })
+    }
+
+    const user = userResult.user
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already verified',
+      })
+    }
+
+    console.log(`📧 [ADMIN] Resending verification email to ${user.email} by ${req.user.email}`)
+
+    // Send verification email
+    const emailSent = await sendBetaWelcomeEmail(
+      user.email,
+      user.firstName,
+      user.position,
+      user.isFree,
+      user.emailVerificationToken
+    )
+
+    if (!emailSent) {
+      console.error('❌ [ADMIN] Failed to send verification email')
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send verification email',
+      })
+    }
+
+    // Send Discord notification
+    const { sendDiscordNotification } = require('../services/discordNotificationService')
+    await sendDiscordNotification({
+      type: 'reminder',
+      title: '📧 Verification Email Resent (Admin)',
+      description: `**${req.user.email}** manually resent verification email to **${user.firstName} ${user.lastName}**`,
+      fields: [
+        { name: '📧 Email', value: user.email, inline: true },
+        { name: '📍 Position', value: `#${user.position}`, inline: true },
+        { name: '👤 Admin', value: req.user.email, inline: true },
+      ],
+    })
+
+    console.log(`✅ [ADMIN] Verification email resent for user ${userId}`)
+
+    res.json({
+      success: true,
+      message: 'Verification email resent successfully',
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error resending verification:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend verification email',
+      error: error.message,
+    })
+  }
+})
+
+/**
  * @route   POST /api/admin/beta-users/:userId/resend-invite
  * @desc    Resend Discord invite to a user
  * @access  Admin only
@@ -567,6 +645,20 @@ router.post('/beta-users/:userId/resend-invite', authenticate, requireAdmin, asy
     // Send invite email
     await sendDiscordInviteEmail(user.email, user.firstName, inviteResult.token)
 
+    // Send Discord notification
+    const { sendDiscordNotification } = require('../services/discordNotificationService')
+    await sendDiscordNotification({
+      type: 'discord',
+      title: '🔄 Discord Invite Resent (Admin)',
+      description: `**${req.user.email}** manually resent Discord invite to **${user.firstName} ${user.lastName}**`,
+      fields: [
+        { name: '📧 Email', value: user.email, inline: true },
+        { name: '📍 Position', value: `#${user.position}`, inline: true },
+        { name: '👤 Admin', value: req.user.email, inline: true },
+        { name: '🔗 Invite Token', value: `\`${inviteResult.token.substring(0, 20)}...\``, inline: false },
+      ],
+    })
+
     console.log(`✅ [ADMIN] Discord invite resent for user ${userId} by ${req.user.email}`)
 
     res.json({
@@ -593,11 +685,22 @@ router.post('/beta-users/:userId/resend-invite', authenticate, requireAdmin, asy
  */
 router.post('/beta-users/:userId/revoke', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { updateBetaUser } = require('../services/betaUserService')
+    const { updateBetaUser, getBetaUser } = require('../services/betaUserService')
     const { USER_STATUS } = require('../services/betaUserService')
     
     const { userId } = req.params
     const { reason } = req.body
+
+    // Get user data first for notification
+    const userResult = await getBetaUser(userId)
+    if (!userResult.success) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      })
+    }
+
+    const user = userResult.user
 
     const result = await updateBetaUser(userId, {
       status: USER_STATUS.SUSPENDED,
@@ -615,6 +718,23 @@ router.post('/beta-users/:userId/revoke', authenticate, requireAdmin, async (req
     }
 
     console.log(`⛔ [ADMIN] Access revoked for user ${userId} by ${req.user.email}. Reason: ${reason}`)
+
+    // Send Discord notification
+    if (user) {
+      const { sendDiscordNotification } = require('../services/discordNotificationService')
+      await sendDiscordNotification({
+        type: 'error',
+        title: '🚫 Access Revoked (Admin)',
+        description: `**${req.user.email}** revoked access for **${user.firstName} ${user.lastName}**`,
+        fields: [
+          { name: '📧 Email', value: user.email, inline: true },
+          { name: '📍 Position', value: `#${user.position}`, inline: true },
+          { name: '💰 Type', value: user.isFree ? 'Free Beta' : 'Paid Beta', inline: true },
+          { name: '📝 Reason', value: reason || 'No reason provided', inline: false },
+          { name: '👤 Admin', value: req.user.email, inline: true },
+        ],
+      })
+    }
 
     // TODO: Remove Discord role via bot
 
