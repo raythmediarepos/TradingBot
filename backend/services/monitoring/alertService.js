@@ -1,5 +1,17 @@
 const { admin, db } = require('../../config/firebase-admin')
 
+// Discord client (will be passed from discordBotService)
+let discordClient = null
+
+/**
+ * Initialize Discord client for alerts
+ * @param {Object} client - Discord client instance
+ */
+const initializeDiscordAlerts = (client) => {
+  discordClient = client
+  console.log('✅ [ALERTS] Discord client initialized for alerts')
+}
+
 // We'll use the main backend's email service through API calls
 const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`
 
@@ -87,6 +99,131 @@ const checkThresholds = async (metrics, healthCheck) => {
 }
 
 /**
+ * Get emoji for severity level
+ * @param {string} severity - Alert severity
+ * @returns {string}
+ */
+const getSeverityEmoji = (severity) => {
+  const emojis = {
+    critical: '🚨',
+    warning: '⚠️',
+    info: 'ℹ️',
+  }
+  return emojis[severity] || '📢'
+}
+
+/**
+ * Get color for Discord embed based on severity
+ * @param {string} severity - Alert severity
+ * @returns {number}
+ */
+const getSeverityColor = (severity) => {
+  const colors = {
+    critical: 0xFF0000, // Red
+    warning: 0xFFA500,  // Orange
+    info: 0x0099FF,     // Blue
+  }
+  return colors[severity] || 0x808080 // Gray default
+}
+
+/**
+ * Send alert to Discord
+ * @param {Object} alert - Alert to send
+ * @returns {Promise<void>}
+ */
+const sendDiscordAlert = async (alert) => {
+  if (!discordClient) {
+    console.log('⚠️  [ALERT] Discord client not initialized, skipping Discord alert')
+    return
+  }
+
+  try {
+    const channelId = process.env.DISCORD_ALERTS_CHANNEL_ID
+    if (!channelId) {
+      console.log('⚠️  [ALERT] DISCORD_ALERTS_CHANNEL_ID not set, skipping Discord alert')
+      return
+    }
+
+    const channel = await discordClient.channels.fetch(channelId)
+    if (!channel) {
+      console.error('❌ [ALERT] Could not find Discord alerts channel')
+      return
+    }
+
+    // Build embed
+    const embed = {
+      color: getSeverityColor(alert.severity),
+      title: `${getSeverityEmoji(alert.severity)} System Alert`,
+      description: alert.message,
+      fields: [
+        {
+          name: '🔧 Service',
+          value: alert.service.toUpperCase(),
+          inline: true,
+        },
+        {
+          name: '📊 Severity',
+          value: alert.severity.toUpperCase(),
+          inline: true,
+        },
+      ],
+      timestamp: new Date().toISOString(),
+      footer: {
+        text: 'Helwa AI Monitoring System',
+      },
+    }
+
+    // Add threshold and actual if present
+    if (alert.threshold !== undefined && alert.actual !== undefined) {
+      embed.fields.push(
+        {
+          name: '🎯 Threshold',
+          value: String(alert.threshold),
+          inline: true,
+        },
+        {
+          name: '📈 Actual',
+          value: String(alert.actual),
+          inline: true,
+        },
+      )
+    }
+
+    // Add view dashboard link
+    const dashboardUrl = process.env.FRONTEND_URL 
+      ? `${process.env.FRONTEND_URL}/admin/system-health`
+      : 'Check your admin dashboard'
+    
+    embed.fields.push({
+      name: '🔗 Actions',
+      value: `[View Dashboard](${dashboardUrl})`,
+      inline: false,
+    })
+
+    // Build message - tag admins for critical alerts
+    let messageContent = ''
+    if (alert.severity === 'critical') {
+      const adminIds = (process.env.DISCORD_ADMIN_IDS || '').split(',').filter(Boolean)
+      if (adminIds.length > 0) {
+        messageContent = adminIds.map(id => `<@${id.trim()}>`).join(' ') + ' 🚨 **CRITICAL ALERT**'
+      } else {
+        messageContent = '🚨 **CRITICAL ALERT**'
+      }
+    }
+
+    // Send to Discord
+    await channel.send({
+      content: messageContent || undefined,
+      embeds: [embed],
+    })
+
+    console.log(`✅ [ALERT] Discord alert sent to #${channel.name}`)
+  } catch (error) {
+    console.error('❌ [ALERT] Error sending Discord alert:', error.message)
+  }
+}
+
+/**
  * Send alert via email (using main backend)
  * @param {Object} alert - Alert to send
  * @returns {Promise<void>}
@@ -102,14 +239,10 @@ const sendAlertEmail = async (alert) => {
       acknowledged: false,
     })
     
-    // TODO: Call main backend to send email
-    // For now, just log it
-    console.log(`   → Alert stored in Firebase`)
+    // Send to Discord
+    await sendDiscordAlert(alert)
     
-    // In production, you could:
-    // 1. Use Resend directly from here (add RESEND_API_KEY to serverbot env)
-    // 2. Or call main backend API endpoint to send email
-    // 3. Or use a webhook to notify admin
+    console.log(`   → Alert stored in Firebase`)
     
   } catch (error) {
     console.error(`❌ [ALERT] Error sending alert:`, error)
@@ -268,6 +401,7 @@ const generateDailySummary = async () => {
 }
 
 module.exports = {
+  initializeDiscordAlerts,
   checkThresholds,
   sendAlertEmail,
   checkAndAlert,

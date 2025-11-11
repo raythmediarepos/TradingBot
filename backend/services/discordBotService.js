@@ -1347,6 +1347,7 @@ module.exports = {
   getMemberGrowth,
 
   // Getters (for admin endpoints)
+  getClient: () => client,
   getGuild: () => guild,
   getBetaRole: () => betaRole,
   getUnverifiedRole: () => unverifiedRole,

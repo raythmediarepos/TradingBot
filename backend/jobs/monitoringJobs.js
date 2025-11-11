@@ -1,7 +1,8 @@
 const cron = require('node-cron')
 const { runAllHealthChecks } = require('../services/monitoring/healthCheck')
 const { collectAndStoreMetrics } = require('../services/monitoring/metricsCollector')
-const { checkAndAlert, generateDailySummary } = require('../services/monitoring/alertService')
+const { initializeDiscordAlerts, checkAndAlert, generateDailySummary } = require('../services/monitoring/alertService')
+const { getClient } = require('../services/discordBotService')
 const { admin, db } = require('../config/firebase-admin')
 
 // Track if tasks are running
@@ -88,6 +89,19 @@ const initializeMonitoringJobs = () => {
   console.log('═'.repeat(60))
   console.log('📊 [MONITORING] Initializing monitoring system...')
   console.log('═'.repeat(60))
+  
+  // Initialize Discord alerts
+  try {
+    const discordClient = getClient()
+    if (discordClient) {
+      initializeDiscordAlerts(discordClient)
+      console.log('   ✅ Discord alerts enabled')
+    } else {
+      console.log('   ⚠️  Discord bot not available - alerts will be Firebase only')
+    }
+  } catch (error) {
+    console.log('   ⚠️  Discord bot not available - alerts will be Firebase only')
+  }
   
   // Run initial checks
   console.log('⚡ [MONITORING] Running initial health check...')
