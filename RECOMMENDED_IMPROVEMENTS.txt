@@ -133,13 +133,14 @@ Effort Levels:
     - Pre-fill name from social profile
     - Still collect email for verification
 
-[ ] Terms of Service Tracking (⚡ Quick - 1 hour)
+[✅] Terms of Service Tracking (⚡ Quick - 1 hour) ✨ IMPLEMENTED
     Why: Legal compliance, version tracking
     Implementation:
     - Add explicit checkbox: "I agree to Terms"
     - Store acceptance timestamp
     - Store TOS version number
     - Track for compliance
+    Status: ✅ Deployed to test branch (Nov 11, 2025)
 
 [ ] Referral Code System (🔨 Medium - 1-2 days)
     Why: Track marketing attribution, reward referrers
@@ -181,7 +182,7 @@ Effort Levels:
 
 🔴 HIGH PRIORITY:
 
-[ ] Email Deliverability Monitoring (🔨 Medium - 1 day)
+[✅] Email Deliverability Monitoring (🔨 Medium - 1 day) ✨ IMPLEMENTED
     Why: Catch email delivery issues early
     Implementation:
     - Use Resend webhook to track deliveries
@@ -189,6 +190,7 @@ Effort Levels:
     - Track spam complaints
     - Alert if bounce rate > 5%
     - Dashboard to view delivery stats
+    Status: ✅ Deployed to test branch (Nov 11, 2025)
 
 [ ] Alternative Verification Methods (🏗️ Large - 1 week)
     Why: Backup when email fails
@@ -219,13 +221,14 @@ Effort Levels:
     - Invalidate old token
     - Track email change requests
 
-[ ] Verification Status Widget (⚡ Quick - 1 hour)
+[✅] Verification Status Widget (⚡ Quick - 1 hour) ✨ IMPLEMENTED
     Why: Persistent reminder to verify
     Implementation:
     - Banner on dashboard if unverified
     - Big yellow alert: "Verify your email"
     - One-click resend button
     - Dismiss after verification
+    Status: ✅ Deployed to test branch (Nov 11, 2025)
 
 🟢 LOW PRIORITY:
 
