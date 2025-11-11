@@ -8,8 +8,17 @@ const { runAllReminders } = require('../services/emailReminderService')
 /**
  * Initialize and schedule all reminder cron jobs
  */
-const initializeReminderJobs = () => {
+const initializeReminderJobs = async () => {
   console.log('⏰ [REMINDERS] Initializing scheduled reminder jobs...')
+  
+  // Run immediate check on startup to catch up on any overdue reminders
+  console.log('🔄 [REMINDERS] Running startup reminder check...')
+  try {
+    await runAllReminders()
+    console.log('✅ [REMINDERS] Startup reminder check complete')
+  } catch (error) {
+    console.error('❌ [REMINDERS] Error during startup reminder check:', error.message)
+  }
   
   // Send email reminders - Every 5 minutes
   cron.schedule('*/5 * * * *', async () => {

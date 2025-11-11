@@ -175,9 +175,9 @@ app.listen(PORT, async () => {
     console.error('⚠️  Failed to initialize cleanup jobs:', error.message)
   }
   
-  // Initialize reminder jobs
+  // Initialize reminder jobs (with immediate startup check)
   try {
-    initializeReminderJobs()
+    await initializeReminderJobs()
   } catch (error) {
     console.error('⚠️  Failed to initialize reminder jobs:', error.message)
   }
