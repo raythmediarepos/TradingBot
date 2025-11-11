@@ -2,19 +2,27 @@ require('dotenv').config()
 const cron = require('node-cron')
 const { initializeFirebase } = require('./config/firebase-admin')
 const { initializeBot, collectAnalytics } = require('./services/discordAnalyticsCollector')
+const { runAllHealthChecks } = require('./services/healthCheck')
+const { collectAndStoreMetrics } = require('./services/metricsCollector')
+const { checkAndAlert, generateDailySummary } = require('./services/alertService')
 
 // ============================================
-// SERVERBOT - Discord Analytics Collector
+// SERVERBOT - Monitoring & Analytics Service
 // ============================================
 
 console.log('')
 console.log('═'.repeat(60))
-console.log('🚀 [SERVERBOT] Starting Helwa AI Analytics Collector')
+console.log('🚀 [SERVERBOT] Starting Helwa AI Monitoring Service')
 console.log('═'.repeat(60))
-console.log('⏰ Schedule: Every 6 hours (cron: 0 */6 * * *)')
-console.log('📊 Target: Discord server analytics')
-console.log('💾 Storage: Firebase (serverAnalytics/discord)')
+console.log('📊 Functions:')
+console.log('   • Health Checks: Every 5 minutes')
+console.log('   • Metrics Collection: Every 15 minutes')
+console.log('   • Alert Monitoring: Every 15 minutes')
+console.log('   • Discord Analytics: Every 6 hours')
+console.log('   • Daily Summary: Once per day (midnight)')
+console.log('💾 Storage: Firebase')
 console.log('🔄 Mode: Run immediately + scheduled')
+console.log('💰 Cost: Completely FREE!')
 console.log('═'.repeat(60))
 console.log('')
 
@@ -28,41 +36,116 @@ try {
   process.exit(1)
 }
 
-// Track if collection is running
-let isCollecting = false
+// Track if tasks are running
+let isCollectingAnalytics = false
+let isRunningHealthCheck = false
+let isCollectingMetrics = false
 
 /**
- * Run analytics collection
+ * Run Discord analytics collection
  */
-const runCollection = async () => {
-  if (isCollecting) {
-    console.log('⚠️  [SERVERBOT] Collection already in progress, skipping...')
+const runAnalyticsCollection = async () => {
+  if (isCollectingAnalytics) {
+    console.log('⚠️  [ANALYTICS] Collection already in progress, skipping...')
     return
   }
 
-  isCollecting = true
+  isCollectingAnalytics = true
   const startTime = Date.now()
 
   try {
     console.log('')
     console.log('═'.repeat(60))
-    console.log(`📊 [SERVERBOT] Starting analytics collection`)
-    console.log(`🕐 [SERVERBOT] Started at: ${new Date().toLocaleString()}`)
+    console.log(`📊 [ANALYTICS] Starting Discord analytics collection`)
+    console.log(`🕐 [ANALYTICS] Started at: ${new Date().toLocaleString()}`)
     console.log('═'.repeat(60))
 
     await collectAnalytics()
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2)
     console.log('═'.repeat(60))
-    console.log(`✅ [SERVERBOT] Collection completed in ${duration}s`)
-    console.log(`🕐 [SERVERBOT] Next run: ${getNextRunTime()}`)
+    console.log(`✅ [ANALYTICS] Collection completed in ${duration}s`)
     console.log('═'.repeat(60))
     console.log('')
   } catch (error) {
-    console.error('❌ [SERVERBOT] Collection failed:', error)
+    console.error('❌ [ANALYTICS] Collection failed:', error)
     console.log('')
   } finally {
-    isCollecting = false
+    isCollectingAnalytics = false
+  }
+}
+
+/**
+ * Run health checks
+ */
+const runHealthChecks = async () => {
+  if (isRunningHealthCheck) {
+    return
+  }
+
+  isRunningHealthCheck = true
+
+  try {
+    await runAllHealthChecks()
+  } catch (error) {
+    console.error('❌ [HEALTH] Health check failed:', error)
+  } finally {
+    isRunningHealthCheck = false
+  }
+}
+
+/**
+ * Run metrics collection and alerting
+ */
+const runMetricsAndAlerts = async () => {
+  if (isCollectingMetrics) {
+    return
+  }
+
+  isCollectingMetrics = true
+
+  try {
+    // Collect metrics
+    const metrics = await collectAndStoreMetrics()
+    
+    // Get latest health check
+    const admin = require('firebase-admin')
+    const db = admin.firestore()
+    const healthSnapshot = await db
+      .collection('healthChecks')
+      .orderBy('timestamp', 'desc')
+      .limit(1)
+      .get()
+    
+    const latestHealth = healthSnapshot.empty ? null : healthSnapshot.docs[0].data()
+    
+    // Check for alerts
+    await checkAndAlert(metrics, latestHealth)
+  } catch (error) {
+    console.error('❌ [METRICS] Metrics/alerts failed:', error)
+  } finally {
+    isCollectingMetrics = false
+  }
+}
+
+/**
+ * Run daily summary
+ */
+const runDailySummary = async () => {
+  try {
+    console.log('')
+    console.log('═'.repeat(60))
+    console.log(`📧 [SUMMARY] Generating daily summary`)
+    console.log('═'.repeat(60))
+    
+    await generateDailySummary()
+    
+    console.log('═'.repeat(60))
+    console.log(`✅ [SUMMARY] Daily summary complete`)
+    console.log('═'.repeat(60))
+    console.log('')
+  } catch (error) {
+    console.error('❌ [SUMMARY] Daily summary failed:', error)
   }
 }
 
@@ -80,7 +163,7 @@ const getNextRunTime = () => {
  */
 const start = async () => {
   try {
-    // Initialize Discord bot
+    // Step 1: Initialize Discord bot
     console.log('═'.repeat(60))
     console.log('🤖 [SERVERBOT] Step 1: Initializing Discord Bot')
     console.log('═'.repeat(60))
@@ -88,31 +171,68 @@ const start = async () => {
     console.log('✅ [SERVERBOT] Discord bot ready')
     console.log('')
 
-    // Run immediately on startup
+    // Step 2: Run initial checks
     console.log('═'.repeat(60))
-    console.log('🚀 [SERVERBOT] Step 2: Running Initial Collection')
+    console.log('🚀 [SERVERBOT] Step 2: Running Initial Checks')
     console.log('═'.repeat(60))
-    console.log('⚡ [SERVERBOT] This will collect all analytics data now...')
+    console.log('⚡ [SERVERBOT] Running health checks...')
+    await runHealthChecks()
+    console.log('⚡ [SERVERBOT] Collecting metrics...')
+    await runMetricsAndAlerts()
+    console.log('⚡ [SERVERBOT] Collecting Discord analytics...')
+    await runAnalyticsCollection()
     console.log('')
-    await runCollection()
 
-    // Schedule to run every 6 hours
-    // Cron pattern: 0 */6 * * * = At minute 0 past every 6th hour
+    // Step 3: Set up cron schedules
     console.log('═'.repeat(60))
-    console.log('⏰ [SERVERBOT] Step 3: Activating Scheduler')
+    console.log('⏰ [SERVERBOT] Step 3: Activating Schedulers')
     console.log('═'.repeat(60))
-    cron.schedule('0 */6 * * *', () => {
-      runCollection()
+    
+    // Health checks every 5 minutes
+    cron.schedule('*/5 * * * *', () => {
+      runHealthChecks()
     })
-
-    console.log('✅ [SERVERBOT] Scheduler active - will run every 6 hours')
-    console.log(`📅 [SERVERBOT] Next scheduled run: ${getNextRunTime()}`)
-    console.log('💡 [SERVERBOT] The serverbot is now running in the background')
-    console.log('   → Analytics will update automatically every 6 hours')
-    console.log('   → Data is stored in Firebase: serverAnalytics/discord')
-    console.log('   → View data at: /admin/analytics')
+    console.log('✅ Scheduled: Health checks (every 5 minutes)')
+    
+    // Metrics collection every 15 minutes
+    cron.schedule('*/15 * * * *', () => {
+      runMetricsAndAlerts()
+    })
+    console.log('✅ Scheduled: Metrics & alerts (every 15 minutes)')
+    
+    // Discord analytics every 6 hours
+    cron.schedule('0 */6 * * *', () => {
+      runAnalyticsCollection()
+    })
+    console.log('✅ Scheduled: Discord analytics (every 6 hours)')
+    
+    // Daily summary at midnight
+    cron.schedule('0 0 * * *', () => {
+      runDailySummary()
+    })
+    console.log('✅ Scheduled: Daily summary (midnight)')
+    
     console.log('')
-    console.log('🛑 [SERVERBOT] Press Ctrl+C to stop the serverbot')
+    console.log('═'.repeat(60))
+    console.log('🎉 [SERVERBOT] All systems operational!')
+    console.log('═'.repeat(60))
+    console.log('💡 [SERVERBOT] The monitoring service is now running 24/7')
+    console.log('')
+    console.log('📊 Active Monitors:')
+    console.log('   → Health checks every 5 minutes')
+    console.log('   → Metrics collection every 15 minutes')
+    console.log('   → Discord analytics every 6 hours')
+    console.log('   → Daily summaries at midnight')
+    console.log('')
+    console.log('💾 Data Storage:')
+    console.log('   → Firebase collections: healthChecks, systemMetrics, alerts')
+    console.log('   → View in admin panel: /admin/system-health')
+    console.log('')
+    console.log('💰 Cost: Completely FREE!')
+    console.log('   → No external services required')
+    console.log('   → Using existing Firebase & Resend')
+    console.log('')
+    console.log('🛑 Press Ctrl+C to stop the serverbot')
     console.log('═'.repeat(60))
     console.log('')
 

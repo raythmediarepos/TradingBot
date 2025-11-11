@@ -1,0 +1,41 @@
+# ============================================
+# SERVERBOT ENVIRONMENT VARIABLES
+# ============================================
+
+# ── BACKEND & FRONTEND URLs ──────────────────
+# These are used for health checks
+BACKEND_URL=https://your-backend.render.com
+FRONTEND_URL=https://your-frontend.vercel.app
+
+# ── DISCORD BOT ──────────────────────────────
+# Your Discord bot token
+DISCORD_TOKEN=your_discord_bot_token_here
+
+# Discord server (guild) ID
+DISCORD_SERVER_ID=your_server_id_here
+
+# Discord beta tester role ID
+DISCORD_BETA_ROLE_ID=your_beta_role_id_here
+
+# ── FIREBASE ─────────────────────────────────
+# Path to service account key (relative to serverbot folder)
+GOOGLE_APPLICATION_CREDENTIALS=./config/serviceAccountKey.json
+
+# ── NODE ENVIRONMENT ─────────────────────────
+NODE_ENV=production
+
+# ============================================
+# DEPLOYMENT TO RENDER
+# ============================================
+
+# 1. Go to Render Dashboard
+# 2. Create New > Background Worker
+# 3. Connect GitHub repo
+# 4. Set Root Directory: serverbot
+# 5. Build Command: npm install
+# 6. Start Command: npm start
+# 7. Add environment variables above
+# 8. Deploy!
+
+# Cost: COMPLETELY FREE! 💰
+
