@@ -5,7 +5,7 @@ const {
   sendDiscordInviteReminder,
   sendDiscordVerificationReminder,
 } = require('./emailService')
-const { getRemainingBetaSpots } = require('./betaUserService')
+const { getBetaStats } = require('./betaUserService')
 
 /**
  * Send email verification reminders
@@ -34,10 +34,10 @@ const sendEmailVerificationReminders = async () => {
       const minutesSinceSignup = (now - createdAt) / 1000 / 60
 
       // Check if we've already sent each reminder
-      const remindersSent = user.emailRemindersSent || {}
+      const emailReminders = user.emailRemindersSent || {}
 
       // 10-minute reminder
-      if (minutesSinceSignup >= 10 && !remindersSent.tenMinute) {
+      if (minutesSinceSignup >= 10 && !emailReminders.tenMinute) {
         console.log(`   📧 Sending 10-min reminder to ${user.email}`)
         await sendEmailVerificationReminder(
           user.email,
@@ -53,7 +53,7 @@ const sendEmailVerificationReminders = async () => {
       }
 
       // 1-hour reminder
-      if (minutesSinceSignup >= 60 && !remindersSent.oneHour) {
+      if (minutesSinceSignup >= 60 && !emailReminders.oneHour) {
         console.log(`   📧 Sending 1-hour reminder to ${user.email}`)
         await sendEmailVerificationReminder(
           user.email,
@@ -69,7 +69,7 @@ const sendEmailVerificationReminders = async () => {
       }
 
       // 24-hour reminder
-      if (minutesSinceSignup >= 1440 && !remindersSent.twentyFourHour) {
+      if (minutesSinceSignup >= 1440 && !emailReminders.twentyFourHour) {
         console.log(`   📧 Sending 24-hour reminder to ${user.email}`)
         await sendEmailVerificationReminder(
           user.email,
@@ -114,7 +114,8 @@ const sendPaymentReminders = async () => {
     let remindersSent = 0
 
     // Get remaining spots for final reminder
-    const spotsLeft = await getRemainingBetaSpots()
+    const betaStats = await getBetaStats()
+    const spotsLeft = betaStats.remaining || 0
 
     for (const doc of pendingPaymentUsers.docs) {
       const user = doc.data()
@@ -128,10 +129,10 @@ const sendPaymentReminders = async () => {
       const minutesSinceVerified = (now - baseTime) / 1000 / 60
 
       // Check if we've already sent each reminder
-      const remindersSent = user.paymentRemindersSent || {}
+      const paymentReminders = user.paymentRemindersSent || {}
 
       // 1-hour reminder
-      if (minutesSinceVerified >= 60 && !remindersSent.oneHour) {
+      if (minutesSinceVerified >= 60 && !paymentReminders.oneHour) {
         console.log(`   📧 Sending 1-hour payment reminder to ${user.email}`)
         await sendAbandonedPaymentReminder(
           user.email,
@@ -147,7 +148,7 @@ const sendPaymentReminders = async () => {
       }
 
       // 24-hour reminder
-      if (minutesSinceVerified >= 1440 && !remindersSent.twentyFourHour) {
+      if (minutesSinceVerified >= 1440 && !paymentReminders.twentyFourHour) {
         console.log(`   📧 Sending 24-hour payment reminder to ${user.email}`)
         await sendAbandonedPaymentReminder(
           user.email,
@@ -162,7 +163,7 @@ const sendPaymentReminders = async () => {
       }
 
       // 3-day reminder (with spots left urgency)
-      if (minutesSinceVerified >= 4320 && !remindersSent.threeDays) {
+      if (minutesSinceVerified >= 4320 && !paymentReminders.threeDays) {
         console.log(`   📧 Sending 3-day payment reminder to ${user.email}`)
         await sendAbandonedPaymentReminder(
           user.email,
@@ -239,10 +240,10 @@ const sendDiscordInviteReminders = async () => {
       const minutesSincePayment = (now - baseTime) / 1000 / 60
 
       // Check if we've already sent each reminder
-      const remindersSent = user.discordInviteRemindersSent || {}
+      const inviteReminders = user.discordInviteRemindersSent || {}
 
       // 1-hour reminder
-      if (minutesSincePayment >= 60 && !remindersSent.oneHour) {
+      if (minutesSincePayment >= 60 && !inviteReminders.oneHour) {
         console.log(`   📧 Sending 1-hour Discord invite reminder to ${user.email}`)
         await sendDiscordInviteReminder(
           user.email,
@@ -258,7 +259,7 @@ const sendDiscordInviteReminders = async () => {
       }
 
       // 24-hour reminder
-      if (minutesSincePayment >= 1440 && !remindersSent.twentyFourHour) {
+      if (minutesSincePayment >= 1440 && !inviteReminders.twentyFourHour) {
         console.log(`   📧 Sending 24-hour Discord invite reminder to ${user.email}`)
         await sendDiscordInviteReminder(
           user.email,
@@ -317,10 +318,10 @@ const sendDiscordVerificationReminders = async () => {
       const minutesSinceInvite = (now - inviteCreatedAt) / 1000 / 60
 
       // Check if we've already sent each reminder
-      const remindersSent = user.discordVerificationRemindersSent || {}
+      const verificationReminders = user.discordVerificationRemindersSent || {}
 
       // 30-minute reminder
-      if (minutesSinceInvite >= 30 && !remindersSent.thirtyMinute) {
+      if (minutesSinceInvite >= 30 && !verificationReminders.thirtyMinute) {
         console.log(`   📧 Sending 30-min Discord verification reminder to ${user.email}`)
         await sendDiscordVerificationReminder(
           user.email,
@@ -337,7 +338,7 @@ const sendDiscordVerificationReminders = async () => {
       }
 
       // 24-hour reminder
-      if (minutesSinceInvite >= 1440 && !remindersSent.twentyFourHour) {
+      if (minutesSinceInvite >= 1440 && !verificationReminders.twentyFourHour) {
         console.log(`   📧 Sending 24-hour Discord verification reminder to ${user.email}`)
         await sendDiscordVerificationReminder(
           user.email,
