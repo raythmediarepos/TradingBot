@@ -34,6 +34,7 @@ let botReady = false
 let guild = null
 let betaRole = null
 let unverifiedRole = null
+let listenersRegistered = false
 
 // ============================================
 // BOT EVENT HANDLERS
@@ -543,13 +544,16 @@ const startBot = async () => {
       return
     }
 
-    // Remove existing event listeners to prevent duplicates on hot reload
-    client.removeListener('guildMemberAdd', handleGuildMemberAdd)
-    client.removeListener('messageCreate', handleMessageCreate)
-    
-    // Register event listeners
-    client.on('guildMemberAdd', handleGuildMemberAdd)
-    client.on('messageCreate', handleMessageCreate)
+    // Only register event listeners once to prevent duplicates
+    if (!listenersRegistered) {
+      console.log('🔧 [DISCORD BOT] Registering event listeners...')
+      client.on('guildMemberAdd', handleGuildMemberAdd)
+      client.on('messageCreate', handleMessageCreate)
+      listenersRegistered = true
+      console.log('✅ [DISCORD BOT] Event listeners registered')
+    } else {
+      console.log('⚠️  [DISCORD BOT] Event listeners already registered, skipping')
+    }
     
     console.log('🚀 [DISCORD BOT] Starting Discord bot...')
     await client.login(DISCORD_CONFIG.BOT_TOKEN)
@@ -567,6 +571,15 @@ const stopBot = async () => {
   try {
     if (client && botReady) {
       console.log('👋 [DISCORD BOT] Shutting down...')
+      
+      // Remove event listeners
+      if (listenersRegistered) {
+        client.removeListener('guildMemberAdd', handleGuildMemberAdd)
+        client.removeListener('messageCreate', handleMessageCreate)
+        listenersRegistered = false
+        console.log('🔧 [DISCORD BOT] Event listeners removed')
+      }
+      
       await client.destroy()
       botReady = false
       console.log('✅ [DISCORD BOT] Shut down successfully')
