@@ -949,6 +949,123 @@ const markWebhookProcessed = async (eventId, eventType, metadata = {}) => {
   }
 }
 
+/**
+ * Renumber all beta users based on creation date
+ * This ensures position numbers are accurate and sequential
+ * @returns {Promise<Object>} - Result with updated count
+ */
+const renumberBetaPositions = async () => {
+  console.log('\n🔢 [RENUMBER] Starting beta position renumbering...')
+  console.log(`   → Time: ${new Date().toISOString()}`)
+  
+  try {
+    // Get all beta users sorted by creation date
+    const usersSnapshot = await db.collection(COLLECTIONS.BETA_USERS)
+      .where('role', '!=', 'admin') // Exclude admins
+      .orderBy('role') // Required for != query
+      .orderBy('createdAt', 'asc')
+      .get()
+
+    if (usersSnapshot.empty) {
+      console.log('⚠️  [RENUMBER] No users found to renumber')
+      return { success: true, count: 0, changes: 0 }
+    }
+
+    // Get all users and sort by createdAt manually (to ensure correct order)
+    const users = usersSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(user => user.role !== 'admin')
+      .sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt)
+        const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt)
+        return dateA - dateB
+      })
+
+    console.log(`   → Found ${users.length} users to renumber`)
+
+    let changes = 0
+    let newPosition = 0
+
+    // Update positions in batches to avoid rate limits
+    const batch = db.batch()
+    let batchCount = 0
+    const MAX_BATCH_SIZE = 500
+
+    for (const user of users) {
+      newPosition++
+      
+      // Check if position needs updating
+      if (user.position !== newPosition) {
+        const userRef = db.collection(COLLECTIONS.BETA_USERS).doc(user.id)
+        batch.update(userRef, {
+          position: newPosition,
+          lastPositionUpdate: admin.firestore.FieldValue.serverTimestamp(),
+        })
+        
+        changes++
+        batchCount++
+        console.log(`   → Updating ${user.email}: ${user.position} → ${newPosition}`)
+
+        // Commit batch if it reaches max size
+        if (batchCount >= MAX_BATCH_SIZE) {
+          await batch.commit()
+          console.log(`   → Committed batch of ${batchCount} updates`)
+          batchCount = 0
+        }
+      }
+    }
+
+    // Commit remaining updates
+    if (batchCount > 0) {
+      await batch.commit()
+      console.log(`   → Committed final batch of ${batchCount} updates`)
+    }
+
+    // Update the counter to reflect the current highest position
+    const counterRef = db.collection(COLLECTIONS.COUNTERS).doc('betaUserCounter')
+    await counterRef.set({ currentPosition: newPosition }, { merge: true })
+    console.log(`   → Updated counter to ${newPosition}`)
+
+    console.log(`✅ [RENUMBER] Complete - ${changes} positions updated out of ${users.length} users`)
+    console.log(`   → Total users: ${users.length}`)
+    console.log(`   → Highest position: ${newPosition}`)
+    console.log(`   → Changes made: ${changes}\n`)
+
+    // Send Discord notification if significant changes were made
+    if (changes > 0) {
+      try {
+        const { sendDiscordNotification } = require('./discordNotificationService')
+        await sendDiscordNotification({
+          type: 'info',
+          title: '🔢 Beta Positions Renumbered',
+          description: `Automatic position renumbering completed`,
+          fields: [
+            { name: '👥 Total Users', value: users.length.toString(), inline: true },
+            { name: '🔄 Changes Made', value: changes.toString(), inline: true },
+            { name: '📊 Highest Position', value: `#${newPosition}`, inline: true },
+            { name: '⏰ Time', value: new Date().toLocaleString(), inline: false },
+          ],
+        })
+      } catch (notifyError) {
+        console.error('⚠️  [RENUMBER] Failed to send Discord notification:', notifyError.message)
+      }
+    }
+
+    return { 
+      success: true, 
+      count: users.length,
+      changes,
+      highestPosition: newPosition,
+    }
+  } catch (error) {
+    console.error('❌ [RENUMBER] Error renumbering positions:', error)
+    return { 
+      success: false, 
+      error: error.message 
+    }
+  }
+}
+
 // ============================================
 // EXPORTS
 // ============================================
@@ -975,6 +1092,7 @@ module.exports = {
   getBetaUserByEmail,
   updateBetaUser,
   getAllBetaUsers,
+  renumberBetaPositions,
 
   // Email verification
   createEmailVerification,

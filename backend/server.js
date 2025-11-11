@@ -10,6 +10,7 @@ const { startBot, stopBot } = require('./services/discordBotService')
 const { initializeCleanupJobs } = require('./jobs/cleanupJobs')
 const { initializeReminderJobs } = require('./jobs/reminderJobs')
 const { initializeMonitoringJobs } = require('./jobs/monitoringJobs')
+const { initializeMaintenanceJobs } = require('./jobs/maintenanceJobs')
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -187,6 +188,13 @@ app.listen(PORT, async () => {
     initializeMonitoringJobs()
   } catch (error) {
     console.error('⚠️  Failed to initialize monitoring jobs:', error.message)
+  }
+  
+  // Initialize maintenance jobs (with immediate startup renumbering)
+  try {
+    await initializeMaintenanceJobs()
+  } catch (error) {
+    console.error('⚠️  Failed to initialize maintenance jobs:', error.message)
   }
 })
 
