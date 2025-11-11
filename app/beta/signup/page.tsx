@@ -23,6 +23,7 @@ export default function BetaSignupPage() {
     confirmPassword: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false)
   const [betaStats, setBetaStats] = useState({
     filled: 0,
     remaining: 0,
@@ -65,6 +66,22 @@ export default function BetaSignupPage() {
 
     fetchBetaStats()
   }, [])
+
+  // Handle Escape key for email confirmation modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showEmailConfirmation) {
+        setShowEmailConfirmation(false)
+        // Focus on email field
+        setTimeout(() => {
+          document.getElementById('email')?.focus()
+        }, 100)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [showEmailConfirmation])
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -157,6 +174,11 @@ export default function BetaSignupPage() {
       return
     }
 
+    // Show email confirmation modal before submitting
+    setShowEmailConfirmation(true)
+  }
+
+  const handleConfirmEmail = async () => {
     const position = betaStats.filled + 1
     const isFree = position <= 20
 
@@ -169,6 +191,7 @@ export default function BetaSignupPage() {
     })
 
     setIsSubmitting(true)
+    setShowEmailConfirmation(false)
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/beta/signup`, {
@@ -237,8 +260,94 @@ export default function BetaSignupPage() {
   const hasErrors = Object.values(errors).some((error) => error !== '')
   const isFormValid = isFormComplete && !hasErrors
 
+  const handleEditEmail = () => {
+    setShowEmailConfirmation(false)
+    // Focus on email field
+    setTimeout(() => {
+      document.getElementById('email')?.focus()
+    }, 100)
+  }
+
+  // Track email confirmation shown
+  useEffect(() => {
+    if (showEmailConfirmation) {
+      // Track that confirmation modal was shown
+      console.log('📧 Email confirmation modal shown:', formData.email)
+    }
+  }, [showEmailConfirmation])
+
   return (
     <div className="min-h-screen bg-hp-black text-hp-white">
+      {/* Email Confirmation Modal */}
+      {showEmailConfirmation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md bg-hp-gray900 border border-hp-yellow/30 rounded-2xl p-8 shadow-2xl"
+          >
+            {/* Icon */}
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-hp-yellow/10 border border-hp-yellow/30 flex items-center justify-center">
+              <Mail className="w-8 h-8 text-hp-yellow" />
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-center mb-2">
+              Confirm Your Email
+            </h2>
+            <p className="text-white/60 text-center mb-8">
+              We'll send your verification link to this address
+            </p>
+
+            {/* Email Display */}
+            <div className="mb-8 p-6 bg-hp-black border border-hp-yellow/20 rounded-xl">
+              <p className="text-xs text-white/50 uppercase tracking-wide mb-2 text-center">
+                Your Email Address
+              </p>
+              <p className="text-xl font-bold text-hp-yellow text-center break-all">
+                {formData.email}
+              </p>
+            </div>
+
+            {/* User Info */}
+            <div className="mb-6 p-4 bg-hp-black/50 border border-white/10 rounded-lg">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-white/50">Name:</span>
+                <span className="text-white font-medium">{formData.firstName} {formData.lastName}</span>
+              </div>
+            </div>
+
+            {/* Warning */}
+            <div className="mb-6 p-4 bg-hp-yellow/10 border border-hp-yellow/20 rounded-lg">
+              <p className="text-xs text-white/70 text-center">
+                ⚠️ Please make sure this email is correct. You'll need to access it to verify your account.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleEditEmail}
+                className="flex-1 px-6 py-4 bg-hp-black border border-white/20 text-white rounded-xl font-semibold hover:bg-hp-gray800 transition-all"
+              >
+                ✏️ Edit Email
+              </button>
+              <button
+                onClick={handleConfirmEmail}
+                className="flex-1 px-6 py-4 bg-gradient-to-r from-hp-yellow to-hp-yellow600 text-hp-black rounded-xl font-bold hover:shadow-lg hover:shadow-hp-yellow/20 transition-all"
+              >
+                ✓ Confirm & Continue
+              </button>
+            </div>
+
+            {/* Keyboard Hint */}
+            <p className="mt-4 text-xs text-center text-white/40">
+              Press <kbd className="px-2 py-1 bg-hp-black border border-white/20 rounded text-white/60">Esc</kbd> to edit
+            </p>
+          </motion.div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="border-b border-white/10">
         <div className="container mx-auto px-6 py-6">
