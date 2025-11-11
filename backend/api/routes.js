@@ -234,6 +234,84 @@ const siteSettingsRoutes = require('../routes/siteSettings')
 router.use('/site-settings', siteSettingsRoutes)
 
 // ============================================
+// MONITORING & ALERTS
+// ============================================
+
+const { sendAlertEmail } = require('../services/monitoring/alertService')
+
+/**
+ * POST /api/test-alert
+ * Trigger a test alert to Discord
+ * Query params: severity (info|warning|critical)
+ */
+router.post('/test-alert', async (req, res) => {
+  try {
+    const { severity = 'warning' } = req.query
+    
+    // Validate severity
+    if (!['info', 'warning', 'critical'].includes(severity)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid severity. Use: info, warning, or critical',
+      })
+    }
+
+    // Create test alert based on severity
+    let alert
+    switch (severity) {
+      case 'critical':
+        alert = {
+          service: 'TEST',
+          severity: 'critical',
+          message: '🚨 TEST ALERT: This is a critical test alert!',
+          details: 'This is a test of the critical alert system. Admins should be tagged!',
+          threshold: 100,
+          actual: 0,
+        }
+        break
+      case 'warning':
+        alert = {
+          service: 'TEST',
+          severity: 'warning',
+          message: '⚠️ TEST ALERT: This is a warning test alert!',
+          details: 'This is a test of the warning alert system.',
+          threshold: 80,
+          actual: 60,
+        }
+        break
+      case 'info':
+        alert = {
+          service: 'TEST',
+          severity: 'info',
+          message: 'ℹ️ TEST ALERT: This is an info test alert!',
+          details: 'This is a test of the info alert system.',
+        }
+        break
+    }
+
+    // Send the alert
+    await sendAlertEmail(alert)
+
+    res.json({
+      success: true,
+      message: `Test ${severity} alert sent to Discord!`,
+      alert: {
+        severity,
+        message: alert.message,
+        service: alert.service,
+      },
+    })
+  } catch (error) {
+    console.error('Error sending test alert:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send test alert',
+      details: error.message,
+    })
+  }
+})
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 
