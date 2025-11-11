@@ -273,8 +273,90 @@ async function trackLoginAttempt(email, success, failureReason) {
 }
 
 /**
+ * Auto-create default admin user if it doesn't exist
+ * This ensures admin can always login with default credentials
+ */
+async function ensureDefaultAdminExists(email, password) {
+  const DEFAULT_ADMIN_EMAIL = 'admin@helwa.ai'
+  const DEFAULT_ADMIN_PASSWORD = 'godisgood'
+
+  // Only auto-create if using default credentials
+  if (email.toLowerCase() !== DEFAULT_ADMIN_EMAIL || password !== DEFAULT_ADMIN_PASSWORD) {
+    return false // Not default credentials, don't auto-create
+  }
+
+  try {
+    const db = admin.firestore()
+    
+    // Check if admin exists
+    const existingAdmin = await db.collection('betaUsers')
+      .where('email', '==', DEFAULT_ADMIN_EMAIL)
+      .limit(1)
+      .get()
+
+    if (!existingAdmin.empty) {
+      // Admin exists, check if password needs update
+      const adminDoc = existingAdmin.docs[0]
+      const adminData = adminDoc.data()
+      
+      // Verify password
+      const isValidPassword = await comparePassword(DEFAULT_ADMIN_PASSWORD, adminData.passwordHash)
+      
+      if (!isValidPassword || !adminData.role || adminData.role !== 'admin') {
+        // Password wrong or role missing - fix it
+        console.log('🔧 [ADMIN] Fixing admin user credentials...')
+        const passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD)
+        
+        await db.collection('betaUsers').doc(adminDoc.id).update({
+          passwordHash,
+          role: 'admin',
+          emailVerified: true,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+        
+        console.log('✅ [ADMIN] Admin credentials fixed!')
+      }
+      
+      return true // Admin exists and is fixed
+    }
+
+    // Admin doesn't exist - create it
+    console.log('🔐 [ADMIN] Creating default admin user...')
+    const passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD)
+
+    const adminData = {
+      email: DEFAULT_ADMIN_EMAIL,
+      firstName: 'Admin',
+      lastName: 'User',
+      passwordHash,
+      role: 'admin',
+      emailVerified: true,
+      status: 'active',
+      position: 0,
+      isFree: true,
+      paymentStatus: 'free',
+      discordJoined: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }
+
+    await db.collection('betaUsers').add(adminData)
+    
+    console.log('✅ [ADMIN] Default admin user created!')
+    console.log(`   Email: ${DEFAULT_ADMIN_EMAIL}`)
+    console.log(`   Password: ${DEFAULT_ADMIN_PASSWORD}`)
+    
+    return true // Admin created
+  } catch (error) {
+    console.error('❌ [ADMIN] Error ensuring admin exists:', error)
+    return false
+  }
+}
+
+/**
  * POST /api/auth/admin-login
  * Login for admin users
+ * Auto-creates default admin if it doesn't exist
  */
 router.post('/admin-login', loginLimiter, async (req, res) => {
   try {
@@ -291,17 +373,31 @@ router.post('/admin-login', loginLimiter, async (req, res) => {
     const db = admin.firestore()
 
     // Find user by email
-    const userSnapshot = await db.collection('betaUsers')
+    let userSnapshot = await db.collection('betaUsers')
       .where('email', '==', email.toLowerCase())
       .where('role', '==', 'admin')
       .limit(1)
       .get()
 
+    // If admin doesn't exist and using default credentials, create it
     if (userSnapshot.empty) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid admin credentials',
-      })
+      const created = await ensureDefaultAdminExists(email, password)
+      
+      if (created) {
+        // Try finding admin again after creation
+        userSnapshot = await db.collection('betaUsers')
+          .where('email', '==', email.toLowerCase())
+          .where('role', '==', 'admin')
+          .limit(1)
+          .get()
+      }
+      
+      if (userSnapshot.empty) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid admin credentials',
+        })
+      }
     }
 
     const userDoc = userSnapshot.docs[0]
@@ -310,6 +406,9 @@ router.post('/admin-login', loginLimiter, async (req, res) => {
     // Verify password
     const isValidPassword = await comparePassword(password, userData.passwordHash)
     if (!isValidPassword) {
+      // If default credentials failed, try to fix admin account
+      await ensureDefaultAdminExists(email, password)
+      
       return res.status(401).json({
         success: false,
         message: 'Invalid admin credentials',
