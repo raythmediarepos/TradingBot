@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser')
 require('dotenv').config()
 
 const apiRoutes = require('./api/routes')
+const webhookRoutes = require('./routes/webhooks')
 const { startBot, stopBot } = require('./services/discordBotService')
 const { initializeCleanupJobs } = require('./jobs/cleanupJobs')
 const { initializeReminderJobs } = require('./jobs/reminderJobs')
@@ -100,6 +101,9 @@ app.use((req, res, next) => {
 
 // Mount API routes
 app.use('/api', apiRoutes)
+
+// Mount webhook routes (with raw body for signature verification)
+app.use('/api/webhooks', webhookRoutes)
 
 // Root endpoint
 app.get('/', (req, res) => {

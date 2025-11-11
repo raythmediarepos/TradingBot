@@ -119,13 +119,21 @@ router.get('/user/:userId', async (req, res) => {
  */
 router.post('/signup', signupLimiter, async (req, res) => {
   try {
-    const { email, firstName, lastName, password } = req.body
+    const { email, firstName, lastName, password, agreedToTerms } = req.body
 
     // Validate input
     if (!email || !firstName || !lastName || !password) {
       return res.status(400).json({
         error: 'Validation error',
         message: 'Email, first name, last name, and password are required',
+      })
+    }
+
+    // Validate TOS acceptance
+    if (agreedToTerms !== true) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'You must agree to the Terms of Service to continue',
       })
     }
 
@@ -147,6 +155,9 @@ router.post('/signup', signupLimiter, async (req, res) => {
       firstName,
       lastName,
       passwordHash,
+      agreedToTerms: true,
+      tosVersion: '1.0', // Track TOS version for future updates
+      tosAcceptedAt: new Date(),
     })
 
     if (!result.success) {

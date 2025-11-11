@@ -14,6 +14,7 @@ export default function BetaSignupPage() {
     lastName: '',
     password: '',
     confirmPassword: '',
+    agreedToTerms: false,
   })
   const [errors, setErrors] = useState({
     email: '',
@@ -119,8 +120,9 @@ export default function BetaSignupPage() {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    const updatedFormData = { ...formData, [name]: value }
+    const { name, value, type, checked } = e.target
+    const fieldValue = type === 'checkbox' ? checked : value
+    const updatedFormData = { ...formData, [name]: fieldValue }
     setFormData(updatedFormData)
     
     // Track form start on first interaction
@@ -255,7 +257,8 @@ export default function BetaSignupPage() {
     formData.firstName.trim() !== '' &&
     formData.lastName.trim() !== '' &&
     formData.password !== '' &&
-    formData.confirmPassword !== ''
+    formData.confirmPassword !== '' &&
+    formData.agreedToTerms
   
   const hasErrors = Object.values(errors).some((error) => error !== '')
   const isFormValid = isFormComplete && !hasErrors
@@ -698,17 +701,57 @@ export default function BetaSignupPage() {
                     </p>
                   )}
 
-                  {/* Terms */}
-                  <p className="text-xs text-center text-white/40">
-                    By signing up, you agree to our{' '}
-                    <a href="/legal/terms" className="text-hp-yellow hover:underline">
-                      Terms of Service
-                    </a>{' '}
-                    and{' '}
-                    <a href="/legal/privacy" className="text-hp-yellow hover:underline">
-                      Privacy Policy
-                    </a>
-                  </p>
+                  {/* Terms of Service Agreement */}
+                  <div className="space-y-4">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative flex items-center justify-center mt-0.5">
+                        <input
+                          type="checkbox"
+                          name="agreedToTerms"
+                          checked={formData.agreedToTerms}
+                          onChange={handleChange}
+                          className="w-5 h-5 bg-hp-black border-2 border-white/20 rounded cursor-pointer
+                                   checked:bg-hp-yellow checked:border-hp-yellow
+                                   focus:outline-none focus:ring-2 focus:ring-hp-yellow/50
+                                   transition-all appearance-none
+                                   checked:after:content-['✓'] checked:after:text-hp-black 
+                                   checked:after:text-sm checked:after:font-bold
+                                   checked:after:absolute checked:after:inset-0
+                                   checked:after:flex checked:after:items-center checked:after:justify-center"
+                        />
+                      </div>
+                      <span className="text-sm text-white/80 group-hover:text-white transition-colors">
+                        I agree to the{' '}
+                        <a 
+                          href="/legal/terms" 
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-hp-yellow hover:underline font-semibold"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Terms of Service
+                        </a>{' '}
+                        and{' '}
+                        <a 
+                          href="/legal/privacy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-hp-yellow hover:underline font-semibold"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Privacy Policy
+                        </a>
+                        <span className="text-red-400 ml-1">*</span>
+                      </span>
+                    </label>
+                    
+                    {!formData.agreedToTerms && isFormComplete && (
+                      <p className="text-xs text-red-400 flex items-center gap-1 ml-8">
+                        <AlertCircle className="w-3 h-3" />
+                        You must agree to the Terms of Service to continue
+                      </p>
+                    )}
+                  </div>
                 </form>
               </div>
             </motion.div>

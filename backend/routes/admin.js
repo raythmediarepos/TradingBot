@@ -1,6 +1,12 @@
 const express = require('express')
 const router = express.Router()
 const { authenticate, requireAdmin } = require('../middleware/auth')
+const {
+  getEmailStats,
+  getRecentBounces,
+  getRecentComplaints,
+  checkEmailHealth,
+} = require('../services/emailMonitoringService')
 
 /**
  * @route   POST /api/admin/discord/setup
@@ -1438,6 +1444,120 @@ router.get('/stock-anomalies', authenticate, requireAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch stock anomalies',
+      error: error.message,
+    })
+  }
+})
+
+// ============================================
+// EMAIL MONITORING ROUTES
+// ============================================
+
+/**
+ * @route   GET /api/admin/email-stats
+ * @desc    Get email deliverability statistics
+ * @access  Admin only
+ * @query   days - Number of days to look back (default 7)
+ */
+router.get('/email-stats', authenticate, requireAdmin, async (req, res) => {
+  try {
+    console.log('📊 [ADMIN] Fetching email stats...')
+    
+    const days = parseInt(req.query.days) || 7
+    const stats = await getEmailStats(days)
+    
+    res.json({
+      success: true,
+      data: stats,
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching email stats:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch email statistics',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   GET /api/admin/email-bounces
+ * @desc    Get recent bounced emails
+ * @access  Admin only
+ * @query   limit - Number of results to return (default 50)
+ */
+router.get('/email-bounces', authenticate, requireAdmin, async (req, res) => {
+  try {
+    console.log('📊 [ADMIN] Fetching recent bounces...')
+    
+    const limit = parseInt(req.query.limit) || 50
+    const bounces = await getRecentBounces(limit)
+    
+    res.json({
+      success: true,
+      count: bounces.length,
+      data: bounces,
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching bounces:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch bounced emails',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   GET /api/admin/email-complaints
+ * @desc    Get recent spam complaints
+ * @access  Admin only
+ * @query   limit - Number of results to return (default 50)
+ */
+router.get('/email-complaints', authenticate, requireAdmin, async (req, res) => {
+  try {
+    console.log('📊 [ADMIN] Fetching spam complaints...')
+    
+    const limit = parseInt(req.query.limit) || 50
+    const complaints = await getRecentComplaints(limit)
+    
+    res.json({
+      success: true,
+      count: complaints.length,
+      data: complaints,
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching complaints:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch spam complaints',
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * @route   POST /api/admin/email-health-check
+ * @desc    Manually trigger email health check
+ * @access  Admin only
+ */
+router.post('/email-health-check', authenticate, requireAdmin, async (req, res) => {
+  try {
+    console.log('🏥 [ADMIN] Manual email health check triggered')
+    
+    await checkEmailHealth()
+    const stats = await getEmailStats(1) // Get last 24 hours
+    
+    res.json({
+      success: true,
+      message: 'Email health check completed',
+      data: stats,
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error in health check:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to run health check',
       error: error.message,
     })
   }

@@ -211,7 +211,7 @@ const checkExistingUser = async (email) => {
  * @returns {Promise<Object>}
  */
 const createBetaUser = async (userData) => {
-  const { email, firstName, lastName, passwordHash } = userData
+  const { email, firstName, lastName, passwordHash, agreedToTerms, tosVersion, tosAcceptedAt } = userData
 
   console.log('🎫 [BETA] New beta signup attempt...')
   console.log(`   → Email: ${email}`)
@@ -298,6 +298,10 @@ const createBetaUser = async (userData) => {
       stripeSubscriptionId: null,
       lastLoginAt: null,
       lastLogoutAt: null,
+      // Terms of Service acceptance tracking
+      agreedToTerms: agreedToTerms || false,
+      tosVersion: tosVersion || '1.0',
+      tosAcceptedAt: tosAcceptedAt || admin.firestore.FieldValue.serverTimestamp(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }
