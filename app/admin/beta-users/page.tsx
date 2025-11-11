@@ -144,6 +144,27 @@ export default function AdminBetaUsersPage() {
     setFilteredUsers(filtered)
   }
 
+  const handleResendVerificationEmail = async (userId: string) => {
+    setActionLoading(`resend-verification-${userId}`)
+    try {
+      const response = await fetchWithAuth(`/api/admin/beta-users/${userId}/resend-verification`, {
+        method: 'POST',
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        alert('Verification email resent successfully!')
+        fetchUsers()
+      } else {
+        alert(`Failed: ${data.message}`)
+      }
+    } catch (error) {
+      alert('Error resending verification email')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   const handleResendInvite = async (userId: string) => {
     setActionLoading(`resend-${userId}`)
     try {
@@ -483,6 +504,20 @@ export default function AdminBetaUsersPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+                          {!user.emailVerified && (
+                            <button
+                              onClick={() => handleResendVerificationEmail(user.id)}
+                              disabled={actionLoading === `resend-verification-${user.id}`}
+                              className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
+                              title="Resend Verification Email"
+                            >
+                              {actionLoading === `resend-verification-${user.id}` ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-yellow-400" />
+                              ) : (
+                                <Mail className="w-4 h-4 text-yellow-400" />
+                              )}
+                            </button>
+                          )}
                           <button
                             onClick={() => handleResendInvite(user.id)}
                             disabled={actionLoading === `resend-${user.id}`}

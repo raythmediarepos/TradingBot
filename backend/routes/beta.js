@@ -954,6 +954,79 @@ router.post('/admin/users/:userId/revoke', async (req, res) => {
 })
 
 /**
+ * POST /api/beta/admin/users/:userId/resend-verification
+ * Resend verification email (admin only)
+ */
+router.post('/admin/users/:userId/resend-verification', async (req, res) => {
+  try {
+    // TODO: Add admin authentication middleware
+    
+    const { userId } = req.params
+
+    const userResult = await getBetaUser(userId)
+    if (!userResult.success) {
+      return res.status(404).json({
+        error: 'User not found',
+      })
+    }
+
+    const user = userResult.user
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.status(400).json({
+        error: 'Email already verified',
+        message: 'This user has already verified their email',
+      })
+    }
+
+    // Send verification email
+    console.log('📧 [ADMIN] Resending verification email to', user.email)
+    const emailSent = await sendBetaWelcomeEmail(
+      user.email,
+      user.firstName,
+      user.position,
+      user.isFree,
+      user.emailVerificationToken
+    )
+
+    if (!emailSent) {
+      console.error('❌ [ADMIN] Failed to send verification email')
+      return res.status(500).json({
+        error: 'Failed to send email',
+        message: 'Email service unavailable',
+      })
+    }
+
+    // Send Discord notification
+    const { sendDiscordNotification } = require('../services/discordNotificationService')
+    await sendDiscordNotification({
+      type: 'reminder',
+      title: '📧 Verification Email Resent (Admin)',
+      description: `Admin manually resent verification email to **${user.firstName} ${user.lastName}**`,
+      fields: [
+        { name: '📧 Email', value: user.email, inline: true },
+        { name: '📍 Position', value: `#${user.position}`, inline: true },
+        { name: '👤 Admin Action', value: 'Manual Resend', inline: true },
+      ],
+    })
+
+    console.log('✅ [ADMIN] Verification email resent successfully')
+
+    res.json({
+      success: true,
+      message: 'Verification email resent successfully',
+    })
+  } catch (error) {
+    console.error('Error in POST /api/beta/admin/users/:userId/resend-verification:', error)
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+    })
+  }
+})
+
+/**
  * POST /api/beta/admin/users/:userId/resend-invite
  * Resend Discord invite (admin only)
  */
