@@ -925,6 +925,19 @@ router.post('/admin/users/:userId/revoke', async (req, res) => {
     // TODO: Add admin authentication middleware
     
     const { userId } = req.params
+    const { reason } = req.body
+
+    // Get user data first for notification
+    const userResult = await getBetaUser(userId)
+    if (!userResult.success) {
+      return res.status(404).json({
+        error: 'User not found',
+      })
+    }
+
+    const user = userResult.user
+
+    console.log('🚫 [ADMIN] Revoking access for', user.email, '- Reason:', reason || 'No reason provided')
 
     const result = await updateBetaUser(userId, {
       status: USER_STATUS.SUSPENDED,
@@ -932,11 +945,29 @@ router.post('/admin/users/:userId/revoke', async (req, res) => {
     })
 
     if (!result.success) {
+      console.error('❌ [ADMIN] Failed to revoke access')
       return res.status(400).json({
         error: 'Failed to revoke access',
         message: result.error,
       })
     }
+
+    // Send Discord notification
+    const { sendDiscordNotification } = require('../services/discordNotificationService')
+    await sendDiscordNotification({
+      type: 'error',
+      title: '🚫 Access Revoked (Admin)',
+      description: `Admin revoked access for **${user.firstName} ${user.lastName}**`,
+      fields: [
+        { name: '📧 Email', value: user.email, inline: true },
+        { name: '📍 Position', value: `#${user.position}`, inline: true },
+        { name: '💰 Type', value: user.isFree ? 'Free Beta' : 'Paid Beta', inline: true },
+        { name: '📝 Reason', value: reason || 'No reason provided', inline: false },
+        { name: '👤 Admin Action', value: 'Access Revoked', inline: true },
+      ],
+    })
+
+    console.log('✅ [ADMIN] Access revoked successfully')
 
     // TODO: Revoke Discord role via bot
 
@@ -1045,10 +1076,13 @@ router.post('/admin/users/:userId/resend-invite', async (req, res) => {
 
     const user = userResult.user
 
+    console.log('🔄 [ADMIN] Resending Discord invite to', user.email)
+
     // Create new Discord invite
     const inviteResult = await createDiscordInvite(userId, user.email)
     
     if (!inviteResult.success) {
+      console.error('❌ [ADMIN] Failed to create Discord invite')
       return res.status(500).json({
         error: 'Failed to create invite',
         message: inviteResult.error,
@@ -1057,6 +1091,22 @@ router.post('/admin/users/:userId/resend-invite', async (req, res) => {
 
     // Send invite email
     await sendDiscordInviteEmail(user.email, user.firstName, inviteResult.token)
+
+    // Send Discord notification
+    const { sendDiscordNotification } = require('../services/discordNotificationService')
+    await sendDiscordNotification({
+      type: 'discord',
+      title: '🔄 Discord Invite Resent (Admin)',
+      description: `Admin manually resent Discord invite to **${user.firstName} ${user.lastName}**`,
+      fields: [
+        { name: '📧 Email', value: user.email, inline: true },
+        { name: '📍 Position', value: `#${user.position}`, inline: true },
+        { name: '👤 Admin Action', value: 'Manual Resend', inline: true },
+        { name: '🔗 Invite Token', value: `\`${inviteResult.token.substring(0, 20)}...\``, inline: false },
+      ],
+    })
+
+    console.log('✅ [ADMIN] Discord invite resent successfully')
 
     res.json({
       success: true,
