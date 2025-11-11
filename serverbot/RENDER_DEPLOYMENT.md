@@ -82,8 +82,8 @@ Add these environment variables in Render dashboard:
 BACKEND_URL=https://your-backend.render.com
 FRONTEND_URL=https://your-frontend.vercel.app
 
-# Discord Bot Token
-DISCORD_TOKEN=your_discord_bot_token_here
+# Discord Bot Token (use same token as main backend)
+DISCORD_BOT_TOKEN=your_discord_bot_token_here
 
 # Discord Server & Role IDs
 DISCORD_SERVER_ID=your_server_id_here
