@@ -5,6 +5,7 @@ const { authenticate } = require('../middleware/auth')
 const { createDiscordInvite } = require('../services/betaUserService')
 const { sendDiscordInviteEmail } = require('../services/emailService')
 const { serializeUser, serializeFirestoreData } = require('../utils/firestore')
+const { notifyDiscordInviteGenerated } = require('../services/discordNotificationService')
 
 /**
  * GET /api/user/profile
@@ -385,6 +386,14 @@ router.post('/generate-discord-invite', authenticate, async (req, res) => {
       console.error('⚠️  [DISCORD] Discord invite email failed to send')
       console.error('   → User can still access invite from dashboard')
     }
+
+    // Send Discord notification
+    await notifyDiscordInviteGenerated({
+      email: req.user.email,
+      firstName: req.user.firstName,
+      lastName: req.user.lastName,
+      position: req.user.position,
+    })
 
     res.json({
       success: true,

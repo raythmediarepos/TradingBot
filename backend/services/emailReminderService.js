@@ -6,6 +6,12 @@ const {
   sendDiscordVerificationReminder,
 } = require('./emailService')
 const { getBetaStats } = require('./betaUserService')
+const {
+  notifyEmailReminderSent,
+  notifyPaymentReminderSent,
+  notifyDiscordInviteReminderSent,
+  notifyDiscordVerificationReminderSent,
+} = require('./discordNotificationService')
 
 /**
  * Send email verification reminders
@@ -49,6 +55,7 @@ const sendEmailVerificationReminders = async () => {
           'emailRemindersSent.tenMinute': admin.firestore.FieldValue.serverTimestamp(),
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyEmailReminderSent(user, 'first')
         remindersSent++
       }
 
@@ -65,6 +72,7 @@ const sendEmailVerificationReminders = async () => {
           'emailRemindersSent.oneHour': admin.firestore.FieldValue.serverTimestamp(),
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyEmailReminderSent(user, 'second')
         remindersSent++
       }
 
@@ -81,6 +89,7 @@ const sendEmailVerificationReminders = async () => {
           'emailRemindersSent.twentyFourHour': admin.firestore.FieldValue.serverTimestamp(),
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyEmailReminderSent(user, 'final')
         remindersSent++
       }
     }
@@ -144,6 +153,7 @@ const sendPaymentReminders = async () => {
           journeyStage: 'payment',
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyPaymentReminderSent(user, 'first')
         remindersSent++
       }
 
@@ -159,6 +169,7 @@ const sendPaymentReminders = async () => {
           'paymentRemindersSent.twentyFourHour': admin.firestore.FieldValue.serverTimestamp(),
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyPaymentReminderSent(user, 'second')
         remindersSent++
       }
 
@@ -175,6 +186,7 @@ const sendPaymentReminders = async () => {
           'paymentRemindersSent.threeDays': admin.firestore.FieldValue.serverTimestamp(),
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyPaymentReminderSent(user, 'final')
         remindersSent++
       }
     }
@@ -255,6 +267,7 @@ const sendDiscordInviteReminders = async () => {
           journeyStage: 'discord_invite',
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyDiscordInviteReminderSent(user, 'first')
         remindersSent++
       }
 
@@ -270,6 +283,7 @@ const sendDiscordInviteReminders = async () => {
           'discordInviteRemindersSent.twentyFourHour': admin.firestore.FieldValue.serverTimestamp(),
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyDiscordInviteReminderSent(user, 'second')
         remindersSent++
       }
     }
@@ -334,6 +348,7 @@ const sendDiscordVerificationReminders = async () => {
           journeyStage: 'discord_verification',
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyDiscordVerificationReminderSent(user, 'first')
         remindersSent++
       }
 
@@ -350,6 +365,7 @@ const sendDiscordVerificationReminders = async () => {
           'discordVerificationRemindersSent.twentyFourHour': admin.firestore.FieldValue.serverTimestamp(),
           lastJourneyUpdate: admin.firestore.FieldValue.serverTimestamp(),
         })
+        await notifyDiscordVerificationReminderSent(user, 'second')
         remindersSent++
       }
     }

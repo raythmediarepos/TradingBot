@@ -35,6 +35,7 @@ const {
 } = require('../services/stripeService')
 const { sendBetaWelcomeEmail, sendDiscordInviteEmail, sendPaymentConfirmationEmail } = require('../services/emailService')
 const { hashPassword, validatePassword } = require('../utils/password')
+const { notifySignup, notifyEmailVerified, notifyDiscordInviteGenerated } = require('../services/discordNotificationService')
 
 // ============================================
 // PUBLIC ROUTES
@@ -179,6 +180,15 @@ router.post('/signup', signupLimiter, async (req, res) => {
       console.log('✅ [BETA SIGNUP] Verification email sent successfully')
     }
 
+    // Send Discord notification
+    await notifySignup({
+      email,
+      firstName,
+      lastName,
+      position: result.position,
+      isFree: result.isFree,
+    })
+
     res.status(201).json({
       success: true,
       message: result.message,
@@ -275,6 +285,15 @@ router.post('/verify-email', verificationLimiter, async (req, res) => {
     }
 
     const user = userResult.user
+
+    // Send Discord notification
+    await notifyEmailVerified({
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      position: user.position,
+      isFree: user.isFree,
+    })
 
     // Discord invite will be available on user dashboard after login
     // No longer sending Discord invite via email
