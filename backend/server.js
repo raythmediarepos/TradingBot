@@ -19,6 +19,9 @@ const PORT = process.env.PORT || 5000
 // MIDDLEWARE
 // ============================================
 
+// Trust proxy - Required for rate limiting and accurate IP detection when behind Render proxy
+app.set('trust proxy', true)
+
 // Security headers
 app.use(helmet())
 
