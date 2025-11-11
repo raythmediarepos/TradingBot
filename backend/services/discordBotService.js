@@ -123,8 +123,9 @@ client.once('clientReady', async () => {
 
 /**
  * New member joined event
+ * Note: Using named function to allow checking if listener already exists
  */
-client.on('guildMemberAdd', async (member) => {
+const handleGuildMemberAdd = async (member) => {
   try {
     console.log('👤 [DISCORD BOT] New member joined')
     console.log(`   → Username: ${member.user.tag}`)
@@ -166,12 +167,13 @@ client.on('guildMemberAdd', async (member) => {
   } catch (error) {
     console.error('❌ [DISCORD BOT] Error handling new member:', error)
   }
-})
+}
 
 /**
  * Direct message handler for token verification
+ * Note: Using named function to allow checking if listener already exists
  */
-client.on('messageCreate', async (message) => {
+const handleMessageCreate = async (message) => {
   // Handle DM messages
   if (!message.guild) {
     if (message.author.bot) return
@@ -227,7 +229,7 @@ client.on('messageCreate', async (message) => {
 
   // Track message for analytics
   await trackMessage(message)
-})
+}
 
 /**
  * Retry role assignment with exponential backoff
@@ -541,6 +543,14 @@ const startBot = async () => {
       return
     }
 
+    // Remove existing event listeners to prevent duplicates on hot reload
+    client.removeListener('guildMemberAdd', handleGuildMemberAdd)
+    client.removeListener('messageCreate', handleMessageCreate)
+    
+    // Register event listeners
+    client.on('guildMemberAdd', handleGuildMemberAdd)
+    client.on('messageCreate', handleMessageCreate)
+    
     console.log('🚀 [DISCORD BOT] Starting Discord bot...')
     await client.login(DISCORD_CONFIG.BOT_TOKEN)
   } catch (error) {
