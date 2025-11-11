@@ -774,7 +774,7 @@ const validateDiscordInvite = async (token) => {
     if (snapshot.empty) {
       return {
         success: false,
-        message: 'Invalid or already used invite token',
+        error: 'Token already used',
       }
     }
 
@@ -788,16 +788,33 @@ const validateDiscordInvite = async (token) => {
     if (now > expiresAt) {
       return {
         success: false,
-        message: 'Invite token has expired',
+        error: 'Token expired',
       }
     }
 
+    // Fetch beta user data
+    const userDoc = await db.collection(COLLECTIONS.BETA_USERS).doc(data.userId).get()
+    
+    if (!userDoc.exists) {
+      return {
+        success: false,
+        error: 'User not found',
+      }
+    }
+
+    const userData = userDoc.data()
+
     return {
       success: true,
-      invite: {
-        id: doc.id,
-        ...data,
-      },
+      inviteId: doc.id,
+      userId: data.userId,
+      userEmail: userData.email,
+      userFirstName: userData.firstName,
+      userLastName: userData.lastName,
+      userPosition: userData.position,
+      isFree: userData.isFree || false,
+      token: data.token,
+      expiresAt: data.expiresAt,
     }
   } catch (error) {
     console.error('Error validating Discord invite:', error)

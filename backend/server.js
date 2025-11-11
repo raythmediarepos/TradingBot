@@ -20,7 +20,8 @@ const PORT = process.env.PORT || 5000
 // ============================================
 
 // Trust proxy - Required for rate limiting and accurate IP detection when behind Render proxy
-app.set('trust proxy', true)
+// Use specific trust proxy value for Render (1 hop) to avoid permissive trust
+app.set('trust proxy', 1)
 
 // Security headers
 app.use(helmet())
