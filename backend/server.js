@@ -9,6 +9,7 @@ const webhookRoutes = require('./routes/webhooks')
 const { startBot, stopBot } = require('./services/discordBotService')
 const { initializeCleanupJobs } = require('./jobs/cleanupJobs')
 const { initializeReminderJobs } = require('./jobs/reminderJobs')
+const { initializeMonitoringJobs } = require('./jobs/monitoringJobs')
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -179,6 +180,13 @@ app.listen(PORT, async () => {
     initializeReminderJobs()
   } catch (error) {
     console.error('⚠️  Failed to initialize reminder jobs:', error.message)
+  }
+  
+  // Initialize monitoring jobs
+  try {
+    initializeMonitoringJobs()
+  } catch (error) {
+    console.error('⚠️  Failed to initialize monitoring jobs:', error.message)
   }
 })
 
