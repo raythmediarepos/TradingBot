@@ -1766,5 +1766,60 @@ router.get('/system-health', authenticate, requireAdmin, async (req, res) => {
   }
 })
 
+/**
+ * POST /api/admin/test-jarvis-alert
+ * Test Jarvis-style alerts (admin only)
+ */
+router.post('/test-jarvis-alert', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { severity, service } = req.body
+    
+    // Validate inputs
+    const validSeverities = ['critical', 'warning', 'info']
+    const validServices = ['system', 'api', 'email', 'users']
+    
+    if (!validSeverities.includes(severity)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid severity. Must be: critical, warning, or info',
+      })
+    }
+    
+    if (!validServices.includes(service)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid service. Must be: system, api, email, or users',
+      })
+    }
+    
+    // Create test alert
+    const testAlert = {
+      severity,
+      service,
+      message: `Test ${severity} alert for ${service} service`,
+      threshold: service === 'system' ? 95 : service === 'api' ? 3000 : service === 'email' ? 90 : 60,
+      actual: service === 'system' ? 85 : service === 'api' ? 4500 : service === 'email' ? 75 : 45,
+      timestamp: new Date(),
+    }
+    
+    // Send to Discord using Jarvis format
+    const { sendAlertEmail } = require('../services/monitoring/alertService')
+    await sendAlertEmail(testAlert)
+    
+    res.json({
+      success: true,
+      message: 'Test Jarvis alert sent successfully',
+      alert: testAlert,
+    })
+  } catch (error) {
+    console.error('Error sending test alert:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send test alert',
+      message: error.message,
+    })
+  }
+})
+
 module.exports = router
 

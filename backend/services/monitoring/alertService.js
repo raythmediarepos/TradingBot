@@ -135,17 +135,133 @@ const checkThresholds = async (metrics, healthCheck) => {
 }
 
 /**
+ * Get admin names from Discord user IDs
+ * @returns {Promise<Array<string>>}
+ */
+const getAdminNames = async () => {
+  if (!discordClient) return []
+  
+  try {
+    const adminIds = (process.env.DISCORD_ADMIN_IDS || '').split(',').filter(Boolean)
+    const names = []
+    
+    for (const adminId of adminIds) {
+      try {
+        const user = await discordClient.users.fetch(adminId.trim())
+        // Get first name or username
+        const name = user.globalName || user.username || 'Admin'
+        names.push(name)
+      } catch (error) {
+        console.error(`Failed to fetch admin user ${adminId}:`, error.message)
+      }
+    }
+    
+    return names
+  } catch (error) {
+    console.error('Error fetching admin names:', error)
+    return []
+  }
+}
+
+/**
+ * Get Jarvis-style greeting based on time of day
+ * @param {string} name - Admin name
+ * @returns {string}
+ */
+const getJarvisGreeting = (name) => {
+  const hour = new Date().getHours()
+  
+  if (hour < 6) {
+    return `Apologies for the late hour, ${name}`
+  } else if (hour < 12) {
+    return `Good morning, ${name}`
+  } else if (hour < 18) {
+    return `Good afternoon, ${name}`
+  } else {
+    return `Good evening, ${name}`
+  }
+}
+
+/**
+ * Get Jarvis-style alert message
+ * @param {Object} alert - Alert object
+ * @param {string} adminName - Admin name
+ * @returns {string}
+ */
+const getJarvisMessage = (alert, adminName) => {
+  const greeting = getJarvisGreeting(adminName)
+  
+  // Critical alerts
+  if (alert.severity === 'critical') {
+    if (alert.service === 'system') {
+      return `${greeting}. I must inform you that we're experiencing a critical system incident. The platform has been degraded for the past 15 minutes across multiple health checks. Your immediate attention is required.`
+    }
+    if (alert.service === 'email') {
+      return `${greeting}. I've detected a significant issue with our email delivery system. The bounce rate has exceeded acceptable parameters at ${alert.actual}%, well above our ${alert.threshold}% threshold. User communications may be compromised.`
+    }
+  }
+  
+  // Warning alerts
+  if (alert.severity === 'warning') {
+    if (alert.service === 'system') {
+      return `${greeting}. I wanted to bring to your attention that system uptime has dropped to ${alert.actual}% over the last 24 hours. While not critical, this is below our ${alert.threshold}% target and may indicate underlying issues.`
+    }
+    if (alert.service === 'api') {
+      return `${greeting}. The API response times have been elevated at ${alert.actual}ms, which is above our optimal threshold of ${alert.threshold}ms. User experience may be impacted.`
+    }
+    if (alert.service === 'email') {
+      return `${greeting}. Email delivery rates have dropped to ${alert.actual}%, below our ${alert.threshold}% target. I recommend investigating our email service provider status.`
+    }
+  }
+  
+  // Info alerts
+  if (alert.severity === 'info') {
+    if (alert.service === 'users') {
+      return `${greeting}. I've noticed that email verification rates have declined to ${alert.actual}%, below our ${alert.threshold}% target. This may warrant reviewing our verification email templates and timing.`
+    }
+  }
+  
+  // Fallback
+  return `${greeting}. I've detected an anomaly that requires your review: ${alert.message}`
+}
+
+/**
+ * Get Jarvis-style recommendation
+ * @param {Object} alert - Alert object
+ * @returns {string}
+ */
+const getJarvisRecommendation = (alert) => {
+  if (alert.service === 'system' && alert.severity === 'critical') {
+    return '🎯 **Recommended Actions:**\n• Check Render backend logs immediately\n• Verify Firebase connectivity\n• Review recent deployments for potential issues\n• Monitor user impact and consider status page update'
+  }
+  
+  if (alert.service === 'email') {
+    return '🎯 **Recommended Actions:**\n• Check Resend dashboard for delivery issues\n• Review recent email template changes\n• Verify DNS records and domain reputation\n• Consider switching to backup email service if critical'
+  }
+  
+  if (alert.service === 'api') {
+    return '🎯 **Recommended Actions:**\n• Review API endpoint performance metrics\n• Check for database query bottlenecks\n• Monitor server resource utilization\n• Consider scaling if load-related'
+  }
+  
+  if (alert.service === 'users') {
+    return '🎯 **Recommended Actions:**\n• Review verification email content and timing\n• Check spam filter compliance\n• Test email delivery to common providers\n• Consider A/B testing subject lines'
+  }
+  
+  return '🎯 **Recommended Action:** Review the system health dashboard for detailed diagnostics.'
+}
+
+/**
  * Get emoji for severity level
  * @param {string} severity - Alert severity
  * @returns {string}
  */
 const getSeverityEmoji = (severity) => {
   const emojis = {
-    critical: '🚨',
-    warning: '⚠️',
-    info: 'ℹ️',
+    critical: '🔴',
+    warning: '🟡',
+    info: '🔵',
   }
-  return emojis[severity] || '📢'
+  return emojis[severity] || '⚪'
 }
 
 /**
@@ -163,7 +279,7 @@ const getSeverityColor = (severity) => {
 }
 
 /**
- * Send alert to Discord
+ * Send alert to Discord (Jarvis-style)
  * @param {Object} alert - Alert to send
  * @returns {Promise<void>}
  */
@@ -186,74 +302,100 @@ const sendDiscordAlert = async (alert) => {
       return
     }
 
-    // Build embed
+    // Get admin names for personalization
+    const adminNames = await getAdminNames()
+    const primaryAdminName = adminNames[0] || 'Admin'
+    
+    // Get Jarvis-style message
+    const jarvisMessage = getJarvisMessage(alert, primaryAdminName)
+    const recommendation = getJarvisRecommendation(alert)
+
+    // Build enhanced embed
     const embed = {
       color: getSeverityColor(alert.severity),
-      title: `${getSeverityEmoji(alert.severity)} System Alert`,
-      description: alert.message,
+      title: `${getSeverityEmoji(alert.severity)} ${alert.severity === 'critical' ? 'URGENT SYSTEM ALERT' : alert.severity === 'warning' ? 'System Advisory' : 'System Notification'}`,
+      description: jarvisMessage,
       fields: [
         {
-          name: '🔧 Service',
-          value: alert.service.toUpperCase(),
+          name: '📊 Service Affected',
+          value: `\`${alert.service.toUpperCase()}\``,
           inline: true,
         },
         {
-          name: '📊 Severity',
-          value: alert.severity.toUpperCase(),
+          name: '🎚️ Priority Level',
+          value: `\`${alert.severity.toUpperCase()}\``,
           inline: true,
         },
       ],
       timestamp: new Date().toISOString(),
       footer: {
-        text: 'Helwa AI Monitoring System',
+        text: 'J.A.R.V.I.S. • Helwa AI Monitoring System',
+        icon_url: 'https://cdn-icons-png.flaticon.com/512/3468/3468377.png', // AI/Robot icon
       },
     }
 
-    // Add threshold and actual if present
+    // Add metrics if present
     if (alert.threshold !== undefined && alert.actual !== undefined) {
       embed.fields.push(
         {
-          name: '🎯 Threshold',
-          value: String(alert.threshold),
+          name: '📏 Expected Threshold',
+          value: `\`${alert.threshold}${alert.service.includes('percent') || alert.service === 'system' ? '%' : 'ms'}\``,
           inline: true,
         },
         {
-          name: '📈 Actual',
-          value: String(alert.actual),
+          name: '📈 Current Value',
+          value: `\`${alert.actual}${alert.service.includes('percent') || alert.service === 'system' ? '%' : 'ms'}\``,
+          inline: true,
+        },
+        {
+          name: '⚠️ Deviation',
+          value: `\`${Math.abs(alert.actual - alert.threshold)}${alert.service.includes('percent') || alert.service === 'system' ? '%' : 'ms'}\``,
           inline: true,
         },
       )
     }
 
-    // Add view dashboard link
-    const dashboardUrl = process.env.FRONTEND_URL 
-      ? `${process.env.FRONTEND_URL}/admin/system-health`
-      : 'Check your admin dashboard'
-    
+    // Add recommendation
     embed.fields.push({
-      name: '🔗 Actions',
-      value: `[View Dashboard](${dashboardUrl})`,
+      name: '\u200B', // Empty space
+      value: recommendation,
       inline: false,
     })
 
-    // Build message - tag admins for critical alerts
+    // Add dashboard link
+    const dashboardUrl = process.env.FRONTEND_URL 
+      ? `${process.env.FRONTEND_URL}/admin/system-health`
+      : 'https://www.helwa.ai/admin/system-health'
+    
+    embed.fields.push({
+      name: '🔗 System Diagnostics',
+      value: `[Access Dashboard](${dashboardUrl}) • [View Logs](${process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace('www.', 'render-') : 'https://render.com'})`,
+      inline: false,
+    })
+
+    // Build Jarvis-style message content
     let messageContent = ''
+    const adminIds = (process.env.DISCORD_ADMIN_IDS || '').split(',').filter(Boolean)
+    
     if (alert.severity === 'critical') {
-      const adminIds = (process.env.DISCORD_ADMIN_IDS || '').split(',').filter(Boolean)
       if (adminIds.length > 0) {
-        messageContent = adminIds.map(id => `<@${id.trim()}>`).join(' ') + ' 🚨 **CRITICAL ALERT**'
+        messageContent = `${adminIds.map(id => `<@${id.trim()}>`).join(' ')}\n\n🔴 **CRITICAL ALERT** • Immediate attention required`
       } else {
-        messageContent = '🚨 **CRITICAL ALERT**'
+        messageContent = '🔴 **CRITICAL ALERT** • Immediate attention required'
+      }
+    } else if (alert.severity === 'warning') {
+      if (adminIds.length > 0) {
+        messageContent = `${adminIds.map(id => `<@${id.trim()}>`).join(', ')}\n\n🟡 **System Advisory** • Review recommended`
       }
     }
 
     // Send to Discord
     await channel.send({
-      content: messageContent || undefined,
+      content: messageContent || '🔵 **System Update**',
       embeds: [embed],
     })
 
-    console.log(`✅ [ALERT] Discord alert sent to #${channel.name}`)
+    console.log(`✅ [JARVIS] Personalized alert sent to #${channel.name} for ${primaryAdminName}`)
   } catch (error) {
     console.error('❌ [ALERT] Error sending Discord alert:', error.message)
   }
