@@ -162,13 +162,42 @@ Returns all user data including position
 
 ---
 
+## 🚨 ISSUE FOUND & FIXED (Nov 13, 2025)
+
+### Problem
+1. Admin user had position #0 (admins shouldn't have positions)
+2. Counter was out of sync, causing new user to get position #20 instead of #13
+
+### Root Cause
+- Admin users were being included in position counts
+- Counter wasn't being maintained correctly
+
+### Solution
+Created two new fix scripts:
+
+1. **`backend/scripts/fixAdminPosition.js`**
+   - Removes position field from admin users
+   - Run: `node backend/scripts/fixAdminPosition.js`
+
+2. **`backend/scripts/renumberNow.js`**
+   - Manually triggers position renumbering
+   - Updates counter to match highest position
+   - Run: `node backend/scripts/renumberNow.js`
+
+### Prevention
+- Hourly renumbering job will auto-fix any drift
+- Admin panel now properly filters out admins
+
+---
+
 ## 🎯 CONCLUSION
 
-**ALL POSITION DISPLAYS ARE ACCURATE** ✅
+**ALL POSITION DISPLAYS ARE NOW ACCURATE** ✅
 
 Every display location pulls directly from the database `user.position` field, which is:
 1. Set during signup via atomic counter
 2. Verified and corrected hourly via renumbering
 3. Never cached or stored in frontend
 4. Always fresh when sent in emails/notifications
+5. Admins are excluded from position numbering
 
