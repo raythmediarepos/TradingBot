@@ -1734,8 +1734,16 @@ router.get('/system-health', authenticate, requireAdmin, async (req, res) => {
       }))
     }
     
+    // Convert timestamp to ISO string
+    const lastCheckTime = healthCheckData?.timestamp
+    const lastCheckISO = lastCheckTime && lastCheckTime.toDate
+      ? lastCheckTime.toDate().toISOString()
+      : lastCheckTime && lastCheckTime._seconds
+      ? new Date(lastCheckTime._seconds * 1000).toISOString()
+      : new Date().toISOString()
+    
     const healthData = {
-      lastCheck: healthCheckData?.timestamp,
+      lastCheck: lastCheckISO,
       overallStatus: healthCheckData?.overall || 'unknown',
       services: healthCheckData?.services || {},
       systemMetrics: serialize(metricsData?.system) || {},

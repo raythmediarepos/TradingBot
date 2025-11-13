@@ -199,7 +199,7 @@ function SystemHealthContent() {
                 <div className="flex items-center justify-between mb-4">
                   <Users className="w-8 h-8 text-blue-500" />
                   <span className="text-2xl font-bold text-blue-500">
-                    {healthData.userMetrics?.totalUsers || 0}
+                    {(healthData.userMetrics?.totalUsers ?? healthData.userMetrics?.total) || 0}
                   </span>
                 </div>
                 <p className="text-sm text-gray-400">Total Users</p>
@@ -241,12 +241,12 @@ function SystemHealthContent() {
                     (healthData.emailMetrics?.deliveryRate || 0) >= 80 ? 'text-yellow-500' :
                     'text-red-500'
                   }`}>
-                    {healthData.emailMetrics?.deliveryRate || 0}%
+                    {healthData.emailMetrics?.deliveryRate?.toFixed?.(0) || healthData.emailMetrics?.deliveryRate || 0}%
                   </span>
                 </div>
                 <p className="text-sm text-gray-400">Email Delivery</p>
                 <p className="text-xs text-white/40 mt-1">
-                  {healthData.emailMetrics?.totalSent || 0} sent
+                  {healthData.emailMetrics?.sent || 0} sent
                 </p>
               </motion.div>
             </div>
@@ -336,13 +336,13 @@ function SystemHealthContent() {
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Verified</p>
                   <p className="text-2xl font-bold text-green-500">
-                    {healthData.userMetrics?.verifiedUsers || 0}
+                    {healthData.userMetrics?.verifiedUsers ?? healthData.userMetrics?.verified ?? 0}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Discord Joined</p>
                   <p className="text-2xl font-bold text-blue-500">
-                    {healthData.userMetrics?.discordUsers || 0}
+                    {healthData.userMetrics?.discordUsers ?? healthData.userMetrics?.discordJoined ?? 0}
                   </p>
                 </div>
                 <div>
@@ -354,7 +354,7 @@ function SystemHealthContent() {
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Beta Spots</p>
                   <p className="text-2xl font-bold text-purple-500">
-                    {healthData.businessMetrics?.betaSpotsFilled || 0}/100
+                    {healthData.businessMetrics?.betaSpotsFilled ?? healthData.userMetrics?.totalUsers ?? 0}/100
                   </p>
                 </div>
               </div>
