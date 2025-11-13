@@ -724,6 +724,130 @@ ${services?.discord ? '✓' : '✗'} Discord Bot
   }
 }
 
+/**
+ * Send user issue report to Discord
+ * @param {Object} report - Issue report data
+ * @returns {Promise<void>}
+ */
+const sendJarvisIssueReport = async (report) => {
+  if (!discordClient) {
+    console.log('⚠️  [JARVIS] Discord client not initialized')
+    return
+  }
+
+  try {
+    const channelId = process.env.DISCORD_ALERTS_CHANNEL_ID
+    if (!channelId) {
+      console.log('⚠️  [JARVIS] DISCORD_ALERTS_CHANNEL_ID not set')
+      return
+    }
+
+    const channel = await discordClient.channels.fetch(channelId)
+    if (!channel) {
+      console.error('❌ [JARVIS] Could not find Discord channel')
+      return
+    }
+
+    // Get admin names for personalization
+    const adminNames = await getAdminNames()
+    const primaryAdminName = adminNames[0] || 'Sir'
+    
+    // Determine severity color based on category
+    const severityColors = {
+      bug: 0xFF0000,        // Red
+      feature: 0x0099FF,    // Blue
+      question: 0xFFD700,   // Gold
+      payment: 0xFF6B6B,    // Light Red
+      account: 0xFFA500,    // Orange
+      general: 0x808080,    // Gray
+    }
+    
+    const color = severityColors[report.category] || 0x808080
+    
+    // Category emoji
+    const categoryEmojis = {
+      bug: '🐛',
+      feature: '💡',
+      question: '❓',
+      payment: '💳',
+      account: '👤',
+      general: '📝',
+    }
+    
+    const emoji = categoryEmojis[report.category] || '📝'
+    
+    // Build embed
+    const embed = {
+      color,
+      title: `${emoji} User Issue Report`,
+      description: `${getJarvisGreeting(primaryAdminName)}. A user has submitted an issue report that requires your attention.`,
+      fields: [
+        {
+          name: '👤 Reporter',
+          value: `${report.userName}\n${report.userEmail}`,
+          inline: true,
+        },
+        {
+          name: '📂 Category',
+          value: `\`${report.category?.toUpperCase() || 'GENERAL'}\``,
+          inline: true,
+        },
+        {
+          name: '🆔 Issue ID',
+          value: `\`${report.issueId}\``,
+          inline: true,
+        },
+        {
+          name: '📌 Title',
+          value: report.title,
+          inline: false,
+        },
+        {
+          name: '📝 Description',
+          value: report.description.length > 1000 
+            ? report.description.substring(0, 1000) + '...' 
+            : report.description,
+          inline: false,
+        },
+      ],
+      footer: {
+        text: 'J.A.R.V.I.S. • User Issue Report',
+        icon_url: 'https://cdn-icons-png.flaticon.com/512/3468/3468377.png',
+      },
+      timestamp: new Date().toISOString(),
+    }
+
+    // Add URL if provided
+    if (report.url) {
+      embed.fields.push({
+        name: '🔗 Page URL',
+        value: report.url,
+        inline: false,
+      })
+    }
+
+    // Add browser info if provided
+    if (report.userAgent) {
+      const browserInfo = report.userAgent.substring(0, 100)
+      embed.fields.push({
+        name: '🌐 Browser',
+        value: `\`${browserInfo}${report.userAgent.length > 100 ? '...' : ''}\``,
+        inline: false,
+      })
+    }
+
+    // Send to Discord (no tagging for user reports)
+    await channel.send({
+      content: '📬 **New User Issue Report**',
+      embeds: [embed],
+    })
+
+    console.log(`✅ [JARVIS] Issue report notification sent for ${report.issueId}`)
+  } catch (error) {
+    console.error(`❌ [JARVIS] Error sending issue report:`, error.message)
+  }
+}
+
 module.exports = {
   initializeDiscordAlerts,
   checkThresholds,
@@ -733,5 +857,6 @@ module.exports = {
   generateDailySummary,
   sendJarvisStatusUpdate,
   sendErrorLogAlert,
+  sendJarvisIssueReport,
 }
 

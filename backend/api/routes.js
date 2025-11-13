@@ -327,5 +327,12 @@ router.get('/health', (req, res) => {
   })
 })
 
+// ============================================
+// ISSUE REPORTS ROUTES
+// ============================================
+
+const issueReportsRouter = require('../routes/issueReports')
+router.use('/issues', issueReportsRouter)
+
 module.exports = router
 
