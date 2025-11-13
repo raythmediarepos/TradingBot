@@ -115,7 +115,11 @@ const generateEmailVerificationToken = () => {
  */
 const getBetaStats = async () => {
   try {
-    const snapshot = await db.collection(COLLECTIONS.BETA_USERS).get()
+    // Only count non-admin users
+    const snapshot = await db.collection(COLLECTIONS.BETA_USERS)
+      .where('role', '!=', 'admin')
+      .orderBy('role')
+      .get()
     const totalUsers = snapshot.size
     const remaining = Math.max(0, MAX_BETA_USERS - totalUsers)
     
