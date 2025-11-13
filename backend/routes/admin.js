@@ -1690,5 +1690,73 @@ router.post('/email-health-check', authenticate, requireAdmin, async (req, res) 
 const testingRoutes = require('./testing')
 router.use('/testing', testingRoutes)
 
+/**
+ * @route   GET /api/admin/system-health
+ * @desc    Get system health and metrics data
+ * @access  Admin only
+ */
+router.get('/system-health', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { admin: adminSdk, db } = require('../config/firebase-admin')
+    
+    // Get latest health check
+    const latestHealthCheck = await db
+      .collection('healthChecks')
+      .orderBy('timestamp', 'desc')
+      .limit(1)
+      .get()
+    
+    let healthCheckData = null
+    if (!latestHealthCheck.empty) {
+      healthCheckData = latestHealthCheck.docs[0].data()
+    }
+    
+    // Get latest metrics
+    const latestMetrics = await db
+      .collection('systemMetrics')
+      .orderBy('timestamp', 'desc')
+      .limit(1)
+      .get()
+    
+    let metricsData = null
+    if (!latestMetrics.empty) {
+      metricsData = latestMetrics.docs[0].data()
+    }
+    
+    // Serialize Firestore timestamps
+    const serialize = (obj) => {
+      if (!obj) return null
+      return JSON.parse(JSON.stringify(obj, (key, value) => {
+        if (value && typeof value === 'object' && value._seconds) {
+          return new Date(value._seconds * 1000).toISOString()
+        }
+        return value
+      }))
+    }
+    
+    const healthData = {
+      lastCheck: healthCheckData?.timestamp,
+      overallStatus: healthCheckData?.overall || 'unknown',
+      services: healthCheckData?.services || {},
+      systemMetrics: serialize(metricsData?.system) || {},
+      userMetrics: serialize(metricsData?.users) || {},
+      businessMetrics: serialize(metricsData?.business) || {},
+      emailMetrics: serialize(metricsData?.email) || {},
+    }
+    
+    res.json({
+      success: true,
+      data: healthData,
+    })
+  } catch (error) {
+    console.error('Error fetching system health:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch system health data',
+      message: error.message,
+    })
+  }
+})
+
 module.exports = router
 
