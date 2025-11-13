@@ -224,12 +224,21 @@ const handleMessageCreate = async (message) => {
             title.includes('System Advisory') || 
             description.includes('System Advisory') ||
             title.includes('SYSTEM ALERT') ||
+            title.includes('System Alert') ||
             title.includes('CRITICAL ALERT') ||
             title.includes('URGENT SYSTEM ALERT') ||
             content.includes('🔴 CRITICAL ALERT') ||
+            content.includes('🔴 URGENT SYSTEM ALERT') ||
             content.includes('🟡 System Advisory') ||
+            content.includes('🚨 CRITICAL ALERT') ||
+            content.includes('🚨 System Alert') ||
+            content.includes('⚠️ System Alert') ||
             content.includes('System Advisory') ||
-            content.includes('URGENT SYSTEM ALERT')
+            content.includes('URGENT SYSTEM ALERT') ||
+            description.includes('API is not healthy') ||
+            description.includes('Uptime below threshold') ||
+            description.includes('Quota exceeded') ||
+            description.includes('not healthy')
           
           // Keep user journey messages
           const isUserMessage = 
