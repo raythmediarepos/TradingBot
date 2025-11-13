@@ -28,13 +28,40 @@ const initializeLogMonitoring = (alerts) => {
    */
   const shouldIgnoreError = (message) => {
     const ignoredPatterns = [
+      // Routine operations
       'Firebase Admin initialized',
-      'Discord client',
       'Health check',
       'Metrics collection',
       'Reminder check',
       'Position renumbering',
-      // Add more patterns to ignore routine logs
+      
+      // Discord configuration issues (expected on test/no token)
+      'No bot token provided',
+      'Discord bot not available',
+      'Discord client not initialized',
+      'Expected token to be set for this request',
+      '[DISCORD BOT]',
+      '[JARVIS]',
+      '[ALERT] Error sending Discord alert',
+      'Error sending health_check update',
+      'Error sending startup update',
+      
+      // Firebase quota issues (expected on free tier)
+      'Quota exceeded',
+      'RESOURCE_EXHAUSTED',
+      'Authentication error',
+      
+      // Log monitor self-referential errors (prevent feedback loop)
+      '[LOG MONITOR]',
+      'Jarvis alerted',
+      'Alert stored in Firebase',
+      
+      // Render/deployment routine messages
+      'Downloaded',
+      'Uploading build',
+      'Build successful',
+      'Deploying',
+      'Your service is live',
     ]
     
     return ignoredPatterns.some(pattern => 
@@ -110,20 +137,32 @@ const initializeLogMonitoring = (alerts) => {
         timestamp: new Date().toISOString(),
       }
 
-      // Store in Firebase
-      await db.collection('errorLogs').add({
-        ...errorData,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      })
+      // Store in Firebase (only if not a Discord/Jarvis internal error)
+      if (!message.includes('JARVIS') && !message.includes('ALERT')) {
+        try {
+          await db.collection('errorLogs').add({
+            ...errorData,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          })
+        } catch (dbError) {
+          // Silently fail if Firebase is down/quota exceeded
+          if (!dbError.message.includes('Quota exceeded')) {
+            originalError('[LOG MONITOR] Failed to store error:', dbError.message)
+          }
+        }
+      }
 
-      // Send Jarvis alert
-      if (alertService && alertService.sendErrorLogAlert) {
-        await alertService.sendErrorLogAlert(errorData)
-        console.log(`✅ [LOG MONITOR] Jarvis alerted: ${level} - ${message.substring(0, 50)}...`)
+      // Send Jarvis alert (only if alert service is available)
+      if (alertService && alertService.sendErrorLogAlert && !message.includes('JARVIS') && !message.includes('ALERT')) {
+        try {
+          await alertService.sendErrorLogAlert(errorData)
+          originalError(`✅ [LOG MONITOR] Jarvis alerted: ${level} - ${message.substring(0, 50)}...`)
+        } catch (alertError) {
+          // Silently fail - don't create feedback loop
+        }
       }
     } catch (error) {
-      // Don't create infinite loop if alert fails
-      originalError('[LOG MONITOR] Failed to send error alert:', error.message)
+      // Don't create infinite loop if alert fails - silently ignore
     }
   }
 
