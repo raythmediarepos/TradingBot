@@ -162,17 +162,17 @@ const initializeMonitoringJobs = () => {
   console.log('')
   console.log('⏰ [MONITORING] Setting up scheduled tasks:')
   
-  // Health checks every 5 minutes
-  cron.schedule('*/5 * * * *', () => {
+  // Health checks every 30 minutes
+  cron.schedule('*/30 * * * *', () => {
     runHealthChecks()
   })
-  console.log('   ✅ Health checks: Every 5 minutes')
+  console.log('   ✅ Health checks: Every 30 minutes')
   
-  // Metrics collection every 15 minutes
-  cron.schedule('*/15 * * * *', () => {
+  // Metrics collection every 30 minutes
+  cron.schedule('*/30 * * * *', () => {
     runMetricsAndAlerts()
   })
-  console.log('   ✅ Metrics & alerts: Every 15 minutes')
+  console.log('   ✅ Metrics & alerts: Every 30 minutes')
   
   // Daily summary at midnight
   cron.schedule('0 0 * * *', () => {
@@ -182,8 +182,8 @@ const initializeMonitoringJobs = () => {
   
   console.log('')
   console.log('💡 [MONITORING] Monitoring system active!')
-  console.log('   → Health checks: Every 5 minutes')
-  console.log('   → Metrics & alerts: Every 15 minutes')
+  console.log('   → Health checks: Every 30 minutes')
+  console.log('   → Metrics & alerts: Every 30 minutes')
   console.log('   → Daily summaries: Midnight')
   console.log('   → Data stored in Firebase')
   console.log('   → View at: /admin/system-health')

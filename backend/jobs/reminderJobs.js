@@ -20,14 +20,14 @@ const initializeReminderJobs = async () => {
     console.error('❌ [REMINDERS] Error during startup reminder check:', error.message)
   }
   
-  // Send email reminders - Every 5 minutes
-  cron.schedule('*/5 * * * *', async () => {
+  // Send email reminders - Every 30 minutes
+  cron.schedule('*/30 * * * *', async () => {
     await runAllReminders()
   }, {
     scheduled: true,
     timezone: 'America/New_York', // Change to your timezone
   })
-  console.log('   → Scheduled: Email reminders (Every 5 minutes)')
+  console.log('   → Scheduled: Email reminders (Every 30 minutes)')
 
   console.log('✅ [REMINDERS] All reminder jobs initialized')
 }
