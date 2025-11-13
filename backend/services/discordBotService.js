@@ -190,11 +190,68 @@ const handleMessageCreate = async (message) => {
     return
   }
 
-  // Handle guild messages for analytics
+  // Handle guild messages
   if (message.author.bot) return
   
   // Only track messages in our guild
   if (message.guild.id !== DISCORD_CONFIG.SERVER_ID) return
+
+  // Check for admin commands in alerts channel
+  const content = message.content.trim().toLowerCase()
+  const alertsChannelId = process.env.DISCORD_ALERTS_CHANNEL_ID
+  
+  if (alertsChannelId && message.channel.id === alertsChannelId) {
+    // Clear spam command - delete all system advisory messages
+    if (content === 'clear spam') {
+      try {
+        const loadingMsg = await message.reply('🧹 Clearing spam messages...')
+        
+        // Fetch last 100 messages
+        const messages = await message.channel.messages.fetch({ limit: 100 })
+        
+        // Filter for system advisory messages (keep signup/user updates)
+        const spamMessages = messages.filter(msg => {
+          if (!msg.author.bot) return false
+          if (!msg.embeds || msg.embeds.length === 0) return false
+          
+          const embed = msg.embeds[0]
+          const title = embed.title || ''
+          const description = embed.description || ''
+          
+          // Delete system advisory messages
+          if (title.includes('System Advisory') || 
+              description.includes('System Advisory') ||
+              title.includes('SYSTEM ALERT')) {
+            return true
+          }
+          
+          return false
+        })
+        
+        // Bulk delete (max 100 messages at a time, must be < 14 days old)
+        if (spamMessages.size > 0) {
+          await message.channel.bulkDelete(spamMessages, true)
+          await loadingMsg.edit(`✅ Deleted ${spamMessages.size} system advisory messages. Kept all signup/user updates.`)
+          
+          console.log(`🧹 [DISCORD BOT] Admin cleared ${spamMessages.size} spam messages`)
+        } else {
+          await loadingMsg.edit('✅ No spam messages found to delete.')
+        }
+        
+        // Delete the command message after 5 seconds
+        setTimeout(() => {
+          message.delete().catch(() => {})
+          setTimeout(() => loadingMsg.delete().catch(() => {}), 3000)
+        }, 5000)
+        
+        return
+      } catch (error) {
+        console.error('❌ [DISCORD BOT] Error clearing spam:', error)
+        await message.reply('❌ Failed to clear spam messages. Check my permissions.')
+        return
+      }
+    }
+  }
 
   // Track message for analytics
   await trackMessage(message)
