@@ -1044,7 +1044,10 @@ const renumberBetaPositions = async () => {
 
     // Update the counter to reflect the current highest position
     const counterRef = db.collection(COLLECTIONS.COUNTERS).doc('betaUserCounter')
-    await counterRef.set({ currentPosition: newPosition }, { merge: true })
+    await counterRef.set({
+      lastPosition: newPosition,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true })
     console.log(`   → Updated counter to ${newPosition}`)
 
     console.log(`✅ [RENUMBER] Complete - ${changes} positions updated out of ${users.length} users`)

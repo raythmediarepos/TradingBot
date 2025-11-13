@@ -50,10 +50,10 @@ const fixCounter = async () => {
     console.log(`📊 Total users: ${snapshot.size}`)
     console.log(`🔄 Updating counter...`)
     
-    await db.collection('counters').doc('betaPosition').set({
-      value: highestPosition,
+    await db.collection('counters').doc('betaUserCounter').set({
+      lastPosition: highestPosition,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    })
+    }, { merge: true })
     
     console.log(`✅ Counter updated to ${highestPosition}\n`)
     
