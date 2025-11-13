@@ -44,42 +44,41 @@ const checkEndpoint = async (url, timeout = 5000) => {
 }
 
 /**
- * Check API health
+ * Check API health (internal checks - no HTTP calls to avoid circular dependency)
  * @returns {Promise<Object>}
  */
 const checkAPIHealth = async () => {
   console.log('🏥 [HEALTH CHECK] Checking API health...')
   
-  const endpoints = [
-    { name: 'API Root', url: `${BACKEND_URL}/` },
-    { name: 'API Health', url: `${BACKEND_URL}/api/health` },
-    { name: 'Beta Stats', url: `${BACKEND_URL}/api/beta/stats` },
-    { name: 'Waitlist Stats', url: `${BACKEND_URL}/api/waitlist/stats` },
-  ]
+  const startTime = Date.now()
   
-  const results = []
-  
-  for (const endpoint of endpoints) {
-    const result = await checkEndpoint(endpoint.url)
-    results.push({
-      ...endpoint,
-      ...result,
-    })
+  try {
+    // Internal health check - verify API can access Firebase
+    await db.collection('healthChecks').limit(1).get()
     
-    console.log(`   → ${endpoint.name}: ${result.healthy ? '✅' : '❌'} (${result.responseTime}ms)`)
-  }
-  
-  const allHealthy = results.every(r => r.healthy)
-  const avgResponseTime = Math.round(
-    results.reduce((sum, r) => sum + r.responseTime, 0) / results.length
-  )
-  
-  return {
-    service: 'api',
-    healthy: allHealthy,
-    endpoints: results,
-    averageResponseTime: avgResponseTime,
-    timestamp: new Date(),
+    const responseTime = Date.now() - startTime
+    
+    console.log(`   → API Internal: ✅ (${responseTime}ms)`)
+    
+    return {
+      service: 'api',
+      healthy: true,
+      responseTime,
+      message: 'API is operational',
+      timestamp: new Date(),
+    }
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    
+    console.error(`   → API Internal: ❌ (${error.message})`)
+    
+    return {
+      service: 'api',
+      healthy: false,
+      responseTime,
+      error: error.message,
+      timestamp: new Date(),
+    }
   }
 }
 
@@ -149,23 +148,17 @@ const checkDiscordBotHealth = async () => {
   console.log('🏥 [HEALTH CHECK] Checking Discord Bot health...')
   
   try {
-    // Check if there are recent Discord analytics (means bot is running)
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    // Import Discord bot service to check if bot is connected
+    const { isBotReady } = require('../discordBotService')
     
-    const recentAnalytics = await db
-      .collection('discordAnalytics')
-      .where('timestamp', '>', twentyFourHoursAgo)
-      .limit(1)
-      .get()
+    const botReady = isBotReady()
     
-    const hasRecentData = !recentAnalytics.empty
-    
-    console.log(`   → Discord Bot: ${hasRecentData ? '✅' : '⚠️'} ${hasRecentData ? '' : '(No recent data)'}`)
+    console.log(`   → Discord Bot: ${botReady ? '✅' : '⚠️'} ${botReady ? 'Connected' : 'Not connected'}`)
     
     return {
       service: 'discord_bot',
-      healthy: hasRecentData,
-      lastDataAt: hasRecentData ? recentAnalytics.docs[0].data().timestamp : null,
+      healthy: botReady,
+      connected: botReady,
       timestamp: new Date(),
     }
   } catch (error) {
@@ -196,12 +189,24 @@ const runAllHealthChecks = async () => {
       checkDiscordBotHealth(),
     ])
     
-    const allHealthy = [api, frontend, database, discordBot].every(
-      service => service.healthy
-    )
+    // Core services - if any are down, system is degraded
+    const coreServices = [api, database]
+    const coreHealthy = coreServices.every(service => service.healthy)
+    
+    // Optional services - don't affect overall health
+    const optionalServices = [frontend, discordBot]
+    const allOptionalHealthy = optionalServices.every(service => service.healthy)
+    
+    // Overall status
+    let overallStatus = 'healthy'
+    if (!coreHealthy) {
+      overallStatus = 'degraded'
+    } else if (!allOptionalHealthy) {
+      overallStatus = 'healthy' // Core services OK, optional services may be down
+    }
     
     const result = {
-      overall: allHealthy ? 'healthy' : 'degraded',
+      overall: overallStatus,
       services: {
         api,
         frontend,

@@ -149,16 +149,34 @@ function SystemHealthContent() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-hp-gray900 border border-white/10 rounded-2xl p-8"
+              className="bg-gradient-to-br from-hp-gray900 via-hp-gray900 to-hp-gray800/50 border-2 border-white/10 rounded-2xl p-8 shadow-xl relative overflow-hidden"
             >
-              <div className="flex items-center justify-between">
+              {/* Decorative gradient overlay */}
+              <div className={`absolute inset-0 pointer-events-none ${
+                healthData.overallStatus === 'healthy' 
+                  ? 'bg-gradient-to-r from-green-500/5 to-transparent' 
+                  : 'bg-gradient-to-r from-red-500/5 to-transparent'
+              }`} />
+              
+              <div className="relative z-10 flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold mb-2">System Status</h2>
-                  <p className="text-gray-400">
+                  <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                    System Status
+                  </h2>
+                  <p className="text-sm text-gray-400">
                     Last checked: {healthData.lastCheck ? new Date(healthData.lastCheck).toLocaleString() : 'N/A'}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className={`flex items-center gap-4 px-6 py-3 rounded-xl border-2 backdrop-blur-sm ${
+                  healthData.overallStatus === 'healthy' 
+                    ? 'bg-green-500/10 border-green-500/30' 
+                    : 'bg-red-500/10 border-red-500/30'
+                }`}>
+                  <div className={`w-4 h-4 rounded-full ${
+                    healthData.overallStatus === 'healthy' 
+                      ? 'bg-green-400 animate-pulse shadow-lg shadow-green-400/50' 
+                      : 'bg-red-400 animate-pulse shadow-lg shadow-red-400/50'
+                  }`} />
                   {getStatusIcon(healthData.overallStatus)}
                   <span className={`text-3xl font-bold ${getStatusColor(healthData.overallStatus)}`}>
                     {healthData.overallStatus?.toUpperCase() || 'UNKNOWN'}
@@ -174,19 +192,22 @@ function SystemHealthContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-hp-gray900 border border-white/10 rounded-xl p-6"
+                className="bg-gradient-to-br from-hp-gray900 to-hp-gray800/50 border border-white/10 rounded-xl p-6 hover:border-green-500/30 transition-all duration-300 shadow-lg group"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <Activity className="w-8 h-8 text-green-500" />
-                  <span className={`text-2xl font-bold ${
+                  <div className="p-3 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+                    <Activity className="w-6 h-6 text-green-500" />
+                  </div>
+                  <span className={`text-3xl font-bold ${
                     (healthData.systemMetrics?.uptimePercent || 0) >= 99 ? 'text-green-500' :
                     (healthData.systemMetrics?.uptimePercent || 0) >= 95 ? 'text-yellow-500' :
                     'text-red-500'
                   }`}>
-                    {healthData.systemMetrics?.uptimePercent || 0}%
+                    {healthData.systemMetrics?.uptimePercent?.toFixed?.(2) || '0.00'}%
                   </span>
                 </div>
-                <p className="text-sm text-gray-400">System Uptime</p>
+                <p className="text-sm font-medium text-gray-300">System Uptime</p>
+                <p className="text-xs text-gray-500 mt-1">Last 24 hours</p>
               </motion.div>
 
               {/* Total Users */}
@@ -194,17 +215,19 @@ function SystemHealthContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-hp-gray900 border border-white/10 rounded-xl p-6"
+                className="bg-gradient-to-br from-hp-gray900 to-hp-gray800/50 border border-white/10 rounded-xl p-6 hover:border-blue-500/30 transition-all duration-300 shadow-lg group"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <Users className="w-8 h-8 text-blue-500" />
-                  <span className="text-2xl font-bold text-blue-500">
+                  <div className="p-3 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                    <Users className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <span className="text-3xl font-bold text-blue-500">
                     {(healthData.userMetrics?.totalUsers ?? healthData.userMetrics?.total) || 0}
                   </span>
                 </div>
-                <p className="text-sm text-gray-400">Total Users</p>
-                <p className="text-xs text-white/40 mt-1">
-                  {healthData.userMetrics?.signupsToday || 0} new today
+                <p className="text-sm font-medium text-gray-300">Total Users</p>
+                <p className="text-xs text-blue-400/60 mt-1">
+                  +{healthData.userMetrics?.signupsToday || 0} new today
                 </p>
               </motion.div>
 
@@ -213,17 +236,19 @@ function SystemHealthContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-hp-gray900 border border-white/10 rounded-xl p-6"
+                className="bg-gradient-to-br from-hp-gray900 to-hp-gray800/50 border border-white/10 rounded-xl p-6 hover:border-hp-yellow/30 transition-all duration-300 shadow-lg group"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <DollarSign className="w-8 h-8 text-hp-yellow" />
-                  <span className="text-2xl font-bold text-hp-yellow">
+                  <div className="p-3 rounded-lg bg-hp-yellow/10 group-hover:bg-hp-yellow/20 transition-colors">
+                    <DollarSign className="w-6 h-6 text-hp-yellow" />
+                  </div>
+                  <span className="text-3xl font-bold text-hp-yellow">
                     ${(healthData.businessMetrics?.totalRevenue || 0).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-sm text-gray-400">Total Revenue</p>
-                <p className="text-xs text-white/40 mt-1">
-                  ${healthData.businessMetrics?.revenueToday || 0} today
+                <p className="text-sm font-medium text-gray-300">Total Revenue</p>
+                <p className="text-xs text-hp-yellow/60 mt-1">
+                  +${healthData.businessMetrics?.revenueToday || 0} today
                 </p>
               </motion.div>
 
@@ -232,11 +257,13 @@ function SystemHealthContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-hp-gray900 border border-white/10 rounded-xl p-6"
+                className="bg-gradient-to-br from-hp-gray900 to-hp-gray800/50 border border-white/10 rounded-xl p-6 hover:border-purple-500/30 transition-all duration-300 shadow-lg group"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <Mail className="w-8 h-8 text-purple-500" />
-                  <span className={`text-2xl font-bold ${
+                  <div className="p-3 rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                    <Mail className="w-6 h-6 text-purple-500" />
+                  </div>
+                  <span className={`text-3xl font-bold ${
                     (healthData.emailMetrics?.deliveryRate || 0) >= 95 ? 'text-green-500' :
                     (healthData.emailMetrics?.deliveryRate || 0) >= 80 ? 'text-yellow-500' :
                     'text-red-500'
@@ -244,9 +271,9 @@ function SystemHealthContent() {
                     {healthData.emailMetrics?.deliveryRate?.toFixed?.(0) || healthData.emailMetrics?.deliveryRate || 0}%
                   </span>
                 </div>
-                <p className="text-sm text-gray-400">Email Delivery</p>
-                <p className="text-xs text-white/40 mt-1">
-                  {healthData.emailMetrics?.sent || 0} sent
+                <p className="text-sm font-medium text-gray-300">Email Delivery</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {healthData.emailMetrics?.sent || 0} sent (24h)
                 </p>
               </motion.div>
             </div>

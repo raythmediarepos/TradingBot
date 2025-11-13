@@ -16,6 +16,39 @@ const initializeDiscordAlerts = (client) => {
 const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`
 
 /**
+ * Check if a service has been unhealthy for multiple consecutive checks
+ * @param {string} service - Service name
+ * @param {number} requiredFailures - Number of consecutive failures required
+ * @returns {Promise<boolean>}
+ */
+const hasConsecutiveFailures = async (service, requiredFailures = 3) => {
+  try {
+    const recentChecks = await db
+      .collection('healthChecks')
+      .orderBy('timestamp', 'desc')
+      .limit(requiredFailures)
+      .get()
+    
+    if (recentChecks.size < requiredFailures) {
+      return false // Not enough data to determine
+    }
+    
+    const checks = recentChecks.docs.map(doc => doc.data())
+    
+    // Check if all recent checks show the service as unhealthy
+    return checks.every(check => {
+      if (service === 'system') {
+        return check.overall === 'degraded'
+      }
+      return check.services?.[service]?.healthy === false
+    })
+  } catch (error) {
+    console.error('Error checking consecutive failures:', error)
+    return false
+  }
+}
+
+/**
  * Check thresholds and determine if alerts are needed
  * @param {Object} metrics - Current metrics
  * @param {Object} healthCheck - Latest health check
@@ -24,72 +57,75 @@ const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${process.env.P
 const checkThresholds = async (metrics, healthCheck) => {
   const alerts = []
   
-  // Check API health
-  if (healthCheck && healthCheck.overall !== 'healthy') {
-    alerts.push({
-      severity: 'critical',
-      service: 'api',
-      message: 'API is not healthy',
-      details: healthCheck,
-      timestamp: new Date(),
-    })
+  // Check API health - only alert after 3 consecutive failures
+  if (healthCheck && healthCheck.overall === 'degraded') {
+    const hasMultipleFailures = await hasConsecutiveFailures('system', 3)
+    if (hasMultipleFailures) {
+      alerts.push({
+        severity: 'critical',
+        service: 'system',
+        message: 'System is degraded (3+ consecutive failures)',
+        details: healthCheck,
+        timestamp: new Date(),
+      })
+    }
   }
   
-  // Check API response time
-  if (metrics?.system?.averageApiResponseTime > 2000) {
+  // Check API response time - only if significantly elevated
+  if (metrics?.system?.averageApiResponseTime > 3000) {
     alerts.push({
       severity: 'warning',
       service: 'api',
-      message: `API response time elevated: ${metrics.system.averageApiResponseTime}ms`,
-      threshold: 2000,
+      message: `API response time critically high: ${metrics.system.averageApiResponseTime}ms`,
+      threshold: 3000,
       actual: metrics.system.averageApiResponseTime,
       timestamp: new Date(),
     })
   }
   
-  // Check uptime
-  if (metrics?.system?.uptimePercent < 99) {
+  // Check uptime - only if critically low
+  if (metrics?.system?.uptimePercent < 95) {
     alerts.push({
       severity: 'warning',
       service: 'system',
-      message: `Uptime below threshold: ${metrics.system.uptimePercent}%`,
-      threshold: 99,
+      message: `Uptime critically low: ${metrics.system.uptimePercent}%`,
+      threshold: 95,
       actual: metrics.system.uptimePercent,
       timestamp: new Date(),
     })
   }
   
   // Check email bounce rate
-  if (metrics?.email?.bounceRate > 5) {
+  if (metrics?.email?.bounceRate > 10 && metrics?.email?.sent > 5) {
     alerts.push({
       severity: 'critical',
       service: 'email',
       message: `Email bounce rate too high: ${metrics.email.bounceRate}%`,
-      threshold: 5,
+      threshold: 10,
       actual: metrics.email.bounceRate,
       timestamp: new Date(),
     })
   }
   
   // Check email delivery rate
-  if (metrics?.email?.deliveryRate < 95 && metrics?.email?.sent > 0) {
+  if (metrics?.email?.deliveryRate < 90 && metrics?.email?.sent > 10) {
     alerts.push({
       severity: 'warning',
       service: 'email',
       message: `Email delivery rate low: ${metrics.email.deliveryRate}%`,
-      threshold: 95,
+      threshold: 90,
       actual: metrics.email.deliveryRate,
       timestamp: new Date(),
     })
   }
   
-  // Check verification rate
-  if (metrics?.users?.verificationRate < 70 && metrics?.users?.totalUsers > 10) {
+  // Check verification rate - only if there are many users
+  if (metrics?.users?.verificationRate < 60 && metrics?.users?.totalUsers > 20) {
     alerts.push({
       severity: 'info',
       service: 'users',
       message: `Email verification rate low: ${metrics.users.verificationRate}%`,
-      threshold: 70,
+      threshold: 60,
       actual: metrics.users.verificationRate,
       timestamp: new Date(),
     })
@@ -269,15 +305,17 @@ const checkAndAlert = async (metrics, healthCheck) => {
     console.log(`   → Found ${alerts.length} alert(s)`)
     
     // Check if we've already alerted for similar issues recently
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
-    
+    // 6 hours for warnings, 3 hours for critical
     for (const alert of alerts) {
+      const suppressionWindow = alert.severity === 'critical' ? 3 : 6
+      const suppressionTime = new Date(Date.now() - suppressionWindow * 60 * 60 * 1000)
+      
       // Check for recent similar alerts
       const recentAlerts = await db
         .collection('alerts')
         .where('service', '==', alert.service)
         .where('message', '==', alert.message)
-        .where('sentAt', '>', oneHourAgo)
+        .where('sentAt', '>', suppressionTime)
         .limit(1)
         .get()
       
@@ -285,7 +323,7 @@ const checkAndAlert = async (metrics, healthCheck) => {
         // No recent similar alert, send it
         await sendAlertEmail(alert)
       } else {
-        console.log(`   → Suppressing duplicate alert: ${alert.message}`)
+        console.log(`   → Suppressing duplicate alert: ${alert.message} (sent within ${suppressionWindow}h)`)
       }
     }
     
