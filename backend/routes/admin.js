@@ -1821,5 +1821,86 @@ router.post('/test-jarvis-alert', authenticate, requireAdmin, async (req, res) =
   }
 })
 
+/**
+ * POST /api/admin/test-jarvis-status
+ * Test Jarvis status updates (admin only)
+ */
+router.post('/test-jarvis-status', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { type } = req.body
+    
+    // Validate input
+    const validTypes = ['startup', 'health_check', 'deployment', 'daily_summary', 'all_clear']
+    
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid type. Must be: startup, health_check, deployment, daily_summary, or all_clear',
+      })
+    }
+    
+    // Prepare test data based on type
+    let testData = {}
+    
+    switch (type) {
+      case 'health_check':
+        testData = {
+          uptime: 99.5,
+          services: {
+            api: true,
+            database: true,
+            frontend: true,
+            discord: true,
+          },
+        }
+        break
+      case 'deployment':
+        testData = {
+          version: 'v1.2.3',
+        }
+        break
+      case 'daily_summary':
+        testData = {
+          stats: {
+            uptime: 99.8,
+            newUsers: 5,
+            totalUsers: 16,
+            revenue: 149.97,
+            emailsSent: 12,
+            deliveryRate: 100,
+            alerts: 0,
+            criticalAlerts: 0,
+          },
+        }
+        break
+      case 'all_clear':
+        testData = {
+          users: 16,
+          uptime: 99.9,
+          apiResponseTime: 145,
+        }
+        break
+    }
+    
+    // Send Jarvis status update
+    const { sendJarvisStatusUpdate } = require('../services/monitoring/alertService')
+    await sendJarvisStatusUpdate(type, testData)
+    
+    res.json({
+      success: true,
+      message: `Test Jarvis ${type} update sent successfully`,
+      type,
+      data: testData,
+    })
+  } catch (error) {
+    console.error('Error sending test status:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send test status update',
+      message: error.message,
+    })
+  }
+})
+
 module.exports = router
 

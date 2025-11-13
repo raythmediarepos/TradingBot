@@ -1,7 +1,7 @@
 const cron = require('node-cron')
 const { runAllHealthChecks } = require('../services/monitoring/healthCheck')
 const { collectAndStoreMetrics } = require('../services/monitoring/metricsCollector')
-const { initializeDiscordAlerts, checkAndAlert, generateDailySummary } = require('../services/monitoring/alertService')
+const { initializeDiscordAlerts, checkAndAlert, generateDailySummary, sendJarvisStatusUpdate } = require('../services/monitoring/alertService')
 const { getClient } = require('../services/discordBotService')
 const { admin, db } = require('../config/firebase-admin')
 
@@ -20,7 +20,40 @@ const runHealthChecks = async () => {
   isRunningHealthCheck = true
 
   try {
-    await runAllHealthChecks()
+    const healthCheck = await runAllHealthChecks()
+    
+    // Send Jarvis update if everything is healthy (once every 6 hours)
+    if (healthCheck && healthCheck.overall === 'healthy') {
+      const lastJarvisUpdate = global.__lastJarvisHealthUpdate || 0
+      const sixHoursAgo = Date.now() - (6 * 60 * 60 * 1000)
+      
+      if (lastJarvisUpdate < sixHoursAgo) {
+        // Get uptime from recent health checks
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+        const healthSnapshot = await db
+          .collection('healthChecks')
+          .where('timestamp', '>', oneDayAgo)
+          .get()
+        
+        const totalChecks = healthSnapshot.size
+        const healthyChecks = healthSnapshot.docs.filter(
+          doc => doc.data().overall === 'healthy'
+        ).length
+        const uptime = totalChecks > 0 ? ((healthyChecks / totalChecks) * 100).toFixed(1) : 100
+        
+        await sendJarvisStatusUpdate('health_check', {
+          uptime,
+          services: {
+            api: healthCheck.services?.api?.healthy,
+            database: healthCheck.services?.database?.healthy,
+            frontend: healthCheck.services?.frontend?.healthy,
+            discord: healthCheck.services?.discordBot?.healthy,
+          },
+        })
+        
+        global.__lastJarvisHealthUpdate = Date.now()
+      }
+    }
   } catch (error) {
     console.error('❌ [MONITORING] Health check failed:', error)
   } finally {
@@ -70,7 +103,23 @@ const runDailySummary = async () => {
     console.log(`📧 [MONITORING] Generating daily summary`)
     console.log('═'.repeat(60))
     
-    await generateDailySummary()
+    const summary = await generateDailySummary()
+    
+    // Send Jarvis daily summary
+    if (summary) {
+      await sendJarvisStatusUpdate('daily_summary', {
+        stats: {
+          uptime: parseFloat(summary.uptime) || 100,
+          newUsers: summary.metrics?.newSignups || 0,
+          totalUsers: summary.metrics?.activeUsers || 0,
+          revenue: summary.metrics?.revenueToday || 0,
+          emailsSent: summary.metrics?.emailsSent || 0,
+          deliveryRate: summary.metrics?.emailDeliveryRate || 100,
+          alerts: summary.totalAlerts || 0,
+          criticalAlerts: summary.criticalAlerts || 0,
+        },
+      })
+    }
     
     console.log('═'.repeat(60))
     console.log(`✅ [MONITORING] Daily summary complete`)
@@ -141,6 +190,16 @@ const initializeMonitoringJobs = () => {
   console.log('   → Cost: $0 (integrated with backend)')
   console.log('═'.repeat(60))
   console.log('')
+  
+  // Send Jarvis startup notification after a delay (wait for Discord bot to be ready)
+  setTimeout(async () => {
+    try {
+      await sendJarvisStatusUpdate('startup')
+      console.log('✅ [JARVIS] Startup notification sent')
+    } catch (error) {
+      console.error('⚠️  [JARVIS] Could not send startup notification:', error.message)
+    }
+  }, 5000) // 5 second delay
 }
 
 module.exports = {

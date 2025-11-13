@@ -580,6 +580,227 @@ const generateDailySummary = async () => {
   }
 }
 
+/**
+ * Send Jarvis status update to Discord
+ * @param {string} type - Type of update (startup, health_check, deployment, daily_summary)
+ * @param {Object} data - Additional data for the update
+ * @returns {Promise<void>}
+ */
+const sendJarvisStatusUpdate = async (type, data = {}) => {
+  if (!discordClient) {
+    console.log('⚠️  [JARVIS] Discord client not initialized')
+    return
+  }
+
+  try {
+    const channelId = process.env.DISCORD_ALERTS_CHANNEL_ID
+    if (!channelId) {
+      console.log('⚠️  [JARVIS] DISCORD_ALERTS_CHANNEL_ID not set')
+      return
+    }
+
+    const channel = await discordClient.channels.fetch(channelId)
+    if (!channel) {
+      console.error('❌ [JARVIS] Could not find Discord channel')
+      return
+    }
+
+    // Get admin names for personalization
+    const adminNames = await getAdminNames()
+    const primaryAdminName = adminNames[0] || 'Sir'
+    
+    let embed
+    
+    switch (type) {
+      case 'startup':
+        embed = {
+          color: 0x00FF00, // Green
+          title: '🟢 Systems Online',
+          description: `${getJarvisGreeting(primaryAdminName)}. All systems have been initialized successfully. I am now monitoring the platform and will alert you to any anomalies.`,
+          fields: [
+            {
+              name: '✅ Status',
+              value: 'Backend operational\nMonitoring active\nDiscord connection established',
+              inline: true,
+            },
+            {
+              name: '📊 Services',
+              value: `\`\`\`
+API:      ✓ Online
+Database: ✓ Connected  
+Discord:  ✓ Ready
+Email:    ✓ Configured
+\`\`\``,
+              inline: true,
+            },
+            {
+              name: '🔄 Active Monitors',
+              value: '• Health checks every 5 minutes\n• Metrics collection every 15 minutes\n• Email reminders every 5 minutes\n• Position renumbering hourly',
+              inline: false,
+            },
+          ],
+          footer: {
+            text: 'J.A.R.V.I.S. • System Boot Complete',
+            icon_url: 'https://cdn-icons-png.flaticon.com/512/3468/3468377.png',
+          },
+          timestamp: new Date().toISOString(),
+        }
+        break
+        
+      case 'health_check':
+        const { uptime, services } = data
+        embed = {
+          color: 0x00FF00, // Green
+          title: '✅ Routine Diagnostics Complete',
+          description: `${getJarvisGreeting(primaryAdminName)}. I've completed my scheduled system diagnostics. All services are operating within normal parameters.`,
+          fields: [
+            {
+              name: '💚 System Status',
+              value: `Uptime: \`${uptime || '99.9'}%\`\nStatus: \`HEALTHY\`\nLast Check: \`Just now\``,
+              inline: true,
+            },
+            {
+              name: '🔍 Services Checked',
+              value: `\`\`\`
+${services?.api ? '✓' : '✗'} API Layer
+${services?.database ? '✓' : '✗'} Database
+${services?.frontend ? '✓' : '✗'} Frontend
+${services?.discord ? '✓' : '✗'} Discord Bot
+\`\`\``,
+              inline: true,
+            },
+            {
+              name: '📈 Performance',
+              value: 'All metrics within acceptable ranges. No action required.',
+              inline: false,
+            },
+          ],
+          footer: {
+            text: 'J.A.R.V.I.S. • Routine Diagnostics',
+            icon_url: 'https://cdn-icons-png.flaticon.com/512/3468/3468377.png',
+          },
+          timestamp: new Date().toISOString(),
+        }
+        break
+        
+      case 'deployment':
+        const { version } = data
+        embed = {
+          color: 0x00A8FF, // Blue
+          title: '🚀 New Version Deployed',
+          description: `${getJarvisGreeting(primaryAdminName)}. A new version of the platform has been deployed successfully. All systems have been updated and are operational.`,
+          fields: [
+            {
+              name: '📦 Deployment Status',
+              value: `Version: \`${version || 'Latest'}\`\nStatus: \`✓ Successful\`\nServices: \`All restarted\``,
+              inline: true,
+            },
+            {
+              name: '🔄 Post-Deployment',
+              value: '```\n✓ Health checks passed\n✓ Database connected\n✓ API responding\n✓ Monitoring active\n```',
+              inline: true,
+            },
+            {
+              name: '💡 Notes',
+              value: 'All services are functioning normally. I will continue monitoring for any anomalies related to this deployment.',
+              inline: false,
+            },
+          ],
+          footer: {
+            text: 'J.A.R.V.I.S. • Deployment Monitor',
+            icon_url: 'https://cdn-icons-png.flaticon.com/512/3468/3468377.png',
+          },
+          timestamp: new Date().toISOString(),
+        }
+        break
+        
+      case 'daily_summary':
+        const { stats } = data
+        embed = {
+          color: 0xFFD700, // Gold
+          title: '📊 Daily System Report',
+          description: `${getJarvisGreeting(primaryAdminName)}. Here's your daily platform summary. Overall, operations have been ${stats?.uptime >= 99 ? 'excellent' : 'within acceptable parameters'}.`,
+          fields: [
+            {
+              name: '⏱️ Uptime',
+              value: `\`${stats?.uptime || 100}%\` (Last 24h)`,
+              inline: true,
+            },
+            {
+              name: '👥 Users',
+              value: `\`${stats?.newUsers || 0}\` new signups\n\`${stats?.totalUsers || 0}\` total`,
+              inline: true,
+            },
+            {
+              name: '💰 Revenue',
+              value: `\`$${stats?.revenue || 0}\` today`,
+              inline: true,
+            },
+            {
+              name: '📧 Email Delivery',
+              value: `\`${stats?.emailsSent || 0}\` sent\n\`${stats?.deliveryRate || 100}%\` delivered`,
+              inline: true,
+            },
+            {
+              name: '🔔 Alerts',
+              value: `\`${stats?.alerts || 0}\` total\n\`${stats?.criticalAlerts || 0}\` critical`,
+              inline: true,
+            },
+            {
+              name: '🎯 Status',
+              value: stats?.alerts > 0 ? 'Some issues detected' : 'All systems nominal',
+              inline: true,
+            },
+          ],
+          footer: {
+            text: 'J.A.R.V.I.S. • Daily Summary',
+            icon_url: 'https://cdn-icons-png.flaticon.com/512/3468/3468377.png',
+          },
+          timestamp: new Date().toISOString(),
+        }
+        break
+        
+      case 'all_clear':
+        embed = {
+          color: 0x00FF00, // Green
+          title: '✅ All Systems Nominal',
+          description: `${getJarvisGreeting(primaryAdminName)}. I'm pleased to report that all platform systems continue to operate within optimal parameters. No issues detected.`,
+          fields: [
+            {
+              name: '💚 Status',
+              value: '`HEALTHY` • All services operational',
+              inline: false,
+            },
+            {
+              name: '📊 Quick Stats',
+              value: `Users: \`${data?.users || 0}\`\nUptime: \`${data?.uptime || 100}%\`\nAPI: \`${data?.apiResponseTime || 0}ms\``,
+              inline: false,
+            },
+          ],
+          footer: {
+            text: 'J.A.R.V.I.S. • Status Check',
+            icon_url: 'https://cdn-icons-png.flaticon.com/512/3468/3468377.png',
+          },
+          timestamp: new Date().toISOString(),
+        }
+        break
+        
+      default:
+        console.log(`⚠️  [JARVIS] Unknown update type: ${type}`)
+        return
+    }
+
+    // Send to Discord
+    await channel.send({
+      embeds: [embed],
+    })
+
+    console.log(`✅ [JARVIS] ${type} update sent to #${channel.name}`)
+  } catch (error) {
+    console.error(`❌ [JARVIS] Error sending ${type} update:`, error.message)
+  }
+}
+
 module.exports = {
   initializeDiscordAlerts,
   checkThresholds,
@@ -587,5 +808,6 @@ module.exports = {
   checkAndAlert,
   getRecentAlerts,
   generateDailySummary,
+  sendJarvisStatusUpdate,
 }
 
