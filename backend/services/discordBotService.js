@@ -209,7 +209,7 @@ const handleMessageCreate = async (message) => {
         // Fetch last 100 messages
         const messages = await message.channel.messages.fetch({ limit: 100 })
         
-        // Filter for system advisory messages (keep signup/user updates)
+        // Filter for system advisory/alert messages (keep signup/user updates)
         const spamMessages = messages.filter(msg => {
           if (!msg.author.bot) return false
           if (!msg.embeds || msg.embeds.length === 0) return false
@@ -217,15 +217,31 @@ const handleMessageCreate = async (message) => {
           const embed = msg.embeds[0]
           const title = embed.title || ''
           const description = embed.description || ''
+          const content = msg.content || ''
           
-          // Delete system advisory messages
-          if (title.includes('System Advisory') || 
-              description.includes('System Advisory') ||
-              title.includes('SYSTEM ALERT')) {
-            return true
-          }
+          // Delete system advisory/alert messages (keep user journey messages)
+          const isSpam = 
+            title.includes('System Advisory') || 
+            description.includes('System Advisory') ||
+            title.includes('SYSTEM ALERT') ||
+            title.includes('CRITICAL ALERT') ||
+            title.includes('URGENT SYSTEM ALERT') ||
+            content.includes('🔴 CRITICAL ALERT') ||
+            content.includes('🟡 System Advisory') ||
+            content.includes('System Advisory') ||
+            content.includes('URGENT SYSTEM ALERT')
           
-          return false
+          // Keep user journey messages
+          const isUserMessage = 
+            title.includes('Beta Signup') ||
+            title.includes('Email Verified') ||
+            title.includes('Payment') ||
+            title.includes('Discord') ||
+            description.includes('signed up') ||
+            description.includes('verified their email') ||
+            description.includes('joined Discord')
+          
+          return isSpam && !isUserMessage
         })
         
         // Bulk delete (max 100 messages at a time, must be < 14 days old)
