@@ -1822,6 +1822,49 @@ router.post('/test-jarvis-alert', authenticate, requireAdmin, async (req, res) =
 })
 
 /**
+ * POST /api/admin/test-error-log
+ * Test error log monitoring (admin only)
+ */
+router.post('/test-error-log', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { level, message } = req.body
+    
+    if (!level || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'level and message are required',
+      })
+    }
+    
+    // Trigger the error/warning
+    if (level === 'error') {
+      console.error(`[TEST ERROR] ${message}`)
+    } else if (level === 'warning') {
+      console.warn(`[TEST WARNING] ${message}`)
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'level must be "error" or "warning"',
+      })
+    }
+    
+    res.json({
+      success: true,
+      message: `Test ${level} logged - Jarvis will be alerted`,
+      level,
+      testMessage: message,
+    })
+  } catch (error) {
+    console.error('Error testing error log:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to test error log',
+      message: error.message,
+    })
+  }
+})
+
+/**
  * POST /api/admin/test-jarvis-status
  * Test Jarvis status updates (admin only)
  */

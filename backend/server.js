@@ -4,6 +4,11 @@ const helmet = require('helmet')
 const cookieParser = require('cookie-parser')
 require('dotenv').config()
 
+// Initialize log monitoring FIRST - before anything else
+const { initializeLogMonitoring } = require('./services/monitoring/logMonitor')
+const alertService = require('./services/monitoring/alertService')
+initializeLogMonitoring(alertService)
+
 const apiRoutes = require('./api/routes')
 const webhookRoutes = require('./routes/webhooks')
 const { startBot, stopBot } = require('./services/discordBotService')

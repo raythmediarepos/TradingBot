@@ -16,36 +16,20 @@ const initializeDiscordAlerts = (client) => {
 const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`
 
 /**
- * Check if a service has been unhealthy for multiple consecutive checks
- * @param {string} service - Service name
- * @param {number} requiredFailures - Number of consecutive failures required
- * @returns {Promise<boolean>}
+ * Send error log alert to Discord
+ * @param {Object} error - Error details
+ * @returns {Promise<void>}
  */
-const hasConsecutiveFailures = async (service, requiredFailures = 3) => {
-  try {
-    const recentChecks = await db
-      .collection('healthChecks')
-      .orderBy('timestamp', 'desc')
-      .limit(requiredFailures)
-      .get()
-    
-    if (recentChecks.size < requiredFailures) {
-      return false // Not enough data to determine
-    }
-    
-    const checks = recentChecks.docs.map(doc => doc.data())
-    
-    // Check if all recent checks show the service as unhealthy
-    return checks.every(check => {
-      if (service === 'system') {
-        return check.overall === 'degraded'
-      }
-      return check.services?.[service]?.healthy === false
-    })
-  } catch (error) {
-    console.error('Error checking consecutive failures:', error)
-    return false
+const sendErrorLogAlert = async (error) => {
+  const alert = {
+    severity: error.level === 'error' ? 'critical' : 'warning',
+    service: error.service || 'system',
+    message: error.message,
+    details: error,
+    timestamp: new Date(),
   }
+  
+  await sendAlertEmail(alert)
 }
 
 /**
@@ -55,83 +39,9 @@ const hasConsecutiveFailures = async (service, requiredFailures = 3) => {
  * @returns {Array} - Array of alerts to send
  */
 const checkThresholds = async (metrics, healthCheck) => {
-  const alerts = []
-  
-  // Check API health - only alert after 3 consecutive failures
-  if (healthCheck && healthCheck.overall === 'degraded') {
-    const hasMultipleFailures = await hasConsecutiveFailures('system', 3)
-    if (hasMultipleFailures) {
-      alerts.push({
-        severity: 'critical',
-        service: 'system',
-        message: 'System is degraded (3+ consecutive failures)',
-        details: healthCheck,
-        timestamp: new Date(),
-      })
-    }
-  }
-  
-  // Check API response time - only if significantly elevated
-  if (metrics?.system?.averageApiResponseTime > 3000) {
-    alerts.push({
-      severity: 'warning',
-      service: 'api',
-      message: `API response time critically high: ${metrics.system.averageApiResponseTime}ms`,
-      threshold: 3000,
-      actual: metrics.system.averageApiResponseTime,
-      timestamp: new Date(),
-    })
-  }
-  
-  // Check uptime - only if critically low
-  if (metrics?.system?.uptimePercent < 95) {
-    alerts.push({
-      severity: 'warning',
-      service: 'system',
-      message: `Uptime critically low: ${metrics.system.uptimePercent}%`,
-      threshold: 95,
-      actual: metrics.system.uptimePercent,
-      timestamp: new Date(),
-    })
-  }
-  
-  // Check email bounce rate
-  if (metrics?.email?.bounceRate > 10 && metrics?.email?.sent > 5) {
-    alerts.push({
-      severity: 'critical',
-      service: 'email',
-      message: `Email bounce rate too high: ${metrics.email.bounceRate}%`,
-      threshold: 10,
-      actual: metrics.email.bounceRate,
-      timestamp: new Date(),
-    })
-  }
-  
-  // Check email delivery rate
-  if (metrics?.email?.deliveryRate < 90 && metrics?.email?.sent > 10) {
-    alerts.push({
-      severity: 'warning',
-      service: 'email',
-      message: `Email delivery rate low: ${metrics.email.deliveryRate}%`,
-      threshold: 90,
-      actual: metrics.email.deliveryRate,
-      timestamp: new Date(),
-    })
-  }
-  
-  // Check verification rate - only if there are many users
-  if (metrics?.users?.verificationRate < 60 && metrics?.users?.totalUsers > 20) {
-    alerts.push({
-      severity: 'info',
-      service: 'users',
-      message: `Email verification rate low: ${metrics.users.verificationRate}%`,
-      threshold: 60,
-      actual: metrics.users.verificationRate,
-      timestamp: new Date(),
-    })
-  }
-  
-  return alerts
+  // DISABLED - User wants real-time error log monitoring only
+  // No scheduled threshold-based alerts
+  return []
 }
 
 /**
@@ -191,38 +101,41 @@ const getJarvisGreeting = (name) => {
 const getJarvisMessage = (alert, adminName) => {
   const greeting = getJarvisGreeting(adminName)
   
-  // Critical alerts
+  // Error log alerts (real-time from logs)
+  if (alert.details && alert.details.level) {
+    const { service, message } = alert
+    
+    if (alert.severity === 'critical') {
+      return `${greeting}. I must inform you of a critical error that just occurred in the ${service} service. The error message is: "${message}". I recommend immediate investigation.`
+    } else {
+      return `${greeting}. I've detected a warning in the ${service} service that may require your attention. Details: "${message}".`
+    }
+  }
+  
+  // Threshold-based alerts (legacy - mostly disabled now)
   if (alert.severity === 'critical') {
     if (alert.service === 'system') {
-      return `${greeting}. I must inform you that we're experiencing a critical system incident. The platform has been degraded for the past 15 minutes across multiple health checks. Your immediate attention is required.`
+      return `${greeting}. I must inform you that we're experiencing a critical system incident. Your immediate attention is required.`
     }
     if (alert.service === 'email') {
-      return `${greeting}. I've detected a significant issue with our email delivery system. The bounce rate has exceeded acceptable parameters at ${alert.actual}%, well above our ${alert.threshold}% threshold. User communications may be compromised.`
+      return `${greeting}. I've detected a significant issue with our email delivery system.`
     }
   }
   
-  // Warning alerts
   if (alert.severity === 'warning') {
     if (alert.service === 'system') {
-      return `${greeting}. I wanted to bring to your attention that system uptime has dropped to ${alert.actual}% over the last 24 hours. While not critical, this is below our ${alert.threshold}% target and may indicate underlying issues.`
+      return `${greeting}. I wanted to bring to your attention a system issue that may require investigation.`
     }
     if (alert.service === 'api') {
-      return `${greeting}. The API response times have been elevated at ${alert.actual}ms, which is above our optimal threshold of ${alert.threshold}ms. User experience may be impacted.`
+      return `${greeting}. The API is experiencing some performance issues that may impact user experience.`
     }
     if (alert.service === 'email') {
-      return `${greeting}. Email delivery rates have dropped to ${alert.actual}%, below our ${alert.threshold}% target. I recommend investigating our email service provider status.`
-    }
-  }
-  
-  // Info alerts
-  if (alert.severity === 'info') {
-    if (alert.service === 'users') {
-      return `${greeting}. I've noticed that email verification rates have declined to ${alert.actual}%, below our ${alert.threshold}% target. This may warrant reviewing our verification email templates and timing.`
+      return `${greeting}. I've noticed some email delivery issues that may need attention.`
     }
   }
   
   // Fallback
-  return `${greeting}. I've detected an anomaly that requires your review: ${alert.message}`
+  return `${greeting}. I've detected an issue that requires your review: ${alert.message}`
 }
 
 /**
@@ -231,23 +144,33 @@ const getJarvisMessage = (alert, adminName) => {
  * @returns {string}
  */
 const getJarvisRecommendation = (alert) => {
+  // Error log alerts - include stack trace
+  if (alert.details && alert.details.stack) {
+    const stackLines = alert.details.stack.split('\n').slice(0, 5).join('\n')
+    return `🎯 **Recommended Actions:**\n• Check the error details below\n• Review recent code changes to affected service\n• Check Render logs for more context\n\n📋 **Stack Trace (first 5 lines):**\n\`\`\`\n${stackLines}\n\`\`\``
+  }
+  
   if (alert.service === 'system' && alert.severity === 'critical') {
-    return '🎯 **Recommended Actions:**\n• Check Render backend logs immediately\n• Verify Firebase connectivity\n• Review recent deployments for potential issues\n• Monitor user impact and consider status page update'
+    return '🎯 **Recommended Actions:**\n• Check Render backend logs immediately\n• Verify Firebase connectivity\n• Review recent deployments for potential issues\n• Monitor user impact'
   }
   
   if (alert.service === 'email') {
-    return '🎯 **Recommended Actions:**\n• Check Resend dashboard for delivery issues\n• Review recent email template changes\n• Verify DNS records and domain reputation\n• Consider switching to backup email service if critical'
+    return '🎯 **Recommended Actions:**\n• Check Resend dashboard for delivery issues\n• Review recent email template changes\n• Verify DNS records and domain reputation'
   }
   
   if (alert.service === 'api') {
-    return '🎯 **Recommended Actions:**\n• Review API endpoint performance metrics\n• Check for database query bottlenecks\n• Monitor server resource utilization\n• Consider scaling if load-related'
+    return '🎯 **Recommended Actions:**\n• Review API endpoint performance metrics\n• Check for database query bottlenecks\n• Monitor server resource utilization'
   }
   
-  if (alert.service === 'users') {
-    return '🎯 **Recommended Actions:**\n• Review verification email content and timing\n• Check spam filter compliance\n• Test email delivery to common providers\n• Consider A/B testing subject lines'
+  if (alert.service === 'discord') {
+    return '🎯 **Recommended Actions:**\n• Check Discord bot connection status\n• Verify bot token and permissions\n• Review Discord API rate limits'
   }
   
-  return '🎯 **Recommended Action:** Review the system health dashboard for detailed diagnostics.'
+  if (alert.service === 'database') {
+    return '🎯 **Recommended Actions:**\n• Check Firebase console for service status\n• Verify Firestore indexes are created\n• Review database query patterns'
+  }
+  
+  return '🎯 **Recommended Action:** Check Render logs and review recent changes to the affected service.'
 }
 
 /**
@@ -809,5 +732,6 @@ module.exports = {
   getRecentAlerts,
   generateDailySummary,
   sendJarvisStatusUpdate,
+  sendErrorLogAlert,
 }
 
