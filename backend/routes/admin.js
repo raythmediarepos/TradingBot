@@ -1865,6 +1865,45 @@ router.post('/test-error-log', authenticate, requireAdmin, async (req, res) => {
 })
 
 /**
+ * POST /api/admin/test-discord-alert
+ * Send a test Discord alert (admin only)
+ */
+router.post('/test-discord-alert', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { sendAlertEmail } = require('../services/monitoring/alertService')
+    
+    const testAlert = {
+      severity: 'warning',
+      service: 'system',
+      message: '🧪 Test Alert from Intelligent Log Monitor',
+      details: {
+        analyzed: true,
+        source: 'Admin Test',
+        description: 'This is a test alert triggered manually to verify Discord integration.',
+        recommendation: 'If you see this message, the Intelligent Log Monitor is working correctly!',
+        timestamp: new Date().toISOString(),
+      },
+      timestamp: new Date(),
+    }
+
+    await sendAlertEmail(testAlert)
+
+    res.json({
+      success: true,
+      message: 'Test alert sent to Discord',
+      alert: testAlert,
+    })
+  } catch (error) {
+    console.error('Error sending test alert:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send test alert',
+      message: error.message,
+    })
+  }
+})
+
+/**
  * POST /api/admin/test-jarvis-status
  * Test Jarvis status updates (admin only)
  */

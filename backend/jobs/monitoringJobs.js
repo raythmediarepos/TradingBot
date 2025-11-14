@@ -4,6 +4,7 @@ const { collectAndStoreMetrics } = require('../services/monitoring/metricsCollec
 const { initializeDiscordAlerts, checkAndAlert, generateDailySummary, sendJarvisStatusUpdate } = require('../services/monitoring/alertService')
 const { getClient } = require('../services/discordBotService')
 const { admin, db } = require('../config/firebase-admin')
+const { runIntelligentLogAnalysis } = require('../services/monitoring/intelligentLogMonitor')
 
 // Track if tasks are running
 let isRunningHealthCheck = false
@@ -174,6 +175,16 @@ const initializeMonitoringJobs = () => {
   })
   console.log('   ✅ Metrics & alerts: Every 30 minutes')
   
+  // Intelligent log analysis every 30 minutes (AI-powered error detection)
+  cron.schedule('*/30 * * * *', async () => {
+    try {
+      await runIntelligentLogAnalysis()
+    } catch (error) {
+      console.error('❌ [INTELLIGENT MONITOR] Error during scheduled run:', error.message)
+    }
+  })
+  console.log('   ✅ AI log analysis: Every 30 minutes')
+  
   // Daily summary at midnight
   cron.schedule('0 0 * * *', () => {
     runDailySummary()
@@ -184,10 +195,11 @@ const initializeMonitoringJobs = () => {
   console.log('💡 [MONITORING] Monitoring system active!')
   console.log('   → Health checks: Every 30 minutes')
   console.log('   → Metrics & alerts: Every 30 minutes')
+  console.log('   → AI log analysis: Every 30 minutes')
   console.log('   → Daily summaries: Midnight')
   console.log('   → Data stored in Firebase')
   console.log('   → View at: /admin/system-health')
-  console.log('   → Cost: $0 (integrated with backend)')
+  console.log('   → Cost: ~$0.14/month (OpenAI)')
   console.log('═'.repeat(60))
   console.log('')
   
