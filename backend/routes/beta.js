@@ -91,6 +91,10 @@ router.get('/user/:userId', async (req, res) => {
 
     const user = result.user
     
+    // CRITICAL: Calculate isFree dynamically based on position
+    const FREE_SLOTS = 20
+    const isFree = user.position <= FREE_SLOTS
+    
     // Return safe user data (no password hash)
     res.json({
       success: true,
@@ -99,7 +103,7 @@ router.get('/user/:userId', async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         position: user.position,
-        isFree: user.isFree || false,
+        isFree: isFree,
         status: user.status,
         paymentStatus: user.paymentStatus,
         emailVerified: user.emailVerified || false,
@@ -228,16 +232,21 @@ router.get('/status/:email', async (req, res) => {
 
     // Return safe user data (no sensitive tokens)
     const { user } = result
+    
+    // CRITICAL: Calculate isFree dynamically based on position
+    const FREE_SLOTS = 20
+    const isFree = user.position <= FREE_SLOTS
+    
     res.json({
       success: true,
       data: {
         position: user.position,
         status: user.status,
         paymentStatus: user.paymentStatus,
-        isFree: user.isFree,
+        isFree: isFree,
         emailVerified: user.emailVerified,
         discordJoined: user.discordJoined,
-        requiresPayment: !user.isFree && user.paymentStatus !== PAYMENT_STATUS.PAID,
+        requiresPayment: !isFree && user.paymentStatus !== PAYMENT_STATUS.PAID,
       },
     })
   } catch (error) {
@@ -286,13 +295,17 @@ router.post('/verify-email', verificationLimiter, async (req, res) => {
 
     const user = userResult.user
 
+    // CRITICAL: Calculate isFree dynamically based on position
+    const FREE_SLOTS = 20
+    const isFree = user.position <= FREE_SLOTS
+
     // Send Discord notification
     await notifyEmailVerified({
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       position: user.position,
-      isFree: user.isFree,
+      isFree: isFree,
     })
 
     // Discord invite will be available on user dashboard after login
@@ -303,8 +316,8 @@ router.post('/verify-email', verificationLimiter, async (req, res) => {
       message: result.message,
       data: {
         userId: result.userId,
-        isFree: user.isFree,
-        requiresPayment: !user.isFree,
+        isFree: isFree,
+        requiresPayment: !isFree,
         status: user.status,
       },
     })

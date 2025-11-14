@@ -140,10 +140,13 @@ router.get('/dashboard', authenticate, requireAdmin, async (req, res) => {
     const startOfWeek = new Date(startOfToday)
     startOfWeek.setDate(startOfToday.getDate() - 7)
 
+    // CRITICAL: Calculate isFree dynamically for accurate stats
+    const FREE_SLOTS = 20
+    
     const userStats = {
       total: users.length,
-      free: users.filter(u => u.isFree).length,
-      paid: users.filter(u => !u.isFree && u.paymentStatus === 'paid').length,
+      free: users.filter(u => u.position <= FREE_SLOTS).length,
+      paid: users.filter(u => u.position > FREE_SLOTS && u.paymentStatus === 'paid').length,
       verified: users.filter(u => u.emailVerified).length,
       discordJoined: users.filter(u => u.discordJoined).length,
       newToday: users.filter(u => {
@@ -386,11 +389,14 @@ router.get('/beta-users', authenticate, requireAdmin, async (req, res) => {
       users = users.filter(user => user.discordJoined === joined)
     }
 
+    // CRITICAL: Calculate isFree dynamically for filtering
+    const FREE_SLOTS = 20
+    
     if (type) {
       if (type === 'free') {
-        users = users.filter(user => user.isFree === true)
+        users = users.filter(user => user.position <= FREE_SLOTS)
       } else if (type === 'paid') {
-        users = users.filter(user => user.isFree === false)
+        users = users.filter(user => user.position > FREE_SLOTS)
       }
     }
 
@@ -422,9 +428,10 @@ router.get('/beta-users', authenticate, requireAdmin, async (req, res) => {
     const stats = await getBetaStats()
 
     // Calculate additional stats
+    // CRITICAL: Calculate isFree dynamically based on position
     const totalUsers = users.length
-    const freeUsers = users.filter(u => u.isFree).length
-    const paidUsers = users.filter(u => !u.isFree).length
+    const freeUsers = users.filter(u => u.position <= 20).length
+    const paidUsers = users.filter(u => u.position > 20).length
     const foundingMembers = users.filter(u => u.isFoundingMember === true).length
     const verifiedEmails = users.filter(u => u.emailVerified).length
     const joinedDiscord = users.filter(u => u.discordJoined).length

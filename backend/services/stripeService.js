@@ -56,7 +56,12 @@ const createCheckoutSession = async ({ userId, email, firstName, lastName }) => 
     }
 
     const user = userResult.user
-    if (user.isFree) {
+    
+    // CRITICAL: Calculate isFree dynamically based on position
+    const FREE_SLOTS = 20
+    const isFree = user.position <= FREE_SLOTS
+    
+    if (isFree) {
       return {
         success: false,
         message: 'This user has a free slot and does not need to pay',
