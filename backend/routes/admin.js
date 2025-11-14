@@ -1904,6 +1904,85 @@ router.post('/test-discord-alert', authenticate, requireAdmin, async (req, res) 
 })
 
 /**
+ * POST /api/admin/test-ai-monitor
+ * Create test error and run AI analysis (admin only)
+ */
+router.post('/test-ai-monitor', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const admin = require('firebase-admin')
+    const db = admin.firestore()
+    
+    console.log('🧪 [ADMIN] Creating test error for AI analysis...')
+    
+    // Create a realistic test error
+    const errorTypes = [
+      {
+        level: 'critical',
+        service: 'payments',
+        message: '🧪 TEST: Payment processing failed - Card declined',
+        stack: 'Error: Payment failed\n    at processPayment (stripe.js:45)\n    at checkout (routes/checkout.js:123)',
+      },
+      {
+        level: 'error',
+        service: 'email',
+        message: '🧪 TEST: Failed to send verification email',
+        stack: 'Error: Email delivery failed\n    at sendEmail (resend.js:34)\n    at verifyUser (auth.js:67)',
+      },
+      {
+        level: 'warning',
+        service: 'api',
+        message: '🧪 TEST: API rate limit approaching',
+        stack: 'Warning: Rate limit at 90%\n    at checkRateLimit (middleware.js:23)',
+      },
+    ]
+    
+    // Pick a random error or use specified type
+    const errorIndex = req.body.errorType || Math.floor(Math.random() * errorTypes.length)
+    const testError = errorTypes[errorIndex]
+    
+    // Add to Firebase
+    await db.collection('errorLogs').add({
+      ...testError,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    })
+    
+    console.log(`✅ [ADMIN] Test error created: ${testError.message}`)
+    
+    // Trigger AI analysis immediately
+    const { runIntelligentLogAnalysis } = require('../services/monitoring/intelligentLogMonitor')
+    
+    // Run in background (don't wait for response)
+    setImmediate(async () => {
+      try {
+        console.log('🧠 [ADMIN] Running AI analysis...')
+        await runIntelligentLogAnalysis()
+        console.log('✅ [ADMIN] AI analysis complete')
+      } catch (error) {
+        console.error('❌ [ADMIN] AI analysis failed:', error.message)
+      }
+    })
+    
+    res.json({
+      success: true,
+      message: 'Test error created and AI analysis triggered',
+      testError: {
+        level: testError.level,
+        service: testError.service,
+        message: testError.message,
+      },
+      note: 'Check Discord #system-alerts channel in ~10 seconds',
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error in test-ai-monitor:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create test error',
+      message: error.message,
+    })
+  }
+})
+
+/**
  * POST /api/admin/test-jarvis-status
  * Test Jarvis status updates (admin only)
  */
