@@ -1015,17 +1015,37 @@ const renumberBetaPositions = async () => {
     for (const user of users) {
       newPosition++
       
-      // Check if position needs updating
-      if (user.position !== newPosition) {
+      // CRITICAL: Calculate isFree based on position
+      const isFree = newPosition <= FREE_SLOTS
+      const shouldBePaymentStatus = isFree ? PAYMENT_STATUS.FREE : user.paymentStatus
+      
+      // Check if position, isFree, or paymentStatus needs updating
+      const needsUpdate = 
+        user.position !== newPosition || 
+        user.isFree !== isFree ||
+        (isFree && user.paymentStatus !== PAYMENT_STATUS.FREE)
+      
+      if (needsUpdate) {
         const userRef = db.collection(COLLECTIONS.BETA_USERS).doc(user.id)
-        batch.update(userRef, {
+        const updateData = {
           position: newPosition,
+          isFree: isFree,
           lastPositionUpdate: admin.firestore.FieldValue.serverTimestamp(),
-        })
+        }
+        
+        // If user should be free but isn't, update payment status
+        if (isFree && user.paymentStatus !== PAYMENT_STATUS.FREE) {
+          updateData.paymentStatus = PAYMENT_STATUS.FREE
+          updateData.requiresPayment = false
+        }
+        
+        batch.update(userRef, updateData)
         
         changes++
         batchCount++
-        console.log(`   → Updating ${user.email}: ${user.position} → ${newPosition}`)
+        
+        const statusChange = isFree !== user.isFree ? ` [${user.isFree ? 'PAID' : 'FREE'} → ${isFree ? 'FREE' : 'PAID'}]` : ''
+        console.log(`   → Updating ${user.email}: #${user.position} → #${newPosition}${statusChange}`)
 
         // Commit batch if it reaches max size
         if (batchCount >= MAX_BATCH_SIZE) {

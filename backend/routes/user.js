@@ -77,10 +77,15 @@ router.patch('/profile', authenticate, async (req, res) => {
 /**
  * GET /api/user/subscription
  * Get user's subscription information
+ * IMPORTANT: Calculate isFree dynamically based on position
  */
 router.get('/subscription', authenticate, async (req, res) => {
   try {
     const db = admin.firestore()
+
+    // CRITICAL: Calculate isFree dynamically based on position
+    const FREE_SLOTS = 20
+    const isFree = req.user.position <= FREE_SLOTS
 
     // Check if user has a subscription
     if (!req.user.stripeSubscriptionId) {
@@ -88,7 +93,7 @@ router.get('/subscription', authenticate, async (req, res) => {
         success: true,
         data: {
           hasSubscription: false,
-          isFree: req.user.isFree || false,
+          isFree: isFree,
           paymentStatus: req.user.paymentStatus,
         },
       })
@@ -107,7 +112,7 @@ router.get('/subscription', authenticate, async (req, res) => {
         success: true,
         data: {
           hasSubscription: false,
-          isFree: req.user.isFree || false,
+          isFree: isFree,
           paymentStatus: req.user.paymentStatus,
         },
       })
@@ -121,7 +126,7 @@ router.get('/subscription', authenticate, async (req, res) => {
       success: true,
       data: {
         hasSubscription: true,
-        isFree: req.user.isFree || false,
+        isFree: isFree,
         subscription: {
           id: subscriptionDoc.id,
           subscriptionId: serializedSubscription.subscriptionId,
@@ -248,25 +253,34 @@ router.get('/discord-status', authenticate, async (req, res) => {
 /**
  * GET /api/user/beta-status
  * Get comprehensive beta program status
+ * IMPORTANT: Always calculate isFree dynamically based on position (position <= 20)
  */
 router.get('/beta-status', authenticate, async (req, res) => {
   try {
+    // CRITICAL: Calculate isFree dynamically based on current position
+    // First 20 users are FREE, regardless of what's stored in database
+    const FREE_SLOTS = 20
+    const isFree = req.user.position <= FREE_SLOTS
+    const paymentStatus = req.user.paymentStatus || (isFree ? 'free' : 'pending')
+    
     console.log('📊 [BETA STATUS] User data:', {
       position: req.user.position,
-      isFree: req.user.isFree,
+      isFree: isFree,
+      storedIsFree: req.user.isFree, // What's in DB (may be stale)
+      calculated: `${req.user.position} <= ${FREE_SLOTS} = ${isFree}`,
       emailVerified: req.user.emailVerified,
-      paymentStatus: req.user.paymentStatus,
+      paymentStatus: paymentStatus,
       discordJoined: req.user.discordJoined,
     })
     
     const betaStatusData = serializeFirestoreData({
         position: req.user.position,
-        isFree: req.user.isFree || false,
+        isFree: isFree, // Use calculated value, not stored value
         status: req.user.status,
-        paymentStatus: req.user.paymentStatus,
+        paymentStatus: paymentStatus,
         emailVerified: req.user.emailVerified || false,
         discordJoined: req.user.discordJoined || false,
-      requiresPayment: !req.user.isFree && req.user.paymentStatus !== 'paid' && req.user.paymentStatus !== 'free',
+      requiresPayment: !isFree && paymentStatus !== 'paid' && paymentStatus !== 'free',
         createdAt: req.user.createdAt,
       accessExpiresAt: req.user.accessExpiresAt,
     })
@@ -302,8 +316,12 @@ router.post('/generate-discord-invite', authenticate, async (req, res) => {
       })
     }
 
+    // CRITICAL: Calculate isFree dynamically based on position
+    const FREE_SLOTS = 20
+    const isFree = req.user.position <= FREE_SLOTS
+    
     // Check if user needs to pay
-    const requiresPayment = !req.user.isFree && req.user.paymentStatus !== 'paid' && req.user.paymentStatus !== 'free'
+    const requiresPayment = !isFree && req.user.paymentStatus !== 'paid' && req.user.paymentStatus !== 'free'
     if (requiresPayment) {
       return res.status(403).json({
         success: false,
