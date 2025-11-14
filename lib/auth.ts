@@ -93,10 +93,29 @@ export const isAdmin = (): boolean => {
 }
 
 /**
+ * Clear all cached data
+ */
+export const clearAllCache = () => {
+  if (typeof window !== 'undefined') {
+    // Clear localStorage
+    localStorage.clear()
+    
+    // Clear sessionStorage
+    sessionStorage.clear()
+    
+    console.log('✅ [AUTH] All cache cleared')
+  }
+}
+
+/**
  * Login user
+ * Clears all cache before logging in to ensure fresh data
  */
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
+    // Clear all cached data before login
+    clearAllCache()
+    
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
@@ -110,6 +129,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     if (data.success && data.data) {
       setAuthToken(data.data.token)
       setUserData(data.data.user)
+      console.log('✅ [AUTH] Login successful - fresh data loaded')
     }
 
     return data
@@ -123,9 +143,13 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 
 /**
  * Login admin
+ * Clears all cache before logging in to ensure fresh data
  */
 export const adminLogin = async (email: string, password: string): Promise<LoginResponse> => {
   try {
+    // Clear all cached data before login
+    clearAllCache()
+    
     const response = await fetch(`${API_URL}/api/auth/admin-login`, {
       method: 'POST',
       headers: {
@@ -139,6 +163,7 @@ export const adminLogin = async (email: string, password: string): Promise<Login
     if (data.success && data.data) {
       setAuthToken(data.data.token)
       setUserData(data.data.user)
+      console.log('✅ [AUTH] Admin login successful - fresh data loaded')
     }
 
     return data

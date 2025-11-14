@@ -30,19 +30,31 @@ export default function ProtectedRoute({
         return
       }
 
-      // Check if user is authenticated
+      // Check if user is authenticated (has token)
       if (!isAuthenticated()) {
+        console.log('❌ [AUTH] No token found - redirecting to login')
         router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
         return
       }
 
+      // Validate token with API (fetch current user)
+      const user = await getCurrentUser()
+      if (!user) {
+        console.log('❌ [AUTH] Invalid token - redirecting to login')
+        // Token is invalid, clear and redirect
+        const { clearAllCache } = await import('@/lib/auth')
+        clearAllCache()
+        router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
+        return
+      }
+
+      console.log('✅ [AUTH] User authenticated:', user.email)
+
       // If admin is required, check admin role
-      if (requireAdmin) {
-        const user = await getCurrentUser()
-        if (!user || user.role !== 'admin') {
-          router.push('/dashboard')
-          return
-        }
+      if (requireAdmin && user.role !== 'admin') {
+        console.log('❌ [AUTH] Admin required but user is not admin')
+        router.push('/dashboard')
+        return
       }
 
       setIsAuthorized(true)
