@@ -767,6 +767,10 @@ router.delete('/beta-users/:userId/delete', authenticate, requireAdmin, async (r
   try {
     const { userId } = req.params
     const { reason } = req.body
+    
+    // Import required services
+    const { getBetaUser, renumberBetaPositions } = require('../services/betaUserService')
+    const admin = require('firebase-admin')
 
     console.log(`🗑️  [ADMIN] Attempting to delete user ${userId} by ${req.user.email}`)
 
@@ -838,7 +842,6 @@ router.delete('/beta-users/:userId/delete', authenticate, requireAdmin, async (r
     console.log(`✅ [ADMIN] User ${userId} deleted successfully`)
 
     // Step 3: Trigger position renumbering to fill the gap
-    const { renumberBetaPositions } = require('../services/betaUserService')
     setImmediate(async () => {
       try {
         await renumberBetaPositions()
