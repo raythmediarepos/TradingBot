@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Shield, Users, DollarSign, Mail, Search, Filter, Download,
   ChevronDown, ChevronUp, Eye, MoreVertical, RefreshCcw, XCircle,
-  CheckCircle2, Clock, Loader2, X, MessageSquare, Ban, Crown
+  CheckCircle2, Clock, Loader2, X, MessageSquare, Ban, Crown, Trash2
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout } from '@/lib/auth'
 
@@ -206,6 +206,47 @@ export default function AdminBetaUsersPage() {
       }
     } catch (error) {
       alert('Error revoking access')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleDeleteUser = async (userId: string) => {
+    const confirmed = confirm(
+      '⚠️ DANGER: This will PERMANENTLY DELETE the user from Firebase and kick them from Discord.\n\n' +
+      'This action CANNOT be undone!\n\n' +
+      'Are you absolutely sure?'
+    )
+    if (!confirmed) return
+
+    const reason = prompt('Enter reason for deletion (required):')
+    if (!reason) {
+      alert('Reason is required for deletion')
+      return
+    }
+
+    setActionLoading(`delete-${userId}`)
+    try {
+      const response = await fetchWithAuth(`/api/admin/beta-users/${userId}/delete`, {
+        method: 'DELETE',
+        body: JSON.stringify({ reason }),
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        alert(
+          `✅ User deleted successfully!\n\n` +
+          `• Removed from Firebase\n` +
+          `${data.data.kickedFromDiscord ? '• Kicked from Discord\n' : ''}` +
+          `• Positions renumbered automatically`
+        )
+        setShowUserDetails(false)
+        fetchUsers()
+      } else {
+        alert(`Failed: ${data.message}`)
+      }
+    } catch (error) {
+      alert('Error deleting user')
     } finally {
       setActionLoading(null)
     }
@@ -542,6 +583,18 @@ export default function AdminBetaUsersPage() {
                               <Ban className="w-4 h-4" />
                             )}
                           </button>
+                          <button
+                            onClick={() => handleDeleteUser(user.id)}
+                            disabled={actionLoading === `delete-${user.id}`}
+                            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-red-600 disabled:opacity-50"
+                            title="Delete User Permanently"
+                          >
+                            {actionLoading === `delete-${user.id}` ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -715,23 +768,42 @@ export default function AdminBetaUsersPage() {
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-3 pt-4">
+                <div className="space-y-3 pt-4">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleResendInvite(selectedUser.id)}
+                      disabled={actionLoading === `resend-${selectedUser.id}`}
+                      className="flex-1 py-2 px-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    >
+                      {actionLoading === `resend-${selectedUser.id}` ? 'Sending...' : 'Resend Discord Invite'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowUserDetails(false)
+                        handleRevokeAccess(selectedUser.id)
+                      }}
+                      disabled={actionLoading === `revoke-${selectedUser.id}`}
+                      className="py-2 px-4 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    >
+                      Revoke Access
+                    </button>
+                  </div>
                   <button
-                    onClick={() => handleResendInvite(selectedUser.id)}
-                    disabled={actionLoading === `resend-${selectedUser.id}`}
-                    className="flex-1 py-2 px-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    onClick={() => handleDeleteUser(selectedUser.id)}
+                    disabled={actionLoading === `delete-${selectedUser.id}`}
+                    className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {actionLoading === `resend-${selectedUser.id}` ? 'Sending...' : 'Resend Discord Invite'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowUserDetails(false)
-                      handleRevokeAccess(selectedUser.id)
-                    }}
-                    disabled={actionLoading === `revoke-${selectedUser.id}`}
-                    className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors disabled:opacity-50"
-                  >
-                    Revoke Access
+                    {actionLoading === `delete-${selectedUser.id}` ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        Delete User Permanently
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

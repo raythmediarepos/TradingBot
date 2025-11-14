@@ -845,6 +845,7 @@ global.__discordBotClient = {
 
   // Member management
   kickMember,
+  kickMemberFromServer: kickMember, // Alias for clarity
   banMember,
   sendDM,
 

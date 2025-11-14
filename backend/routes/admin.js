@@ -760,6 +760,133 @@ router.post('/beta-users/:userId/revoke', authenticate, requireAdmin, async (req
 })
 
 /**
+ * DELETE /api/admin/beta-users/:userId/delete
+ * Permanently delete a user and kick from Discord
+ */
+router.delete('/beta-users/:userId/delete', authenticateAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params
+    const { reason } = req.body
+
+    console.log(`🗑️  [ADMIN] Attempting to delete user ${userId} by ${req.user.email}`)
+
+    // Get user data first for Discord kick and notification
+    const userResult = await getBetaUser(userId)
+    if (!userResult.success) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      })
+    }
+
+    const user = userResult.user
+    const discordUserId = user.discordUserId
+
+    // Step 1: Kick from Discord if they joined
+    if (discordUserId) {
+      console.log(`   → Kicking user from Discord: ${user.discordUsername || discordUserId}`)
+      try {
+        const discordBotService = require('../services/discordBotService')
+        const kickResult = await discordBotService.kickMemberFromServer(discordUserId, reason || 'Account deleted by admin')
+        
+        if (kickResult.success) {
+          console.log(`   ✅ User kicked from Discord`)
+        } else {
+          console.log(`   ⚠️  Could not kick from Discord: ${kickResult.message}`)
+        }
+      } catch (discordError) {
+        console.error(`   ❌ Discord kick error:`, discordError.message)
+        // Continue with deletion even if Discord kick fails
+      }
+    }
+
+    // Step 2: Delete all related data from Firebase
+    const db = admin.firestore()
+    const batch = db.batch()
+
+    // Delete user record
+    batch.delete(db.collection('betaUsers').doc(userId))
+
+    // Delete Discord invites
+    const invitesSnapshot = await db.collection('discordInvites')
+      .where('userId', '==', userId)
+      .get()
+    invitesSnapshot.forEach(doc => batch.delete(doc.ref))
+
+    // Delete email verifications
+    const verificationsSnapshot = await db.collection('emailVerifications')
+      .where('userId', '==', userId)
+      .get()
+    verificationsSnapshot.forEach(doc => batch.delete(doc.ref))
+
+    // Delete payments (keep for records, but mark as deleted)
+    const paymentsSnapshot = await db.collection('payments')
+      .where('userId', '==', userId)
+      .get()
+    paymentsSnapshot.forEach(doc => {
+      batch.update(doc.ref, {
+        deleted: true,
+        deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+        deletedBy: req.user.email,
+        deletedReason: reason || 'User deleted by admin',
+      })
+    })
+
+    // Commit all deletions
+    await batch.commit()
+
+    console.log(`✅ [ADMIN] User ${userId} deleted successfully`)
+
+    // Step 3: Trigger position renumbering to fill the gap
+    const { renumberBetaPositions } = require('../services/betaUserService')
+    setImmediate(async () => {
+      try {
+        await renumberBetaPositions()
+        console.log('✅ [ADMIN] Position renumbering triggered after deletion')
+      } catch (error) {
+        console.error('❌ [ADMIN] Error renumbering positions:', error.message)
+      }
+    })
+
+    // Step 4: Send Discord notification
+    const { sendDiscordNotification } = require('../services/discordNotificationService')
+    await sendDiscordNotification({
+      type: 'error',
+      title: '🗑️  User Permanently Deleted',
+      description: `**${req.user.email}** permanently deleted user **${user.firstName} ${user.lastName}**`,
+      fields: [
+        { name: '📧 Email', value: user.email, inline: true },
+        { name: '📍 Position', value: `#${user.position}`, inline: true },
+        { name: '💰 Type', value: user.position <= 20 ? 'Free Beta' : 'Paid Beta', inline: true },
+        { name: '🎮 Discord', value: discordUserId ? `Kicked (${user.discordUsername || 'Unknown'})` : 'Not joined', inline: false },
+        { name: '📝 Reason', value: reason || 'No reason provided', inline: false },
+        { name: '👤 Admin', value: req.user.email, inline: true },
+      ],
+    })
+
+    res.json({
+      success: true,
+      message: 'User deleted successfully',
+      data: {
+        deletedUser: {
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          position: user.position,
+        },
+        kickedFromDiscord: !!discordUserId,
+      },
+    })
+  } catch (error) {
+    console.error('Error in DELETE /api/admin/beta-users/:userId/delete:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete user',
+      error: error.message,
+    })
+  }
+})
+
+/**
  * @route   GET /api/admin/discord/overview
  * @desc    Get Discord server overview and stats
  * @access  Admin only
