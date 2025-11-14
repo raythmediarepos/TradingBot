@@ -276,6 +276,71 @@ const handleMessageCreate = async (message) => {
         return
       }
     }
+    
+    // Clear logs command - delete all Firebase error logs
+    if (content === 'clear logs') {
+      try {
+        const loadingMsg = await message.reply('🧹 Clearing Firebase error logs...')
+        
+        const admin = require('firebase-admin')
+        const db = admin.firestore()
+        
+        // Get all error logs
+        const snapshot = await db.collection('errorLogs').get()
+        
+        if (snapshot.empty) {
+          await loadingMsg.edit('✅ No error logs to clear.')
+          setTimeout(() => {
+            message.delete().catch(() => {})
+            loadingMsg.delete().catch(() => {})
+          }, 5000)
+          return
+        }
+        
+        // Delete in batches (max 500 per batch)
+        const batchSize = 500
+        let deletedCount = 0
+        const batches = []
+        let batch = db.batch()
+        let batchCount = 0
+        
+        snapshot.forEach((doc) => {
+          batch.delete(doc.ref)
+          batchCount++
+          deletedCount++
+          
+          if (batchCount === batchSize) {
+            batches.push(batch)
+            batch = db.batch()
+            batchCount = 0
+          }
+        })
+        
+        // Push remaining batch
+        if (batchCount > 0) {
+          batches.push(batch)
+        }
+        
+        // Execute all batches
+        await Promise.all(batches.map(b => b.commit()))
+        
+        await loadingMsg.edit(`✅ Cleared ${deletedCount} error log(s) from Firebase.\n\n🧠 AI monitor will start fresh on next run.`)
+        
+        console.log(`🧹 [DISCORD BOT] Admin cleared ${deletedCount} Firebase error logs`)
+        
+        // Delete the command message after 8 seconds
+        setTimeout(() => {
+          message.delete().catch(() => {})
+          setTimeout(() => loadingMsg.delete().catch(() => {}), 3000)
+        }, 8000)
+        
+        return
+      } catch (error) {
+        console.error('❌ [DISCORD BOT] Error clearing logs:', error)
+        await message.reply('❌ Failed to clear error logs. Check Firebase permissions.')
+        return
+      }
+    }
   }
 
   // Track message for analytics
