@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Shield, Users, DollarSign, Mail, Search, Filter, Download,
   ChevronDown, ChevronUp, Eye, MoreVertical, RefreshCcw, XCircle,
-  CheckCircle2, Clock, Loader2, X, MessageSquare, Ban, Crown, Trash2
+  CheckCircle2, Clock, Loader2, X, MessageSquare, Ban, Crown, Trash2, Gift
 } from 'lucide-react'
 import { isAuthenticated, isAdmin, fetchWithAuth, logout } from '@/lib/auth'
 
@@ -247,6 +247,37 @@ export default function AdminBetaUsersPage() {
       }
     } catch (error) {
       alert('Error deleting user')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleGrantAccess = async (userId: string) => {
+    const reason = prompt('Enter reason for granting free access (optional):')
+    
+    setActionLoading(`grant-${userId}`)
+    try {
+      const response = await fetchWithAuth(`/api/admin/beta-users/${userId}/grant-access`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason || 'Manual access granted' }),
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        alert(
+          `✅ Access granted successfully!\n\n` +
+          `• User can now access without payment\n` +
+          `• Status: ACTIVE\n` +
+          `• Access until: December 31, 2025\n` +
+          `• Marked as manually granted`
+        )
+        setShowUserDetails(false)
+        fetchUsers()
+      } else {
+        alert(`Failed: ${data.message}`)
+      }
+    } catch (error) {
+      alert('Error granting access')
     } finally {
       setActionLoading(null)
     }
@@ -572,6 +603,18 @@ export default function AdminBetaUsersPage() {
                             )}
                           </button>
                           <button
+                            onClick={() => handleGrantAccess(user.id)}
+                            disabled={actionLoading === `grant-${user.id}`}
+                            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-green-400 disabled:opacity-50"
+                            title="Grant Free Access (Bypass Payment)"
+                          >
+                            {actionLoading === `grant-${user.id}` ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Gift className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
                             onClick={() => handleRevokeAccess(user.id)}
                             disabled={actionLoading === `revoke-${user.id}`}
                             className="p-2 hover:bg-white/10 rounded-lg transition-colors text-red-400 disabled:opacity-50"
@@ -788,6 +831,23 @@ export default function AdminBetaUsersPage() {
                       Revoke Access
                     </button>
                   </div>
+                  <button
+                    onClick={() => handleGrantAccess(selectedUser.id)}
+                    disabled={actionLoading === `grant-${selectedUser.id}`}
+                    className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {actionLoading === `grant-${selectedUser.id}` ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Granting...
+                      </>
+                    ) : (
+                      <>
+                        <Gift className="w-4 h-4" />
+                        Grant Free Access (Bypass Payment)
+                      </>
+                    )}
+                  </button>
                   <button
                     onClick={() => handleDeleteUser(selectedUser.id)}
                     disabled={actionLoading === `delete-${selectedUser.id}`}

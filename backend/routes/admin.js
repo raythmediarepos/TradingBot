@@ -760,6 +760,95 @@ router.post('/beta-users/:userId/revoke', authenticate, requireAdmin, async (req
 })
 
 /**
+ * POST /api/admin/beta-users/:userId/grant-access
+ * Manually grant access (bypass payment requirement)
+ * @desc    Admin can manually mark user as paid without Stripe
+ * @access  Admin only
+ */
+router.post('/beta-users/:userId/grant-access', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { updateBetaUser, getBetaUser } = require('../services/betaUserService')
+    const { USER_STATUS, PAYMENT_STATUS } = require('../services/betaUserService')
+    const admin = require('firebase-admin')
+    
+    const { userId } = req.params
+    const { reason } = req.body
+
+    console.log(`🎁 [ADMIN] Granting free access to user ${userId} by ${req.user.email}`)
+
+    // Get user data first
+    const userResult = await getBetaUser(userId)
+    if (!userResult.success) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      })
+    }
+
+    const user = userResult.user
+
+    // Update user to mark as paid (manually granted)
+    const accessExpiresAt = new Date('2025-12-31T23:59:59Z')
+    
+    const result = await updateBetaUser(userId, {
+      paymentStatus: PAYMENT_STATUS.PAID,
+      status: USER_STATUS.ACTIVE,
+      requiresPayment: false,
+      accessExpiresAt: accessExpiresAt,
+      manuallyGranted: true,
+      grantedBy: req.user.email,
+      grantedAt: admin.firestore.FieldValue.serverTimestamp(),
+      grantedReason: reason || 'Manual access granted by admin',
+    })
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to grant access',
+        error: result.error,
+      })
+    }
+
+    console.log(`✅ [ADMIN] Access granted to user ${userId} by ${req.user.email}`)
+
+    // Send Discord notification
+    const { sendDiscordNotification } = require('../services/discordNotificationService')
+    await sendDiscordNotification({
+      type: 'success',
+      title: '🎁 Free Access Granted (Admin)',
+      description: `**${req.user.email}** manually granted access to **${user.firstName} ${user.lastName}**`,
+      fields: [
+        { name: '📧 Email', value: user.email, inline: true },
+        { name: '📍 Position', value: `#${user.position}`, inline: true },
+        { name: '💰 Type', value: user.position <= 20 ? 'Free Beta' : 'Paid Beta', inline: true },
+        { name: '✅ Access Level', value: 'Full Access (No Payment Required)', inline: false },
+        { name: '⏰ Expires', value: 'December 31, 2025', inline: true },
+        { name: '📝 Reason', value: reason || 'Manual grant by admin', inline: false },
+        { name: '👤 Admin', value: req.user.email, inline: true },
+      ],
+    })
+
+    res.json({
+      success: true,
+      message: 'Access granted successfully',
+      data: {
+        userId: userId,
+        paymentStatus: PAYMENT_STATUS.PAID,
+        accessExpiresAt: accessExpiresAt.toISOString(),
+        manuallyGranted: true,
+      },
+    })
+  } catch (error) {
+    console.error('❌ [ADMIN] Error granting access:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to grant access',
+      error: error.message,
+    })
+  }
+})
+
+/**
  * DELETE /api/admin/beta-users/:userId/delete
  * Permanently delete a user and kick from Discord
  */
