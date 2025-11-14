@@ -1983,6 +1983,180 @@ router.post('/test-ai-monitor', authenticate, requireAdmin, async (req, res) => 
 })
 
 /**
+ * GET /api/admin/test-discord-ai
+ * Simple URL to test AI monitor and Discord alerts (no auth for easy testing)
+ */
+router.get('/test-discord-ai', async (req, res) => {
+  try {
+    const admin = require('firebase-admin')
+    const db = admin.firestore()
+    
+    console.log('🧪 [TEST URL] Creating test error for AI analysis...')
+    
+    // Create a random test error
+    const errorTypes = [
+      {
+        level: 'critical',
+        service: 'payments',
+        message: '🧪 TEST: Payment processing failed - Card declined',
+        stack: 'Error: Payment failed\n    at processPayment (stripe.js:45)\n    at checkout (routes/checkout.js:123)',
+      },
+      {
+        level: 'error',
+        service: 'email',
+        message: '🧪 TEST: Failed to send verification email',
+        stack: 'Error: Email delivery failed\n    at sendEmail (resend.js:34)\n    at verifyUser (auth.js:67)',
+      },
+      {
+        level: 'warning',
+        service: 'database',
+        message: '🧪 TEST: Database connection slow (>5s response time)',
+        stack: 'Warning: Slow query\n    at queryDB (firebase.js:89)\n    at fetchUsers (users.js:23)',
+      },
+    ]
+    
+    const testError = errorTypes[Math.floor(Math.random() * errorTypes.length)]
+    
+    // Add to Firebase
+    await db.collection('errorLogs').add({
+      ...testError,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    })
+    
+    console.log(`✅ [TEST URL] Test error created: ${testError.message}`)
+    
+    // Trigger AI analysis in background
+    const { runIntelligentLogAnalysis } = require('../services/monitoring/intelligentLogMonitor')
+    
+    setImmediate(async () => {
+      try {
+        console.log('🧠 [TEST URL] Running AI analysis...')
+        await runIntelligentLogAnalysis()
+        console.log('✅ [TEST URL] AI analysis complete - check Discord!')
+      } catch (error) {
+        console.error('❌ [TEST URL] AI analysis failed:', error.message)
+      }
+    })
+    
+    // Send nice HTML response
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>AI Monitor Test</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              max-width: 600px;
+              margin: 100px auto;
+              padding: 40px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+            }
+            .container {
+              background: rgba(255, 255, 255, 0.1);
+              backdrop-filter: blur(10px);
+              border-radius: 20px;
+              padding: 40px;
+              box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            }
+            h1 { margin-top: 0; font-size: 32px; }
+            .status { font-size: 60px; margin: 20px 0; }
+            .error-box {
+              background: rgba(0, 0, 0, 0.2);
+              padding: 20px;
+              border-radius: 10px;
+              margin: 20px 0;
+              font-family: 'Courier New', monospace;
+            }
+            .note {
+              background: rgba(255, 255, 255, 0.2);
+              padding: 15px;
+              border-radius: 10px;
+              margin-top: 20px;
+              font-size: 14px;
+            }
+            a {
+              color: #ffd700;
+              text-decoration: none;
+              font-weight: bold;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="status">✅</div>
+            <h1>AI Monitor Test Triggered!</h1>
+            <p><strong>Test error created and AI analysis running...</strong></p>
+            
+            <div class="error-box">
+              <strong>🔴 ${testError.level.toUpperCase()}</strong><br>
+              <strong>Service:</strong> ${testError.service}<br>
+              <strong>Message:</strong> ${testError.message}
+            </div>
+            
+            <div class="note">
+              <strong>📱 Check your Discord #system-alerts channel in ~10 seconds!</strong><br><br>
+              You should see a Jarvis alert with:
+              <ul>
+                <li>Error severity and service</li>
+                <li>AI-analyzed details</li>
+                <li>Recommended actions</li>
+              </ul>
+            </div>
+            
+            <p style="margin-top: 30px; font-size: 14px; opacity: 0.8;">
+              🧠 Powered by OpenAI GPT-4o-mini<br>
+              Cost: ~$0.0007 per analysis
+            </p>
+            
+            <p style="margin-top: 20px;">
+              <a href="/test-discord-ai">🔄 Test Again</a>
+            </p>
+          </div>
+        </body>
+      </html>
+    `)
+  } catch (error) {
+    console.error('❌ [TEST URL] Error:', error)
+    res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Test Failed</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              max-width: 600px;
+              margin: 100px auto;
+              padding: 40px;
+              background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+              color: white;
+            }
+            .container {
+              background: rgba(255, 255, 255, 0.1);
+              backdrop-filter: blur(10px);
+              border-radius: 20px;
+              padding: 40px;
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>❌ Test Failed</h1>
+            <p>${error.message}</p>
+            <p style="font-size: 14px; opacity: 0.8; margin-top: 20px;">
+              Check Render logs for details
+            </p>
+          </div>
+        </body>
+      </html>
+    `)
+  }
+})
+
+/**
  * POST /api/admin/test-jarvis-status
  * Test Jarvis status updates (admin only)
  */
