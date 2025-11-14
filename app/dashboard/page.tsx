@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { User, CreditCard, LogOut, CheckCircle2, XCircle, Loader2, Shield, ExternalLink, Copy } from 'lucide-react'
 import { fetchWithAuth, logout, getUserData } from '@/lib/auth'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import ReportIssueButton from '@/components/ReportIssueButton'
+import ReportIssueButton from '@/app/components/ReportIssueButton'
 
 // Helper function to format date from various formats
 const formatDate = (dateValue: any): string => {
