@@ -763,7 +763,7 @@ router.post('/beta-users/:userId/revoke', authenticate, requireAdmin, async (req
  * DELETE /api/admin/beta-users/:userId/delete
  * Permanently delete a user and kick from Discord
  */
-router.delete('/beta-users/:userId/delete', authenticateAdmin, async (req, res) => {
+router.delete('/beta-users/:userId/delete', authenticate, requireAdmin, async (req, res) => {
   try {
     const { userId } = req.params
     const { reason } = req.body
