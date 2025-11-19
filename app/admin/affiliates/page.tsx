@@ -479,12 +479,12 @@ export default function AffiliatesPage() {
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        value={affiliateStats.affiliateLink || ''}
+                        value={affiliateStats.affiliate.affiliateLink || ''}
                         readOnly
                         className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white font-mono text-sm"
                       />
                       <button
-                        onClick={() => handleCopyLink(affiliateStats.affiliateLink, selectedAffiliate)}
+                        onClick={() => handleCopyLink(affiliateStats.affiliate.affiliateLink, selectedAffiliate)}
                         className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg text-white transition-colors flex items-center gap-2"
                       >
                         {copiedLink === selectedAffiliate ? (
