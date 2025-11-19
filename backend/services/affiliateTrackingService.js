@@ -136,17 +136,29 @@ const getClickStats = async (affiliateCode) => {
  */
 const updateCommissionOnPayment = async (userId, affiliateCode) => {
   try {
-    const COMMISSION_AMOUNT = 12.50 // $49.99 * 0.25
+    const PAYMENT_AMOUNT = 49.99
+
+    // Get affiliate to retrieve commission rate
+    const affiliateResult = await getAffiliateByCode(affiliateCode)
+    if (!affiliateResult.success) {
+      return {
+        success: false,
+        error: 'Affiliate not found',
+      }
+    }
+
+    const commissionRate = affiliateResult.affiliate.commissionRate || 25 // Default to 25%
+    const commissionAmount = PAYMENT_AMOUNT * (commissionRate / 100)
 
     // Increment paid users count and total commission
     await incrementAffiliateStats(affiliateCode, 'paidUsers', 1)
-    await incrementAffiliateStats(affiliateCode, 'totalCommission', COMMISSION_AMOUNT)
+    await incrementAffiliateStats(affiliateCode, 'totalCommission', commissionAmount)
 
-    console.log(`💰 [AFFILIATE COMMISSION] ${affiliateCode} earned $${COMMISSION_AMOUNT} from user ${userId}`)
+    console.log(`💰 [AFFILIATE COMMISSION] ${affiliateCode} earned $${commissionAmount.toFixed(2)} (${commissionRate}%) from user ${userId}`)
 
     return {
       success: true,
-      commissionAmount: COMMISSION_AMOUNT,
+      commissionAmount: commissionAmount,
     }
   } catch (error) {
     console.error('❌ [AFFILIATE COMMISSION] Error updating commission:', error)
@@ -162,17 +174,29 @@ const updateCommissionOnPayment = async (userId, affiliateCode) => {
  */
 const deductCommissionOnRefund = async (userId, affiliateCode) => {
   try {
-    const COMMISSION_AMOUNT = 12.50 // $49.99 * 0.25
+    const PAYMENT_AMOUNT = 49.99
+
+    // Get affiliate to retrieve commission rate
+    const affiliateResult = await getAffiliateByCode(affiliateCode)
+    if (!affiliateResult.success) {
+      return {
+        success: false,
+        error: 'Affiliate not found',
+      }
+    }
+
+    const commissionRate = affiliateResult.affiliate.commissionRate || 25 // Default to 25%
+    const commissionAmount = PAYMENT_AMOUNT * (commissionRate / 100)
 
     // Decrement paid users count and total commission
     await incrementAffiliateStats(affiliateCode, 'paidUsers', -1)
-    await incrementAffiliateStats(affiliateCode, 'totalCommission', -COMMISSION_AMOUNT)
+    await incrementAffiliateStats(affiliateCode, 'totalCommission', -commissionAmount)
 
-    console.log(`↩️  [AFFILIATE REFUND] ${affiliateCode} commission deducted: -$${COMMISSION_AMOUNT} (user ${userId})`)
+    console.log(`↩️  [AFFILIATE REFUND] ${affiliateCode} commission deducted: -$${commissionAmount.toFixed(2)} (${commissionRate}%) (user ${userId})`)
 
     return {
       success: true,
-      commissionAmount: -COMMISSION_AMOUNT,
+      commissionAmount: -commissionAmount,
     }
   } catch (error) {
     console.error('❌ [AFFILIATE REFUND] Error deducting commission:', error)

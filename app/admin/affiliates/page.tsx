@@ -15,6 +15,7 @@ interface Affiliate {
   code: string
   name: string
   email: string
+  commissionRate: number
   status: string
   createdAt: any
   totalClicks: number
@@ -53,11 +54,13 @@ export default function AffiliatesPage() {
     name: '',
     email: '',
     code: '',
+    commissionRate: 25,
   })
   const [formErrors, setFormErrors] = useState({
     name: '',
     email: '',
     code: '',
+    commissionRate: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [copiedLink, setCopiedLink] = useState<string | null>(null)
@@ -112,6 +115,7 @@ export default function AffiliatesPage() {
       name: formData.name ? '' : 'Name is required',
       email: formData.email ? '' : 'Email is required',
       code: formData.code ? '' : 'Code is required',
+      commissionRate: (formData.commissionRate >= 0 && formData.commissionRate <= 100) ? '' : 'Rate must be between 0-100',
     }
     setFormErrors(errors)
 
@@ -129,7 +133,7 @@ export default function AffiliatesPage() {
       if (data.success) {
         alert('✅ Affiliate created successfully!')
         setShowCreateModal(false)
-        setFormData({ name: '', email: '', code: '' })
+        setFormData({ name: '', email: '', code: '', commissionRate: 25 })
         fetchAffiliates()
       } else {
         alert(`Failed: ${data.message}`)
@@ -279,6 +283,7 @@ export default function AffiliatesPage() {
                     <th className="text-left py-3 px-4 text-purple-200 font-semibold">Code</th>
                     <th className="text-left py-3 px-4 text-purple-200 font-semibold">Name</th>
                     <th className="text-left py-3 px-4 text-purple-200 font-semibold">Email</th>
+                    <th className="text-center py-3 px-4 text-purple-200 font-semibold">Rate</th>
                     <th className="text-center py-3 px-4 text-purple-200 font-semibold">Clicks</th>
                     <th className="text-center py-3 px-4 text-purple-200 font-semibold">Signups</th>
                     <th className="text-center py-3 px-4 text-purple-200 font-semibold">Paid</th>
@@ -296,6 +301,7 @@ export default function AffiliatesPage() {
                       </td>
                       <td className="py-4 px-4 text-white">{affiliate.name}</td>
                       <td className="py-4 px-4 text-purple-200">{affiliate.email}</td>
+                      <td className="py-4 px-4 text-center text-blue-400 font-semibold">{affiliate.commissionRate || 25}%</td>
                       <td className="py-4 px-4 text-center text-white">{affiliate.totalClicks}</td>
                       <td className="py-4 px-4 text-center text-white">{affiliate.totalSignups}</td>
                       <td className="py-4 px-4 text-center text-green-400 font-semibold">{affiliate.paidUsers}</td>
@@ -412,6 +418,22 @@ export default function AffiliatesPage() {
                   <p className="text-purple-300 text-sm mt-1">Unique code for tracking (letters and numbers only)</p>
                 </div>
 
+                <div>
+                  <label className="block text-purple-200 mb-2">Commission Rate (%) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={formData.commissionRate}
+                    onChange={(e) => setFormData({ ...formData, commissionRate: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-purple-500"
+                    placeholder="25"
+                  />
+                  {formErrors.commissionRate && <p className="text-red-400 text-sm mt-1">{formErrors.commissionRate}</p>}
+                  <p className="text-purple-300 text-sm mt-1">Percentage of $49.99 payment (e.g., 25% = $12.50 commission)</p>
+                </div>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -464,6 +486,7 @@ export default function AffiliatesPage() {
                         {affiliateStats.affiliate.code} - {affiliateStats.affiliate.name}
                       </h2>
                       <p className="text-purple-200">{affiliateStats.affiliate.email}</p>
+                      <p className="text-blue-400 font-semibold mt-1">Commission Rate: {affiliateStats.affiliate.commissionRate || 25}%</p>
                     </div>
                     <button
                       onClick={() => setShowDetailsModal(false)}

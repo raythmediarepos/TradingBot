@@ -11,7 +11,7 @@ const COLLECTIONS = {
 /**
  * Create a new affiliate
  */
-const createAffiliate = async (name, email, code, createdBy) => {
+const createAffiliate = async (name, email, code, commissionRate, createdBy) => {
   try {
     // Validate code uniqueness
     const existingAffiliate = await db
@@ -26,11 +26,21 @@ const createAffiliate = async (name, email, code, createdBy) => {
       }
     }
 
+    // Validate commission rate
+    const rate = parseFloat(commissionRate) || 25
+    if (rate < 0 || rate > 100) {
+      return {
+        success: false,
+        error: 'Commission rate must be between 0 and 100',
+      }
+    }
+
     // Create affiliate
     const affiliateData = {
       code: code.toUpperCase(),
       name: name,
       email: email,
+      commissionRate: rate, // Store as percentage (e.g., 25 = 25%)
       status: 'active',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       createdBy: createdBy,
@@ -45,7 +55,7 @@ const createAffiliate = async (name, email, code, createdBy) => {
 
     const docRef = await db.collection(COLLECTIONS.AFFILIATES).add(affiliateData)
 
-    console.log(`✅ [AFFILIATE] Created affiliate: ${code} (${name})`)
+    console.log(`✅ [AFFILIATE] Created affiliate: ${code} (${name}) - ${rate}% commission`)
 
     return {
       success: true,
@@ -230,6 +240,8 @@ const getAffiliateStats = async (code) => {
 
     // Calculate stats
     const FREE_SLOTS = 20
+    const PAYMENT_AMOUNT = 49.99
+    const commissionRate = affiliate.commissionRate || 25 // Default to 25% if not set
     let paidUsers = 0
     let freeUsers = 0
     let totalCommission = 0
@@ -241,7 +253,8 @@ const getAffiliateStats = async (code) => {
         freeUsers++
       } else if (user.paymentStatus === 'paid' && !user.manuallyGranted) {
         paidUsers++
-        totalCommission += 12.50 // $49.99 * 0.25
+        // Calculate commission based on affiliate's custom rate
+        totalCommission += (PAYMENT_AMOUNT * (commissionRate / 100))
       }
     })
 

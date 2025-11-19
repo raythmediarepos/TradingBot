@@ -63,7 +63,7 @@ router.get('/track-click', async (req, res) => {
  */
 router.post('/admin/affiliates', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { name, email, code } = req.body
+    const { name, email, code, commissionRate } = req.body
 
     if (!name || !email || !code) {
       return res.status(400).json({
@@ -72,7 +72,7 @@ router.post('/admin/affiliates', authenticate, requireAdmin, async (req, res) =>
       })
     }
 
-    const result = await createAffiliate(name, email, code, req.user.email)
+    const result = await createAffiliate(name, email, code, commissionRate || 25, req.user.email)
 
     if (result.success) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
