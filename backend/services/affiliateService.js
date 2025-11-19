@@ -317,6 +317,10 @@ const incrementAffiliateStats = async (code, field, incrementBy = 1) => {
  * Generate affiliate link
  */
 const generateAffiliateLink = (code, frontendUrl) => {
+  if (!code) {
+    console.error('❌ [AFFILIATE] Cannot generate link: code is undefined')
+    return null
+  }
   return `${frontendUrl}/beta/signup?ref=${code.toUpperCase()}`
 }
 

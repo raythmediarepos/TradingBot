@@ -110,11 +110,13 @@ router.get('/admin/affiliates', authenticate, requireAdmin, async (req, res) => 
     if (result.success) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
       
-      // Add affiliate links to each affiliate
-      const affiliatesWithLinks = result.affiliates.map(affiliate => ({
-        ...affiliate,
-        affiliateLink: generateAffiliateLink(affiliate.code, frontendUrl),
-      }))
+      // Filter out affiliates without codes and add affiliate links
+      const affiliatesWithLinks = result.affiliates
+        .filter(affiliate => affiliate.code) // Skip affiliates without codes
+        .map(affiliate => ({
+          ...affiliate,
+          affiliateLink: generateAffiliateLink(affiliate.code, frontendUrl),
+        }))
 
       res.json({
         success: true,
