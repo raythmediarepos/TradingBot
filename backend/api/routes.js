@@ -227,6 +227,13 @@ const adminRoutes = require('../routes/admin')
 router.use('/admin', adminRoutes)
 
 // ============================================
+// AFFILIATE ROUTES
+// ============================================
+
+const affiliateRoutes = require('../routes/affiliate')
+router.use('/affiliate', affiliateRoutes)
+
+// ============================================
 // SITE SETTINGS ROUTES
 // ============================================
 

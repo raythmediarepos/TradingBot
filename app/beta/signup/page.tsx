@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, Mail, User, CheckCircle2, AlertCircle, Check, X } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
+import { getAffiliateCookie, handleAffiliateLink } from '@/lib/affiliateCookie'
 
 export default function BetaSignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -34,6 +36,25 @@ export default function BetaSignupPage() {
     },
   })
   const [error, setError] = useState('')
+  const [affiliateCode, setAffiliateCode] = useState<string | null>(null)
+
+  // Check for affiliate code on mount
+  useEffect(() => {
+    // Check URL for ?ref= parameter
+    const refParam = searchParams.get('ref')
+    
+    if (refParam) {
+      // Track click and set cookie
+      handleAffiliateLink(refParam)
+      setAffiliateCode(refParam.toUpperCase())
+    } else {
+      // Check cookie for existing affiliate code
+      const cookieCode = getAffiliateCookie()
+      if (cookieCode) {
+        setAffiliateCode(cookieCode)
+      }
+    }
+  }, [searchParams])
 
   // Fetch beta stats on mount
   useEffect(() => {
@@ -196,12 +217,18 @@ export default function BetaSignupPage() {
     setShowEmailConfirmation(false)
 
     try {
+      // Include affiliate code if present
+      const signupData = {
+        ...formData,
+        ...(affiliateCode && { affiliateCode }),
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/beta/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(signupData),
       })
 
       const data = await response.json()

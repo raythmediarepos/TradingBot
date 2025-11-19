@@ -252,10 +252,52 @@ const handleCheckoutSessionCompleted = async (session) => {
       paymentStatus: PAYMENT_STATUS.PAID,
       stripeCustomerId: customerId,
       stripePaymentIntentId: paymentIntentId,
-      accessExpiresAt: new Date('2025-12-31T23:59:59Z'), // Access until Dec 31, 2025
+      accessExpiresAt: new Date('2025-12-31T23:59:59Z'), // Access until Dec 31, 2025,
+      paidAt: new Date(), // Track when payment was completed
     })
 
     console.log(`✅ [STRIPE WEBHOOK] User ${userId} activated`)
+
+    // Handle affiliate commission tracking
+    if (user.affiliateCode && !user.manuallyGranted) {
+      try {
+        const { updateCommissionOnPayment } = require('./affiliateTrackingService')
+        const { getAffiliateByCode } = require('./affiliateService')
+        const { sendCommissionEarnedNotification } = require('./affiliateEmailService')
+
+        console.log(`💰 [AFFILIATE] Processing commission for affiliate: ${user.affiliateCode}`)
+
+        // Update commission stats
+        const commissionResult = await updateCommissionOnPayment(userId, user.affiliateCode)
+
+        if (commissionResult.success) {
+          // Get affiliate details for email
+          const affiliateResult = await getAffiliateByCode(user.affiliateCode)
+          
+          if (affiliateResult.success) {
+            const affiliate = affiliateResult.affiliate
+            
+            // Send commission earned email to affiliate
+            await sendCommissionEarnedNotification(
+              user.affiliateCode,
+              affiliate.name,
+              affiliate.email,
+              {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                position: user.position,
+              },
+              commissionResult.commissionAmount
+            )
+
+            console.log(`✅ [AFFILIATE] Commission tracked: $${commissionResult.commissionAmount} for ${user.affiliateCode}`)
+          }
+        }
+      } catch (affiliateError) {
+        console.error('❌ [AFFILIATE] Error tracking commission:', affiliateError)
+        // Don't fail the payment if affiliate tracking fails
+      }
+    }
 
     // Send payment confirmation email
     console.log('📧 [STRIPE WEBHOOK] Sending payment confirmation email...')

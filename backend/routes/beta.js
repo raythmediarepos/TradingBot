@@ -124,7 +124,7 @@ router.get('/user/:userId', async (req, res) => {
  */
 router.post('/signup', signupLimiter, async (req, res) => {
   try {
-    const { email, firstName, lastName, password, agreedToTerms } = req.body
+    const { email, firstName, lastName, password, agreedToTerms, affiliateCode } = req.body
 
     // Validate input
     if (!email || !firstName || !lastName || !password) {
@@ -154,8 +154,8 @@ router.post('/signup', signupLimiter, async (req, res) => {
     // Hash password
     const passwordHash = await hashPassword(password)
 
-    // Create beta user
-    const result = await createBetaUser({
+    // Prepare user data
+    const userData = {
       email,
       firstName,
       lastName,
@@ -163,7 +163,17 @@ router.post('/signup', signupLimiter, async (req, res) => {
       agreedToTerms: true,
       tosVersion: '1.0', // Track TOS version for future updates
       tosAcceptedAt: new Date(),
-    })
+    }
+
+    // Add affiliate code if provided
+    if (affiliateCode) {
+      userData.affiliateCode = affiliateCode.toUpperCase()
+      userData.affiliatedAt = new Date()
+      console.log(`🎯 [AFFILIATE] Signup with affiliate code: ${affiliateCode}`)
+    }
+
+    // Create beta user
+    const result = await createBetaUser(userData)
 
     if (!result.success) {
       return res.status(400).json({
@@ -192,6 +202,42 @@ router.post('/signup', signupLimiter, async (req, res) => {
       position: result.position,
       isFree: result.isFree,
     })
+
+    // Handle affiliate tracking if code was provided
+    if (affiliateCode) {
+      try {
+        const { trackConversion } = require('../services/affiliateTrackingService')
+        const { getAffiliateByCode } = require('../services/affiliateService')
+        const { sendSignupNotification } = require('../services/affiliateEmailService')
+
+        // Track conversion (mark click as converted)
+        await trackConversion(result.userId, affiliateCode)
+
+        // Get affiliate details
+        const affiliateResult = await getAffiliateByCode(affiliateCode)
+        
+        if (affiliateResult.success) {
+          const affiliate = affiliateResult.affiliate
+          
+          // Send email notification to affiliate
+          await sendSignupNotification(
+            affiliateCode,
+            affiliate.name,
+            affiliate.email,
+            {
+              position: result.position,
+              firstName,
+              lastName,
+            }
+          )
+
+          console.log(`✅ [AFFILIATE] Tracked signup for affiliate: ${affiliateCode}`)
+        }
+      } catch (affiliateError) {
+        console.error('❌ [AFFILIATE] Error tracking affiliate signup:', affiliateError)
+        // Don't fail the signup if affiliate tracking fails
+      }
+    }
 
     res.status(201).json({
       success: true,

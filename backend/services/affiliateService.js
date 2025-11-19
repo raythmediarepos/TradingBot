@@ -1,427 +1,333 @@
-const { admin, db } = require('../config/firebase-admin')
-const emailService = require('./emailService')
-const crypto = require('crypto')
+const admin = require('firebase-admin')
+const db = admin.firestore()
 
-/**
- * Generate a unique affiliate code
- * @returns {string} Unique 8-character code
- */
-const generateAffiliateCode = () => {
-  return crypto.randomBytes(4).toString('hex').toUpperCase()
+const COLLECTIONS = {
+  AFFILIATES: 'affiliates',
+  BETA_USERS: 'betaUsers',
+  AFFILIATE_CLICKS: 'affiliateClicks',
+  AFFILIATE_PAYOUTS: 'affiliatePayouts',
 }
 
 /**
- * Check if affiliate code already exists
- * @param {string} code - Affiliate code to check
- * @returns {Promise<boolean>}
+ * Create a new affiliate
  */
-const isCodeUnique = async (code) => {
+const createAffiliate = async (name, email, code, createdBy) => {
   try {
-    const snapshot = await db.collection('affiliates')
-      .where('affiliateCode', '==', code)
-      .limit(1)
-      .get()
-    
-    return snapshot.empty
-  } catch (error) {
-    console.error('❌ [AFFILIATE] Error checking code uniqueness:', error)
-    throw error
-  }
-}
-
-/**
- * Generate unique affiliate code
- * @returns {Promise<string>}
- */
-const generateUniqueAffiliateCode = async () => {
-  let code
-  let isUnique = false
-  let attempts = 0
-  const maxAttempts = 10
-
-  while (!isUnique && attempts < maxAttempts) {
-    code = generateAffiliateCode()
-    isUnique = await isCodeUnique(code)
-    attempts++
-  }
-
-  if (!isUnique) {
-    throw new Error('Failed to generate unique affiliate code')
-  }
-
-  return code
-}
-
-/**
- * Create new affiliate account (basic signup - no affiliate code yet)
- * @param {Object} affiliateData - Affiliate signup data
- * @returns {Promise<Object>}
- */
-const createAffiliateAccount = async (affiliateData) => {
-  console.log('🎯 [AFFILIATE] New signup started...')
-  console.log(`   → Name: ${affiliateData.name}`)
-  console.log(`   → Email: ${affiliateData.email}`)
-  console.log(`   → Platform: ${affiliateData.platform}`)
-
-  try {
-    // Check if affiliate already exists
-    console.log('   → Checking for existing affiliate...')
-    const existingAffiliate = await db.collection('affiliates')
-      .where('email', '==', affiliateData.email)
-      .limit(1)
+    // Validate code uniqueness
+    const existingAffiliate = await db
+      .collection(COLLECTIONS.AFFILIATES)
+      .where('code', '==', code.toUpperCase())
       .get()
 
     if (!existingAffiliate.empty) {
-      console.log('⚠️ [AFFILIATE] Email already exists')
-      throw new Error('An affiliate account with this email already exists')
+      return {
+        success: false,
+        error: 'Affiliate code already exists',
+      }
     }
 
-    // Create temporary password (will be sent via email)
-    const tempPassword = crypto.randomBytes(8).toString('hex')
-    console.log('   → Generated temporary password')
-
-    // Create affiliate record - NO affiliate code yet (will be generated after setup)
-    const affiliateRecord = {
-      name: affiliateData.name,
-      email: affiliateData.email,
-      platform: affiliateData.platform,
-      audienceSize: affiliateData.audienceSize || null,
-      websiteUrl: affiliateData.websiteUrl || null,
-      affiliateCode: null, // Generated after setup completion
-      affiliateLink: null, // Generated after setup completion
-      tempPassword: tempPassword, // In production, hash this!
-      passwordChanged: false,
-      status: 'active', // active, suspended
-      setupCompleted: false,
-      // Full profile info (collected during setup)
-      fullName: null,
-      phone: null,
-      address: {
-        street: null,
-        city: null,
-        state: null,
-        country: null,
-        postalCode: null
-      },
-      paymentInfo: {
-        method: null, // paypal, bank, etc
-        details: null
-      },
-      commissionRate: 0.10, // 10%
-      totalEarnings: 0,
-      totalReferrals: 0,
-      activeReferrals: 0,
-      clicks: 0,
-      conversions: 0,
+    // Create affiliate
+    const affiliateData = {
+      code: code.toUpperCase(),
+      name: name,
+      email: email,
+      status: 'active',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      lastLoginAt: null
+      createdBy: createdBy,
+      
+      // Stats (initialized to 0)
+      totalClicks: 0,
+      totalSignups: 0,
+      paidUsers: 0,
+      freeUsers: 0,
+      totalCommission: 0.0,
     }
 
-    console.log('   → Saving to Firebase...')
-    const docRef = await db.collection('affiliates').add(affiliateRecord)
-    console.log(`✅ [AFFILIATE] Account created with ID: ${docRef.id}`)
+    const docRef = await db.collection(COLLECTIONS.AFFILIATES).add(affiliateData)
 
-    // Send welcome email with login credentials (no affiliate code yet)
-    console.log('   → Sending welcome email...')
-    const emailSent = await emailService.sendAffiliateWelcomeEmail(
-      affiliateData.email,
-      affiliateData.name,
-      tempPassword
-    )
-
-    if (emailSent) {
-      console.log('✅ [AFFILIATE] Welcome email sent')
-    } else {
-      console.log('⚠️ [AFFILIATE] Email failed but account created')
-    }
+    console.log(`✅ [AFFILIATE] Created affiliate: ${code} (${name})`)
 
     return {
       success: true,
       affiliateId: docRef.id,
-      tempPassword: tempPassword,
-      status: 'active',
-      setupCompleted: false,
-      message: 'Account created successfully! Check your email for login credentials.'
+      affiliate: {
+        id: docRef.id,
+        ...affiliateData,
+      },
     }
-
   } catch (error) {
-    console.error('❌ [AFFILIATE] Error creating account:', error)
-    throw error
+    console.error('❌ [AFFILIATE] Error creating affiliate:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
   }
 }
 
 /**
- * Complete affiliate setup and generate affiliate code
- * @param {string} affiliateId - Affiliate document ID
- * @param {Object} setupData - Complete setup data
- * @returns {Promise<Object>}
+ * Get affiliate by code
  */
-const completeAffiliateSetup = async (affiliateId, setupData) => {
-  console.log('🎯 [AFFILIATE] Completing setup...')
-  console.log(`   → Affiliate ID: ${affiliateId}`)
-
+const getAffiliateByCode = async (code) => {
   try {
-    const affiliateRef = db.collection('affiliates').doc(affiliateId)
-    const doc = await affiliateRef.get()
+    const snapshot = await db
+      .collection(COLLECTIONS.AFFILIATES)
+      .where('code', '==', code.toUpperCase())
+      .limit(1)
+      .get()
+
+    if (snapshot.empty) {
+      return {
+        success: false,
+        error: 'Affiliate not found',
+      }
+    }
+
+    const doc = snapshot.docs[0]
+    return {
+      success: true,
+      affiliate: {
+        id: doc.id,
+        ...doc.data(),
+      },
+    }
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error getting affiliate:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Get affiliate by ID
+ */
+const getAffiliateById = async (affiliateId) => {
+  try {
+    const doc = await db.collection(COLLECTIONS.AFFILIATES).doc(affiliateId).get()
 
     if (!doc.exists) {
-      throw new Error('Affiliate not found')
+      return {
+        success: false,
+        error: 'Affiliate not found',
+      }
     }
-
-    const affiliate = doc.data()
-
-    if (affiliate.setupCompleted) {
-      throw new Error('Setup already completed')
-    }
-
-    // Generate unique affiliate code NOW
-    console.log('   → Generating unique affiliate code...')
-    const affiliateCode = await generateUniqueAffiliateCode()
-    console.log(`   → Generated code: ${affiliateCode}`)
-
-    // Update affiliate with complete info
-    await affiliateRef.update({
-      fullName: setupData.fullName,
-      phone: setupData.phone,
-      address: {
-        street: setupData.address.street,
-        city: setupData.address.city,
-        state: setupData.address.state,
-        country: setupData.address.country,
-        postalCode: setupData.address.postalCode
-      },
-      paymentInfo: {
-        method: setupData.paymentInfo.method,
-        details: setupData.paymentInfo.details
-      },
-      affiliateCode: affiliateCode,
-      affiliateLink: `https://helwaai.com/?ref=${affiliateCode}`,
-      setupCompleted: true,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    })
-
-    console.log('✅ [AFFILIATE] Setup completed successfully')
-
-    // Send setup completion email with affiliate code
-    await emailService.sendAffiliateSetupCompleteEmail(
-      affiliate.email,
-      affiliate.name,
-      affiliateCode
-    )
 
     return {
       success: true,
-      affiliateCode: affiliateCode,
-      affiliateLink: `https://helwaai.com/?ref=${affiliateCode}`,
-      message: 'Setup completed! Your affiliate code has been generated.'
+      affiliate: {
+        id: doc.id,
+        ...doc.data(),
+      },
     }
-
   } catch (error) {
-    console.error('❌ [AFFILIATE] Error completing setup:', error)
-    throw error
-  }
-}
-
-/**
- * Approve affiliate application
- * @param {string} affiliateId - Affiliate document ID
- * @returns {Promise<Object>}
- */
-const approveAffiliate = async (affiliateId) => {
-  console.log(`✅ [AFFILIATE] Approving affiliate: ${affiliateId}`)
-
-  try {
-    const affiliateRef = db.collection('affiliates').doc(affiliateId)
-    
-    await affiliateRef.update({
-      status: 'approved',
-      approvedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    })
-
-    // Get affiliate data to send approval email
-    const affiliateDoc = await affiliateRef.get()
-    const affiliate = affiliateDoc.data()
-
-    // Send approval email with login credentials
-    await emailService.sendAffiliateApprovalEmail(
-      affiliate.email,
-      affiliate.name,
-      affiliate.affiliateCode,
-      affiliate.tempPassword
-    )
-
-    console.log('✅ [AFFILIATE] Approved and notification sent')
-    return { success: true, message: 'Affiliate approved successfully' }
-
-  } catch (error) {
-    console.error('❌ [AFFILIATE] Error approving affiliate:', error)
-    throw error
-  }
-}
-
-/**
- * Get affiliate by email
- * @param {string} email - Affiliate email
- * @returns {Promise<Object>}
- */
-const getAffiliateByEmail = async (email) => {
-  try {
-    const snapshot = await db.collection('affiliates')
-      .where('email', '==', email)
-      .limit(1)
-      .get()
-
-    if (snapshot.empty) {
-      return null
-    }
-
-    const doc = snapshot.docs[0]
+    console.error('❌ [AFFILIATE] Error getting affiliate:', error)
     return {
-      id: doc.id,
-      ...doc.data()
+      success: false,
+      error: error.message,
     }
-  } catch (error) {
-    console.error('❌ [AFFILIATE] Error fetching affiliate:', error)
-    throw error
   }
 }
 
 /**
- * Track affiliate click
- * @param {string} affiliateCode - Affiliate code
- * @returns {Promise<Object>}
- */
-const trackClick = async (affiliateCode) => {
-  console.log(`🖱️ [AFFILIATE] Click tracked for code: ${affiliateCode}`)
-
-  try {
-    const snapshot = await db.collection('affiliates')
-      .where('affiliateCode', '==', affiliateCode)
-      .limit(1)
-      .get()
-
-    if (snapshot.empty) {
-      console.log('⚠️ [AFFILIATE] Invalid affiliate code')
-      return { success: false, message: 'Invalid affiliate code' }
-    }
-
-    const doc = snapshot.docs[0]
-    await doc.ref.update({
-      clicks: admin.firestore.FieldValue.increment(1),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    })
-
-    console.log('✅ [AFFILIATE] Click recorded')
-    return { success: true }
-
-  } catch (error) {
-    console.error('❌ [AFFILIATE] Error tracking click:', error)
-    throw error
-  }
-}
-
-/**
- * Track affiliate conversion
- * @param {string} affiliateCode - Affiliate code
- * @param {string} userId - User who converted
- * @param {number} subscriptionAmount - Monthly subscription amount
- * @returns {Promise<Object>}
- */
-const trackConversion = async (affiliateCode, userId, subscriptionAmount) => {
-  console.log(`💰 [AFFILIATE] Conversion tracked for code: ${affiliateCode}`)
-  console.log(`   → User: ${userId}`)
-  console.log(`   → Amount: $${subscriptionAmount}`)
-
-  try {
-    // Get affiliate
-    const snapshot = await db.collection('affiliates')
-      .where('affiliateCode', '==', affiliateCode)
-      .limit(1)
-      .get()
-
-    if (snapshot.empty) {
-      console.log('⚠️ [AFFILIATE] Invalid affiliate code')
-      return { success: false, message: 'Invalid affiliate code' }
-    }
-
-    const affiliateDoc = snapshot.docs[0]
-    const affiliate = affiliateDoc.data()
-    const commissionAmount = subscriptionAmount * affiliate.commissionRate
-
-    // Update affiliate stats
-    await affiliateDoc.ref.update({
-      conversions: admin.firestore.FieldValue.increment(1),
-      totalReferrals: admin.firestore.FieldValue.increment(1),
-      activeReferrals: admin.firestore.FieldValue.increment(1),
-      totalEarnings: admin.firestore.FieldValue.increment(commissionAmount),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    })
-
-    // Create commission record
-    await db.collection('commissions').add({
-      affiliateId: affiliateDoc.id,
-      affiliateCode: affiliateCode,
-      userId: userId,
-      subscriptionAmount: subscriptionAmount,
-      commissionRate: affiliate.commissionRate,
-      commissionAmount: commissionAmount,
-      status: 'pending', // pending, paid
-      type: 'recurring',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      paidAt: null
-    })
-
-    console.log('✅ [AFFILIATE] Conversion recorded')
-    console.log(`   → Commission: $${commissionAmount.toFixed(2)}`)
-
-    return { 
-      success: true, 
-      commission: commissionAmount,
-      message: 'Conversion tracked successfully'
-    }
-
-  } catch (error) {
-    console.error('❌ [AFFILIATE] Error tracking conversion:', error)
-    throw error
-  }
-}
-
-/**
- * Get all affiliates (admin)
- * @returns {Promise<Array>}
+ * Get all affiliates
  */
 const getAllAffiliates = async () => {
   try {
-    const snapshot = await db.collection('affiliates')
+    const snapshot = await db
+      .collection(COLLECTIONS.AFFILIATES)
       .orderBy('createdAt', 'desc')
       .get()
 
-    const affiliates = []
-    snapshot.forEach(doc => {
-      affiliates.push({
-        id: doc.id,
-        ...doc.data()
-      })
-    })
+    const affiliates = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
 
-    return affiliates
+    return {
+      success: true,
+      affiliates: affiliates,
+    }
   } catch (error) {
-    console.error('❌ [AFFILIATE] Error fetching affiliates:', error)
-    throw error
+    console.error('❌ [AFFILIATE] Error getting affiliates:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
   }
 }
 
-module.exports = {
-  createAffiliateAccount,
-  completeAffiliateSetup,
-  createAffiliateApplication: createAffiliateAccount, // Alias for backward compatibility
-  approveAffiliate,
-  getAffiliateByEmail,
-  trackClick,
-  trackConversion,
-  getAllAffiliates,
-  generateUniqueAffiliateCode
+/**
+ * Update affiliate
+ */
+const updateAffiliate = async (affiliateId, updates) => {
+  try {
+    const affiliateRef = db.collection(COLLECTIONS.AFFILIATES).doc(affiliateId)
+    
+    await affiliateRef.update({
+      ...updates,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    })
+
+    console.log(`✅ [AFFILIATE] Updated affiliate: ${affiliateId}`)
+
+    return {
+      success: true,
+    }
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error updating affiliate:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
 }
 
+/**
+ * Delete affiliate
+ */
+const deleteAffiliate = async (affiliateId) => {
+  try {
+    await db.collection(COLLECTIONS.AFFILIATES).doc(affiliateId).delete()
+
+    console.log(`✅ [AFFILIATE] Deleted affiliate: ${affiliateId}`)
+
+    return {
+      success: true,
+    }
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error deleting affiliate:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Get detailed affiliate stats
+ */
+const getAffiliateStats = async (code) => {
+  try {
+    // Get affiliate
+    const affiliateResult = await getAffiliateByCode(code)
+    if (!affiliateResult.success) {
+      return affiliateResult
+    }
+
+    const affiliate = affiliateResult.affiliate
+
+    // Get all users referred by this affiliate
+    const usersSnapshot = await db
+      .collection(COLLECTIONS.BETA_USERS)
+      .where('affiliateCode', '==', code.toUpperCase())
+      .get()
+
+    const users = usersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+
+    // Calculate stats
+    const FREE_SLOTS = 20
+    let paidUsers = 0
+    let freeUsers = 0
+    let totalCommission = 0
+
+    users.forEach(user => {
+      const isFree = user.position <= FREE_SLOTS
+      
+      if (isFree) {
+        freeUsers++
+      } else if (user.paymentStatus === 'paid' && !user.manuallyGranted) {
+        paidUsers++
+        totalCommission += 12.50 // $49.99 * 0.25
+      }
+    })
+
+    // Calculate conversion rates
+    const clickToSignup = affiliate.totalClicks > 0 
+      ? ((users.length / affiliate.totalClicks) * 100).toFixed(1)
+      : '0.0'
+    
+    const signupToPaid = users.length > 0
+      ? ((paidUsers / users.length) * 100).toFixed(1)
+      : '0.0'
+    
+    const clickToPaid = affiliate.totalClicks > 0
+      ? ((paidUsers / affiliate.totalClicks) * 100).toFixed(1)
+      : '0.0'
+
+    return {
+      success: true,
+      stats: {
+        affiliate: affiliate,
+        totalClicks: affiliate.totalClicks,
+        totalSignups: users.length,
+        paidUsers: paidUsers,
+        freeUsers: freeUsers,
+        totalCommission: totalCommission,
+        conversionRates: {
+          clickToSignup: parseFloat(clickToSignup),
+          signupToPaid: parseFloat(signupToPaid),
+          clickToPaid: parseFloat(clickToPaid),
+        },
+        referredUsers: users,
+      },
+    }
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error getting stats:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Increment affiliate stats
+ */
+const incrementAffiliateStats = async (code, field, incrementBy = 1) => {
+  try {
+    const affiliateResult = await getAffiliateByCode(code)
+    if (!affiliateResult.success) {
+      return affiliateResult
+    }
+
+    const affiliateRef = db.collection(COLLECTIONS.AFFILIATES).doc(affiliateResult.affiliate.id)
+    
+    await affiliateRef.update({
+      [field]: admin.firestore.FieldValue.increment(incrementBy),
+      lastActivity: admin.firestore.FieldValue.serverTimestamp(),
+    })
+
+    return {
+      success: true,
+    }
+  } catch (error) {
+    console.error('❌ [AFFILIATE] Error incrementing stats:', error)
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Generate affiliate link
+ */
+const generateAffiliateLink = (code, frontendUrl) => {
+  return `${frontendUrl}/beta/signup?ref=${code.toUpperCase()}`
+}
+
+module.exports = {
+  createAffiliate,
+  getAffiliateByCode,
+  getAffiliateById,
+  getAllAffiliates,
+  updateAffiliate,
+  deleteAffiliate,
+  getAffiliateStats,
+  incrementAffiliateStats,
+  generateAffiliateLink,
+}
