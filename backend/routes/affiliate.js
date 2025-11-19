@@ -58,7 +58,7 @@ router.get('/track-click', async (req, res) => {
  */
 
 /**
- * POST /api/admin/affiliates
+ * POST /api/affiliate/admin/affiliates
  * Create new affiliate
  */
 router.post('/admin/affiliates', authenticate, requireAdmin, async (req, res) => {

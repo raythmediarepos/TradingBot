@@ -75,7 +75,7 @@ export default function AffiliatesPage() {
 
   const fetchAffiliates = async () => {
     try {
-      const response = await fetchWithAuth('/api/admin/affiliates')
+      const response = await fetchWithAuth('/api/affiliate/admin/affiliates')
       const data = await response.json()
 
       if (data.success) {
@@ -91,7 +91,7 @@ export default function AffiliatesPage() {
   const fetchAffiliateStats = async (code: string) => {
     setLoadingStats(true)
     try {
-      const response = await fetchWithAuth(`/api/admin/affiliates/${code}/stats`)
+      const response = await fetchWithAuth(`/api/affiliate/admin/affiliates/${code}/stats`)
       const data = await response.json()
 
       if (data.success) {
@@ -120,7 +120,7 @@ export default function AffiliatesPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetchWithAuth('/api/admin/affiliates', {
+      const response = await fetchWithAuth('/api/affiliate/admin/affiliates', {
         method: 'POST',
         body: JSON.stringify(formData),
       })
@@ -145,7 +145,7 @@ export default function AffiliatesPage() {
     if (!confirm(`Delete affiliate "${name}"? This cannot be undone.`)) return
 
     try {
-      const response = await fetchWithAuth(`/api/admin/affiliates/${id}`, {
+      const response = await fetchWithAuth(`/api/affiliate/admin/affiliates/${id}`, {
         method: 'DELETE',
       })
       const data = await response.json()
