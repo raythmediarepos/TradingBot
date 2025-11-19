@@ -181,12 +181,18 @@ router.get('/admin/affiliates/:code/stats', authenticate, requireAdmin, async (r
     if (result.success) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
       
-      res.json({
-        success: true,
-        data: {
-          ...result.stats,
+      // Add affiliateLink to the affiliate object
+      const statsWithLink = {
+        ...result.stats,
+        affiliate: {
+          ...result.stats.affiliate,
           affiliateLink: generateAffiliateLink(code, frontendUrl),
         },
+      }
+      
+      res.json({
+        success: true,
+        data: statsWithLink,
       })
     } else {
       res.status(404).json(result)
